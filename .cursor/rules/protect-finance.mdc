@@ -1,0 +1,12 @@
+---
+description: Protege o BusinessOS Finance; One é produto independente
+alwaysApply: true
+---
+
+# BusinessOS One — isolamento do Finance
+
+- Nunca editar arquivos em `BuniseSOS-Finance` / `buniseSOS-FINANCE`.
+- Nunca apontar `DATABASE_URL` do One para o banco do Finance.
+- Nunca reutilizar migrations do Finance neste repositório.
+- Integração futura apenas via API formal.
+- Detalhes: `docs/PROTECTION.md` e `docs/AUDIT-FINANCE.md`.
