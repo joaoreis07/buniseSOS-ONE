@@ -7,13 +7,26 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-/// Roles iniciais do BusinessOS One (expansíveis).
 enum Role {
   ADMIN
   MANAGER
   SALES
   FINANCE
   INVENTORY
+}
+
+enum InviteStatus {
+  PENDING
+  ACCEPTED
+  REVOKED
+  EXPIRED
+}
+
+enum LogLevel {
+  INFO
+  WARNING
+  ERROR
+  DEBUG
 }
 
 model User {
@@ -28,10 +41,52 @@ model User {
   updatedAt      DateTime  @updatedAt
   deletedAt      DateTime?
 
+  accounts    Account[]
+  sessions    Session[]
   memberships Membership[]
   auditLogs   AuditLog[]
+  systemLogs  SystemLog[]
+  invitesSent Invite[]     @relation("InviteInviter")
 
   @@index([deletedAt])
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
 }
 
 model Company {
@@ -42,7 +97,10 @@ model Company {
   deletedAt DateTime?
 
   memberships Membership[]
+  settings    CompanySettings?
+  invites     Invite[]
   auditLogs   AuditLog[]
+  systemLogs  SystemLog[]
 
   @@index([deletedAt])
 }
@@ -64,6 +122,40 @@ model Membership {
   @@index([userId, deletedAt])
 }
 
+model CompanySettings {
+  id         String   @id @default(cuid())
+  companyId  String   @unique
+  theme      String   @default("light")
+  language   String   @default("pt-BR")
+  currency   String   @default("BRL")
+  timezone   String   @default("America/Sao_Paulo")
+  dateFormat String   @default("dd/MM/yyyy")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+}
+
+model Invite {
+  id          String       @id @default(cuid())
+  companyId   String
+  email       String
+  role        Role         @default(SALES)
+  token       String       @unique
+  status      InviteStatus @default(PENDING)
+  invitedById String?
+  expiresAt   DateTime
+  acceptedAt  DateTime?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  invitedBy User?   @relation("InviteInviter", fields: [invitedById], references: [id], onDelete: SetNull)
+
+  @@index([companyId, status])
+  @@index([email, status])
+}
+
 model AuditLog {
   id        String   @id @default(cuid())
   companyId String?
@@ -83,4 +175,22 @@ model AuditLog {
   @@index([companyId, createdAt])
   @@index([userId, createdAt])
   @@index([module, action])
+}
+
+model SystemLog {
+  id        String   @id @default(cuid())
+  companyId String?
+  userId    String?
+  level     LogLevel @default(INFO)
+  module    String
+  message   String
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  company Company? @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  user    User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([companyId, createdAt])
+  @@index([level, createdAt])
+  @@index([module, createdAt])
 }

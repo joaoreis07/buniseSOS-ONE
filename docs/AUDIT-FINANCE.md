@@ -136,7 +136,7 @@ Reutilizar como **padrão arquitetural**, não como cópia cega do repositório.
 3. **SaleItem sem ProductId:** itens são descritivos — One deve ligar a catálogo/estoque.
 4. **Financeiro centrado em Transaction + Installment:** funciona para Finance; One precisa de eventos entre módulos sem duplicar lançamentos.
 5. **Feature flags com chaves futuras (`inventory`):** não implementar flags antes do domínio existir.
-6. **Docker na mesma porta 5432:** o One **já nasce** em `5433` para coexistir localmente sem conflito.
+6. **Docker na mesma porta 5432:** o One **nasce separado** do Finance. Nesta máquina: Finance=`5432`, Odonto=`5433`, One=`5434`.
 
 ---
 

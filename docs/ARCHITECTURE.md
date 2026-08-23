@@ -16,100 +16,116 @@ Plataforma multi-tenant com CRM, vendas, produtos, estoque, financeiro, DRE, e-c
 6. Soft delete + auditoria desde a fundação
 7. Sem acesso direto ao banco do Finance
 
-## Stack inicial
+## Stack
 
 - Next.js 15 (App Router) + React 19 + TypeScript
-- Tailwind CSS 4 + shadcn/ui (a adicionar na FASE 2)
-- Prisma + PostgreSQL 16 (Docker, porta **5433**)
-- Auth.js (FASE 3)
-- Zod (+ React Hook Form / TanStack quando necessário)
-- Recharts quando houver dashboards
+- Tailwind CSS 4 + shadcn/ui (`src/shared/ui`)
+- Prisma 6 + PostgreSQL 16 (Docker)
+- Auth.js (Credentials + JWT)
+- Zod + React Hook Form
 
 ## Estrutura de pastas
 
 ```text
 src/
 ├── app/                      # Rotas Next.js (App Router)
+│   ├── api/auth/[...nextauth]
+│   ├── login|register|forgot-password|reset-password|invite
+│   └── app/                  # Área autenticada (/app)
 ├── modules/
-│   ├── auth/
-│   ├── crm/
-│   ├── sales/
-│   ├── products/
-│   ├── inventory/
-│   ├── finance/
-│   ├── dre/
-│   ├── ecommerce/
-│   └── dashboard/
+│   ├── auth/                 # schemas, services, actions, components
+│   ├── app-shell/            # sidebar, header, nav
+│   ├── crm/ …                # placeholders de domínio
 └── shared/
+    ├── auth/                 # NextAuth config + session helpers
     ├── db/                   # Prisma client
-    ├── permissions/          # RBAC
-    ├── tenant/               # Contexto e asserts de tenant
-    ├── validation/
-    ├── repositories/
-    ├── ui/                   # design system / shadcn
+    ├── permissions/          # RBAC (hasPermission / can)
+    ├── tenant/               # asserts e filtros de tenant
+    ├── audit/                # AuditLog / SystemLog
+    ├── ui/                   # shadcn
     └── utilities/
 ```
 
-Cada módulo tende a evoluir com:
+## Auth.js e sessão
 
-```text
-actions/ | services/ | repositories/ | schemas/ | dto/ | components/
-```
+- Strategy: **JWT** (30 dias), com `sessionVersion` no User
+- Login Credentials valida senha (bcrypt) + membership ativo
+- JWT carrega `companyId`, `role`, `sessionVersion`
+- Callbacks revalidam membership e invalidam token se:
+  - membership removido/soft-deleted
+  - `sessionVersion` divergente (logout forçado / reset de senha)
+- Tenant **nunca** vem confiado do client: usa sessão autenticada (`requireSession` / `requirePermission`)
 
 ## Multi-tenant
 
 ```text
 Company
  ├── Membership (User + Role)
- ├── Customers / Leads / ...
- ├── Products / Inventory / ...
- └── Finance / DRE / ...
+ ├── CompanySettings
+ ├── Invite
+ └── AuditLog / SystemLog
 ```
 
 Regras:
 
-- Toda query de negócio filtra por `companyId`
-- FKs cross-tenant são rejeitadas (padrão `assert*BelongsToTenant`)
+- Toda query de negócio filtra por `companyId` da sessão
 - Soft delete com `deletedAt`
+- Cadastro cria User + Company + Membership(ADMIN) + CompanySettings em transação
 
-## RBAC (alvo)
+## RBAC
 
-| Role | Escopo inicial |
+| Role | Escopo |
 |---|---|
-| ADMIN | Acesso completo |
-| MANAGER | Gerencial amplo |
-| SALES | CRM + vendas |
+| ADMIN | `*` (acesso total) |
+| MANAGER | Gerencial amplo (inclui settings) |
+| SALES | CRM + vendas (+ produtos view) |
 | FINANCE | Financeiro + DRE |
 | INVENTORY | Produtos + estoque |
 
-Permissões no formato `recurso:acao` (ex.: `crm:manage`, `finance:view`), centralizadas em `src/shared/permissions`.
+Permissões no formato `recurso:acao`, em `src/shared/permissions/rbac.ts`.
+
+Proteção em camadas:
+
+1. Middleware: `/app/*` exige JWT ativo
+2. Server Components / actions: `requirePermission(...)`
+3. Sidebar: filtra itens com `can(role, permission)` (somente UX)
+
+## Middleware e rotas
+
+- Públicas de auth: `/login`, `/register`, `/forgot-password`, `/reset-password`, `/invite`
+- Protegidas: `/app/**`
+- Usuário autenticado em página de auth → redirect `/app`
 
 ## Dados
 
 - Banco: `businessos_one`
-- URL local: `postgresql://businessos:businessos@localhost:5433/businessos_one`
-- Migrations **novas**, criadas neste repositório
-- Seed próprio (quando existir)
-
-## Integração entre módulos (futuro)
-
-Preferir eventos/serviços de aplicação:
-
-```text
-Venda concluída → baixa estoque → gera conta a receber → atualiza DRE/dashboard
-```
-
-Evitar duplicidade de lançamentos manuais.
+- URL local: `postgresql://businessos:businessos@localhost:5434/businessos_one`
+- Container: `businessos-one-postgres`
+- Migration inicial: `prisma/migrations/20260823232550_init_auth_tenant`
+- Migrations **novas**, criadas neste repositório (nunca do Finance)
 
 ## Relação com o Finance
 
 ```text
-Finance  = app + DB + deploy próprios
-One      = app + DB + deploy próprios
+Finance  = app + DB + deploy próprios (porta 5432)
+One      = app + DB + deploy próprios (porta 5434)
 ```
 
 Integração eventual: API formal — nunca DB compartilhado.
 
+Ver `docs/PROTECTION.md` e `docs/ISOLATION-CHECK.md`.
+
+## Verificação
+
+```bash
+npm run db:up
+npm run db:verify
+npm run verify:foundation
+npm run typecheck
+npm run lint
+npm run build
+```
+
 ## Fases
 
-Ver `docs/ROADMAP.md`. Fundação atual cobre FASE 0 (repo/ambiente) e inicia FASE 2 (scaffold). Auth completa = FASE 3.
+Ver `docs/ROADMAP.md`. Fundação Auth/tenant = FASE 2/3.

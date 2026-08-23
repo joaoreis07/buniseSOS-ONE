@@ -31,6 +31,8 @@ Se no futuro houver integração entre produtos, ela deve ocorrer por **API form
 | | Finance | One |
 |---|---|---|
 | Database | `businessos_finance` | `businessos_one` |
-| Porta host | `5432` | `5433` |
+| Porta host | `5432` | `5434` |
 | Container | `businessos-postgres` | `businessos-one-postgres` |
 | Volume | `businessos_pg_data` | `businessos_one_pg_data` |
+
+> A porta `5433` está em uso pelo BusinessOS Odonto nesta máquina. O One usa `5434` para coexistir sem tocar no Finance.

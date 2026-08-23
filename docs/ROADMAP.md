@@ -6,11 +6,11 @@ Uma fase só fecha quando backend, banco, validações, permissões, integraçõ
 
 | Fase | Nome | Status |
 |---|---|---|
-| 0 | Proteção e planejamento | Em andamento |
+| 0 | Proteção e planejamento | Concluída |
 | 1 | Auditoria do Finance (read-only) | Concluída (ver `AUDIT-FINANCE.md`) |
-| 2 | Fundação (Next, Prisma, modular, RBAC base, erros, logging) | Em andamento |
-| 3 | Autenticação e empresa | Pendente |
-| 4 | CRM | Pendente |
+| 2 | Fundação (Next, Prisma, modular, RBAC base, erros, logging) | Concluída |
+| 3 | Autenticação e empresa | Concluída (fundação) |
+| 4 | CRM | Pendente — **próxima** |
 | 5 | Produtos e serviços | Pendente |
 | 6 | Estoque | Pendente |
 | 7 | Vendas | Pendente |
@@ -25,6 +25,17 @@ Uma fase só fecha quando backend, banco, validações, permissões, integraçõ
 | 16 | Deploy independente | Pendente |
 | 17 | Lançamento | Pendente |
 
+## O que a FASE 2/3 entregou
+
+- PostgreSQL isolado (`businessos_one`, porta host `5434`)
+- Migration inicial Auth/tenant
+- Auth.js (cadastro, login, logout, reset, convite)
+- Sessão JWT com `companyId` + `role` + `sessionVersion`
+- Multi-tenant + RBAC centralizado
+- Middleware e rotas `/app` protegidas
+- App shell (sidebar/header) + shadcn/ui
+- Scripts `db:verify` e `verify:foundation`
+
 ## Próximo passo imediato
 
-Concluir FASE 2 (shadcn, Auth.js wiring mínimo, migrations iniciais, testes de tenant) e só então FASE 3.
+Iniciar **FASE 4 — CRM** (clientes, leads, oportunidades, funil, atividades), sem alterar o BusinessOS Finance.
