@@ -83,6 +83,16 @@ enum ActivityStatus {
   CANCELLED
 }
 
+enum ProductType {
+  PRODUCT
+  SERVICE
+}
+
+enum ProductStatus {
+  ACTIVE
+  INACTIVE
+}
+
 model User {
   id             String    @id @default(cuid())
   name           String?
@@ -163,6 +173,8 @@ model Company {
   leads       Lead[]
   opportunities Opportunity[]
   activities    Activity[]
+  productCategories ProductCategory[]
+  products          Product[]
 
   @@index([deletedAt])
 }
@@ -398,5 +410,52 @@ model Activity {
   @@index([customerId])
   @@index([leadId])
   @@index([opportunityId])
+  @@index([companyId, createdAt])
+}
+
+model ProductCategory {
+  id          String    @id @default(cuid())
+  companyId   String
+  name        String
+  description String?   @db.Text
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+
+  company  Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  products Product[]
+
+  @@index([companyId, deletedAt])
+  @@index([companyId, name])
+  @@index([companyId, createdAt])
+}
+
+model Product {
+  id          String        @id @default(cuid())
+  companyId   String
+  name        String
+  sku         String
+  barcode     String?
+  description String?       @db.Text
+  type        ProductType   @default(PRODUCT)
+  categoryId  String?
+  costPrice   Decimal       @default(0) @db.Decimal(14, 2)
+  salePrice   Decimal       @default(0) @db.Decimal(14, 2)
+  status      ProductStatus @default(ACTIVE)
+  imageUrl    String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  deletedAt   DateTime?
+
+  company  Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  category ProductCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  @@index([companyId, deletedAt])
+  @@index([companyId, name])
+  @@index([companyId, sku])
+  @@index([companyId, barcode])
+  @@index([companyId, type, deletedAt])
+  @@index([companyId, status, deletedAt])
+  @@index([companyId, categoryId, deletedAt])
   @@index([companyId, createdAt])
 }

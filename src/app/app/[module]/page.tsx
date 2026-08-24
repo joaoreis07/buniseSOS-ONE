@@ -18,11 +18,6 @@ const MODULE_META: Record<
     permission: "sales:view",
     description: "Módulo de vendas — implementação na FASE 7.",
   },
-  products: {
-    title: "Produtos",
-    permission: "products:view",
-    description: "Produtos e serviços — implementação na FASE 5.",
-  },
   inventory: {
     title: "Estoque",
     permission: "inventory:view",

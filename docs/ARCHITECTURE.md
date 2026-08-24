@@ -183,6 +183,20 @@ npm run build
 - Rota: `/app/crm/dashboard`
 - Verificação consolidada: `npm run verify:crm`
 
+## Produtos e serviços (FASE 5)
+
+- Models `Product` e `ProductCategory` multi-tenant com soft delete
+- Tipos: `PRODUCT` | `SERVICE` (serviço sem estoque futuro)
+- Status: `ACTIVE` | `INACTIVE`
+- SKU obrigatório e único por empresa (ativos); barcode único quando informado
+- Preços de custo/venda ≥ 0; categoria validada no mesmo `companyId`
+- Imagem: apenas referência/URL (`imageUrl`) — sem galeria; storage de upload ainda não wired
+- Permissões: `products:view|manage`, `categories:view|manage`
+  - SALES: visualização; INVENTORY: gestão; FINANCE: sem produtos
+- Rotas: `/app/products`, `/new`, `/[id]`, `/[id]/edit`, `/app/products/categories`
+- Sem estoque e sem vendas nesta fase
+- Verificação: `npm run verify:products`
+
 ## Fases
 
 Ver `docs/ROADMAP.md`.
