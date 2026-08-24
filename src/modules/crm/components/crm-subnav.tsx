@@ -3,12 +3,14 @@ import type { Role } from "@prisma/client";
 import { hasPermission } from "@/shared/permissions/rbac";
 import { cn } from "@/shared/utilities/cn";
 
+type CrmTab = "customers" | "leads" | "opportunities";
+
 export function CrmSubnav({
   role,
   active,
 }: {
   role: Role;
-  active: "customers" | "leads";
+  active: CrmTab;
 }) {
   const items = [
     hasPermission(role, "crm:view")
@@ -17,11 +19,14 @@ export function CrmSubnav({
     hasPermission(role, "crm:leads:view")
       ? { key: "leads" as const, href: "/app/crm/leads", label: "Leads" }
       : null,
-  ].filter(Boolean) as Array<{
-    key: "customers" | "leads";
-    href: string;
-    label: string;
-  }>;
+    hasPermission(role, "crm:opportunities:view")
+      ? {
+          key: "opportunities" as const,
+          href: "/app/crm/opportunities",
+          label: "Oportunidades",
+        }
+      : null,
+  ].filter(Boolean) as Array<{ key: CrmTab; href: string; label: string }>;
 
   if (items.length === 0) return null;
 

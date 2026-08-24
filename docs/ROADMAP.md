@@ -31,20 +31,22 @@ Uma fase só fecha quando backend, banco, validações, permissões, integraçõ
 |---|---|---|
 | 4.1 | Clientes | **Concluída** |
 | 4.2 | Leads | **Concluída** |
-| 4.3 | Oportunidades | Pendente — **próxima** |
-| 4.4 | Funil de vendas | Pendente |
+| 4.3 | Oportunidades | **Concluída** |
+| 4.4 | Funil de vendas | Pendente — **próxima** |
 | 4.5 | Atividades / Follow-up | Pendente |
 | 4.6 | Dashboard CRM | Pendente |
 
-### O que a FASE 4.2 entregou
+### O que a FASE 4.3 entregou
 
-- Model `Lead` + migration `add_leads`
-- Origem/status enums, responsável, valor estimado, soft delete
-- Rotas `/app/crm/leads`, `/new`, `/[id]`, `/[id]/edit`
-- Permissões `crm:leads:view` / `crm:leads:manage` (FINANCE e INVENTORY sem acesso a leads)
-- Campo reservado `convertedCustomerId` para conversão futura (sem Opportunity nesta fase)
-- Script `npm run verify:leads`
+- Model `Opportunity` + migration `add_opportunities`
+- Estágios: NEW → QUALIFIED → PROPOSAL → NEGOTIATION → WON / LOST
+- Vínculos opcionais com Lead e Customer (mesmo tenant)
+- Valor estimado, probabilidade, previsão de fechamento
+- Rotas `/app/crm/opportunities` (+ new/detail/edit)
+- Permissões `crm:opportunities:view` / `crm:opportunities:manage`
+- Sem funil visual/kanban (FASE 4.4)
+- Script `npm run verify:opportunities`
 
 ## Próximo passo imediato
 
-Validar FASE 4.2 e, somente depois, iniciar **FASE 4.3 — Oportunidades**. Não alterar o BusinessOS Finance.
+Validar FASE 4.3 e, somente depois, iniciar **FASE 4.4 — Funil de vendas**. Não alterar o BusinessOS Finance.

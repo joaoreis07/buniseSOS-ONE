@@ -147,6 +147,17 @@ npm run build
 - `convertedCustomerId` reservado para conversão futura (sem Opportunity nesta fase)
 - Verificação: `npm run verify:leads`
 
+## CRM — Oportunidades (FASE 4.3)
+
+- Model `Opportunity` multi-tenant com soft delete
+- Estágios: `NEW` | `QUALIFIED` | `PROPOSAL` | `NEGOTIATION` | `WON` | `LOST`
+- Vínculos opcionais `leadId` / `customerId` validados no mesmo `companyId`
+- Campos: valor estimado, probabilidade (0–100), previsão de fechamento, responsável, notas
+- Permissões: `crm:opportunities:view`, `crm:opportunities:manage`
+- Rotas: `/app/crm/opportunities` (+ `/new`, `/[id]`, `/[id]/edit`)
+- Funil visual/kanban **não** incluído (FASE 4.4)
+- Verificação: `npm run verify:opportunities`
+
 ## Fases
 
 Ver `docs/ROADMAP.md`.

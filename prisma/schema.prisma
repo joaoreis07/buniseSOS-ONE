@@ -59,6 +59,15 @@ enum LeadStatus {
   LOST
 }
 
+enum OpportunityStage {
+  NEW
+  QUALIFIED
+  PROPOSAL
+  NEGOTIATION
+  WON
+  LOST
+}
+
 model User {
   id             String    @id @default(cuid())
   name           String?
@@ -79,6 +88,7 @@ model User {
   invitesSent        Invite[]     @relation("InviteInviter")
   customersOwned     Customer[]   @relation("CustomerOwner")
   leadsOwned         Lead[]       @relation("LeadOwner")
+  opportunitiesOwned Opportunity[] @relation("OpportunityOwner")
 
   @@index([deletedAt])
 }
@@ -135,6 +145,7 @@ model Company {
   systemLogs  SystemLog[]
   customers   Customer[]
   leads       Lead[]
+  opportunities Opportunity[]
 
   @@index([deletedAt])
 }
@@ -259,6 +270,7 @@ model Customer {
   company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
   owner   User?   @relation("CustomerOwner", fields: [ownerId], references: [id], onDelete: SetNull)
   convertedFromLeads Lead[] @relation("LeadConvertedCustomer")
+  opportunities Opportunity[]
 
   @@index([companyId, deletedAt])
   @@index([companyId, name])
@@ -292,6 +304,7 @@ model Lead {
   company           Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
   owner             User?     @relation("LeadOwner", fields: [ownerId], references: [id], onDelete: SetNull)
   convertedCustomer Customer? @relation("LeadConvertedCustomer", fields: [convertedCustomerId], references: [id], onDelete: SetNull)
+  opportunities     Opportunity[]
 
   @@index([companyId, deletedAt])
   @@index([companyId, name])
@@ -301,4 +314,35 @@ model Lead {
   @@index([companyId, ownerId, deletedAt])
   @@index([companyId, createdAt])
   @@index([convertedCustomerId])
+}
+
+model Opportunity {
+  id                String           @id @default(cuid())
+  companyId         String
+  name              String
+  leadId            String?
+  customerId        String?
+  ownerId           String?
+  stage             OpportunityStage @default(NEW)
+  estimatedValue    Decimal?         @db.Decimal(14, 2)
+  probability       Int              @default(10)
+  expectedCloseDate DateTime?
+  notes             String?          @db.Text
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  deletedAt         DateTime?
+
+  company  Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  lead     Lead?     @relation(fields: [leadId], references: [id], onDelete: SetNull)
+  customer Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  owner    User?     @relation("OpportunityOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+
+  @@index([companyId, deletedAt])
+  @@index([companyId, name])
+  @@index([companyId, stage, deletedAt])
+  @@index([companyId, ownerId, deletedAt])
+  @@index([companyId, expectedCloseDate])
+  @@index([companyId, createdAt])
+  @@index([leadId])
+  @@index([customerId])
 }
