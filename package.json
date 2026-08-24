@@ -18,7 +18,10 @@
     "verify:foundation": "tsx scripts/verify-foundation.ts",
     "verify:customers": "tsx scripts/verify-customers.ts",
     "verify:leads": "tsx scripts/verify-leads.ts",
-    "verify:opportunities": "tsx scripts/verify-opportunities.ts"
+    "verify:opportunities": "tsx scripts/verify-opportunities.ts",
+    "verify:pipeline": "tsx scripts/verify-pipeline.ts",
+    "verify:activities": "tsx scripts/verify-activities.ts",
+    "verify:crm": "tsx scripts/verify-crm.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",

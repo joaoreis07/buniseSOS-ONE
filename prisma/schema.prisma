@@ -68,6 +68,21 @@ enum OpportunityStage {
   LOST
 }
 
+enum ActivityType {
+  CALL
+  MEETING
+  WHATSAPP
+  EMAIL
+  TASK
+  NOTE
+}
+
+enum ActivityStatus {
+  PENDING
+  COMPLETED
+  CANCELLED
+}
+
 model User {
   id             String    @id @default(cuid())
   name           String?
@@ -89,6 +104,7 @@ model User {
   customersOwned     Customer[]   @relation("CustomerOwner")
   leadsOwned         Lead[]       @relation("LeadOwner")
   opportunitiesOwned Opportunity[] @relation("OpportunityOwner")
+  activitiesOwned    Activity[]    @relation("ActivityOwner")
 
   @@index([deletedAt])
 }
@@ -146,6 +162,7 @@ model Company {
   customers   Customer[]
   leads       Lead[]
   opportunities Opportunity[]
+  activities    Activity[]
 
   @@index([deletedAt])
 }
@@ -271,6 +288,7 @@ model Customer {
   owner   User?   @relation("CustomerOwner", fields: [ownerId], references: [id], onDelete: SetNull)
   convertedFromLeads Lead[] @relation("LeadConvertedCustomer")
   opportunities Opportunity[]
+  activities Activity[]
 
   @@index([companyId, deletedAt])
   @@index([companyId, name])
@@ -305,6 +323,7 @@ model Lead {
   owner             User?     @relation("LeadOwner", fields: [ownerId], references: [id], onDelete: SetNull)
   convertedCustomer Customer? @relation("LeadConvertedCustomer", fields: [convertedCustomerId], references: [id], onDelete: SetNull)
   opportunities     Opportunity[]
+  activities        Activity[]
 
   @@index([companyId, deletedAt])
   @@index([companyId, name])
@@ -336,6 +355,7 @@ model Opportunity {
   lead     Lead?     @relation(fields: [leadId], references: [id], onDelete: SetNull)
   customer Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
   owner    User?     @relation("OpportunityOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+  activities Activity[]
 
   @@index([companyId, deletedAt])
   @@index([companyId, name])
@@ -345,4 +365,38 @@ model Opportunity {
   @@index([companyId, createdAt])
   @@index([leadId])
   @@index([customerId])
+}
+
+model Activity {
+  id            String         @id @default(cuid())
+  companyId     String
+  title         String
+  description   String?        @db.Text
+  type          ActivityType   @default(TASK)
+  status        ActivityStatus @default(PENDING)
+  ownerId       String?
+  dueAt         DateTime?
+  completedAt   DateTime?
+  customerId    String?
+  leadId        String?
+  opportunityId String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  deletedAt     DateTime?
+
+  company     Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  owner       User?        @relation("ActivityOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+  customer    Customer?    @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  lead        Lead?        @relation(fields: [leadId], references: [id], onDelete: SetNull)
+  opportunity Opportunity? @relation(fields: [opportunityId], references: [id], onDelete: SetNull)
+
+  @@index([companyId, deletedAt])
+  @@index([companyId, status, deletedAt])
+  @@index([companyId, type, deletedAt])
+  @@index([companyId, ownerId, deletedAt])
+  @@index([companyId, dueAt])
+  @@index([customerId])
+  @@index([leadId])
+  @@index([opportunityId])
+  @@index([companyId, createdAt])
 }

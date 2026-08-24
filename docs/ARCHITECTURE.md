@@ -155,8 +155,33 @@ npm run build
 - Campos: valor estimado, probabilidade (0–100), previsão de fechamento, responsável, notas
 - Permissões: `crm:opportunities:view`, `crm:opportunities:manage`
 - Rotas: `/app/crm/opportunities` (+ `/new`, `/[id]`, `/[id]/edit`)
-- Funil visual/kanban **não** incluído (FASE 4.4)
 - Verificação: `npm run verify:opportunities`
+
+## CRM — Funil (FASE 4.4)
+
+- Board Kanban sobre o model `Opportunity` existente (sem modelagem duplicada)
+- Colunas = estágios; cards com nome, vínculo, responsável, valor, probabilidade, previsão
+- Move de estágio com `crm:pipeline:manage`, escopo `companyId` e auditoria `OPPORTUNITY_STAGE_MOVE`
+- Rota: `/app/crm/pipeline`
+- Verificação: `npm run verify:pipeline`
+
+## CRM — Atividades (FASE 4.5)
+
+- Model `Activity` multi-tenant com soft delete
+- Tipos: CALL, MEETING, WHATSAPP, EMAIL, TASK, NOTE
+- Status: PENDING, COMPLETED, CANCELLED
+- Vínculos opcionais a Customer / Lead / Opportunity (ao menos um obrigatório na validação)
+- Painel embutido nos detalhes de cliente, lead e oportunidade
+- Permissões: `crm:activities:view`, `crm:activities:manage`
+- Rotas: `/app/crm/activities` (+ `/new`, `/[id]`, `/[id]/edit`)
+- Verificação: `npm run verify:activities`
+
+## CRM — Dashboard (FASE 4.6)
+
+- Indicadores de leads, oportunidades, conversão, atividades e desempenho por estágio/responsável
+- Escopo estrito por `companyId` + `crm:dashboard:view`
+- Rota: `/app/crm/dashboard`
+- Verificação consolidada: `npm run verify:crm`
 
 ## Fases
 

@@ -7,6 +7,7 @@ import {
 } from "@/modules/crm/services/opportunity.service";
 import { CrmSubnav } from "@/modules/crm/components/crm-subnav";
 import { DeleteOpportunityButton } from "@/modules/crm/components/delete-opportunity-button";
+import { EntityActivitiesPanel } from "@/modules/crm/components/entity-activities-panel";
 import {
   OPPORTUNITY_STAGE_LABELS,
   formatDateBR,
@@ -190,11 +191,13 @@ export default async function OpportunityDetailPage({
         </Card>
       </div>
 
+      <EntityActivitiesPanel user={user} opportunityId={opportunity.id} />
+
       <Card>
         <CardHeader>
           <CardTitle>Histórico</CardTitle>
           <CardDescription>
-            Base para funil e atividades nas próximas fases
+            Auditoria e mudanças de estágio
           </CardDescription>
         </CardHeader>
         <CardContent>

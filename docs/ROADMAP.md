@@ -10,8 +10,8 @@ Uma fase só fecha quando backend, banco, validações, permissões, integraçõ
 | 1 | Auditoria do Finance (read-only) | Concluída (ver `AUDIT-FINANCE.md`) |
 | 2 | Fundação (Next, Prisma, modular, RBAC base, erros, logging) | Concluída |
 | 3 | Autenticação e empresa | Concluída (fundação) |
-| 4 | CRM | Em andamento |
-| 5 | Produtos e serviços | Pendente |
+| 4 | CRM | **Concluída** |
+| 5 | Produtos e serviços | Pendente — **próxima** |
 | 6 | Estoque | Pendente |
 | 7 | Vendas | Pendente |
 | 8 | Financeiro do One | Pendente |
@@ -32,21 +32,19 @@ Uma fase só fecha quando backend, banco, validações, permissões, integraçõ
 | 4.1 | Clientes | **Concluída** |
 | 4.2 | Leads | **Concluída** |
 | 4.3 | Oportunidades | **Concluída** |
-| 4.4 | Funil de vendas | Pendente — **próxima** |
-| 4.5 | Atividades / Follow-up | Pendente |
-| 4.6 | Dashboard CRM | Pendente |
+| 4.4 | Funil de vendas | **Concluída** |
+| 4.5 | Atividades / Follow-up | **Concluída** |
+| 4.6 | Dashboard CRM | **Concluída** |
 
-### O que a FASE 4.3 entregou
+### O que a FASE 4 entregou
 
-- Model `Opportunity` + migration `add_opportunities`
-- Estágios: NEW → QUALIFIED → PROPOSAL → NEGOTIATION → WON / LOST
-- Vínculos opcionais com Lead e Customer (mesmo tenant)
-- Valor estimado, probabilidade, previsão de fechamento
-- Rotas `/app/crm/opportunities` (+ new/detail/edit)
-- Permissões `crm:opportunities:view` / `crm:opportunities:manage`
-- Sem funil visual/kanban (FASE 4.4)
-- Script `npm run verify:opportunities`
+- Clientes, Leads, Oportunidades (CRUD + soft delete + auditoria)
+- Funil Kanban (`/app/crm/pipeline`) com mudança de estágio
+- Atividades/Follow-up vinculadas a Customer / Lead / Opportunity
+- Dashboard CRM com indicadores do tenant
+- Permissões: `crm:*`, `crm:leads:*`, `crm:opportunities:*`, `crm:pipeline:*`, `crm:activities:*`, `crm:dashboard:view`
+- Verificações: `verify:customers`, `verify:leads`, `verify:opportunities`, `verify:pipeline`, `verify:activities`, `verify:crm`
 
 ## Próximo passo imediato
 
-Validar FASE 4.3 e, somente depois, iniciar **FASE 4.4 — Funil de vendas**. Não alterar o BusinessOS Finance.
+Validar FASE 4 e, somente depois, iniciar **FASE 5 — Produtos**. Não alterar o BusinessOS Finance.

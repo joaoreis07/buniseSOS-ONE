@@ -7,6 +7,7 @@ import {
 } from "@/modules/crm/services/lead.service";
 import { CrmSubnav } from "@/modules/crm/components/crm-subnav";
 import { DeleteLeadButton } from "@/modules/crm/components/delete-lead-button";
+import { EntityActivitiesPanel } from "@/modules/crm/components/entity-activities-panel";
 import {
   LEAD_ORIGIN_LABELS,
   LEAD_STATUS_LABELS,
@@ -147,12 +148,12 @@ export default async function LeadDetailPage({
         </Card>
       </div>
 
+      <EntityActivitiesPanel user={user} leadId={lead.id} />
+
       <Card>
         <CardHeader>
           <CardTitle>Histórico</CardTitle>
-          <CardDescription>
-            Base para futuras atividades, oportunidades e conversões
-          </CardDescription>
+          <CardDescription>Auditoria e eventos do lead</CardDescription>
         </CardHeader>
         <CardContent>
           {history.length === 0 ? (

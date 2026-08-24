@@ -5,7 +5,9 @@ import {
   canManageCustomers,
   getCustomerForTenant,
 } from "@/modules/crm/services/customer.service";
+import { CrmSubnav } from "@/modules/crm/components/crm-subnav";
 import { DeleteCustomerButton } from "@/modules/crm/components/delete-customer-button";
+import { EntityActivitiesPanel } from "@/modules/crm/components/entity-activities-panel";
 import {
   CUSTOMER_STATUS_LABELS,
   CUSTOMER_TYPE_LABELS,
@@ -88,6 +90,7 @@ export default async function CustomerDetailPage({
 
   return (
     <div className="space-y-6">
+      <CrmSubnav role={user.role} active="customers" />
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-2">
           <div className="flex flex-wrap items-center gap-2">
@@ -181,11 +184,13 @@ export default async function CustomerDetailPage({
         </Card>
       </div>
 
+      <EntityActivitiesPanel user={user} customerId={customer.id} />
+
       <Card>
         <CardHeader>
           <CardTitle>Histórico</CardTitle>
           <CardDescription>
-            Base para futuras interações, tarefas, oportunidades e vendas
+            Auditoria e eventos do cliente
           </CardDescription>
         </CardHeader>
         <CardContent>
