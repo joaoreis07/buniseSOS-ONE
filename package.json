@@ -22,7 +22,8 @@
     "verify:pipeline": "tsx scripts/verify-pipeline.ts",
     "verify:activities": "tsx scripts/verify-activities.ts",
     "verify:crm": "tsx scripts/verify-crm.ts",
-    "verify:products": "tsx scripts/verify-products.ts"
+    "verify:products": "tsx scripts/verify-products.ts",
+    "verify:inventory": "tsx scripts/verify-inventory.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",

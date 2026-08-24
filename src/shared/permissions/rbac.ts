@@ -21,6 +21,7 @@ export const PERMISSIONS = [
   "categories:manage",
   "inventory:view",
   "inventory:manage",
+  "inventory:movements",
   "finance:view",
   "finance:manage",
   "dre:view",
@@ -56,6 +57,7 @@ const ROLE_PERMISSIONS: Record<Role, ReadonlyArray<Permission | "*">> = {
     "categories:manage",
     "inventory:view",
     "inventory:manage",
+    "inventory:movements",
     "finance:view",
     "finance:manage",
     "dre:view",
@@ -82,6 +84,7 @@ const ROLE_PERMISSIONS: Record<Role, ReadonlyArray<Permission | "*">> = {
     "sales:manage",
     "products:view",
     "categories:view",
+    "inventory:view",
     "reports:view",
   ],
   FINANCE: [
@@ -101,6 +104,7 @@ const ROLE_PERMISSIONS: Record<Role, ReadonlyArray<Permission | "*">> = {
     "categories:manage",
     "inventory:view",
     "inventory:manage",
+    "inventory:movements",
   ],
 };
 

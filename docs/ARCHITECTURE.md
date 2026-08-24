@@ -197,6 +197,16 @@ npm run build
 - Sem estoque e sem vendas nesta fase
 - Verificação: `npm run verify:products`
 
+## Estoque (FASE 6)
+
+- Models `Inventory` (1:1 produto físico/tenant) e `InventoryMovement`
+- Tipos: ENTRY, EXIT, ADJUSTMENT, RETURN, LOSS — movimentações imutáveis
+- Serviços (`SERVICE`) sem saldo de estoque
+- Saldo nunca negativo; ajuste via nova movimentação
+- Permissões: `inventory:view`, `inventory:manage`, `inventory:movements`
+- Rotas: `/app/inventory`, `/app/inventory/[productId]`, `/app/inventory/[productId]/movements`
+- Verificação: `npm run verify:inventory`
+
 ## Fases
 
 Ver `docs/ROADMAP.md`.

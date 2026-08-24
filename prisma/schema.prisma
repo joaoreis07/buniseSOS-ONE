@@ -93,6 +93,14 @@ enum ProductStatus {
   INACTIVE
 }
 
+enum InventoryMovementType {
+  ENTRY
+  EXIT
+  ADJUSTMENT
+  RETURN
+  LOSS
+}
+
 model User {
   id             String    @id @default(cuid())
   name           String?
@@ -115,6 +123,7 @@ model User {
   leadsOwned         Lead[]       @relation("LeadOwner")
   opportunitiesOwned Opportunity[] @relation("OpportunityOwner")
   activitiesOwned    Activity[]    @relation("ActivityOwner")
+  inventoryMovements InventoryMovement[] @relation("InventoryMovementCreator")
 
   @@index([deletedAt])
 }
@@ -175,6 +184,8 @@ model Company {
   activities    Activity[]
   productCategories ProductCategory[]
   products          Product[]
+  inventories       Inventory[]
+  inventoryMovements InventoryMovement[]
 
   @@index([deletedAt])
 }
@@ -449,6 +460,8 @@ model Product {
 
   company  Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
   category ProductCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  inventory Inventory?
+  inventoryMovements InventoryMovement[]
 
   @@index([companyId, deletedAt])
   @@index([companyId, name])
@@ -458,4 +471,41 @@ model Product {
   @@index([companyId, status, deletedAt])
   @@index([companyId, categoryId, deletedAt])
   @@index([companyId, createdAt])
+}
+
+model Inventory {
+  id              String   @id @default(cuid())
+  companyId       String
+  productId       String   @unique
+  quantity        Int      @default(0)
+  minimumQuantity Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([companyId, productId])
+  @@index([companyId])
+  @@index([companyId, quantity])
+}
+
+model InventoryMovement {
+  id          String                @id @default(cuid())
+  companyId   String
+  productId   String
+  type        InventoryMovementType
+  quantity    Int
+  reason      String?
+  notes       String?               @db.Text
+  createdById String?
+  createdAt   DateTime              @default(now())
+
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  createdBy User?   @relation("InventoryMovementCreator", fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@index([companyId, productId, createdAt])
+  @@index([companyId, createdAt])
+  @@index([productId])
 }

@@ -18,11 +18,6 @@ const MODULE_META: Record<
     permission: "sales:view",
     description: "Módulo de vendas — implementação na FASE 7.",
   },
-  inventory: {
-    title: "Estoque",
-    permission: "inventory:view",
-    description: "Estoque — implementação na FASE 6.",
-  },
   finance: {
     title: "Financeiro",
     permission: "finance:view",
