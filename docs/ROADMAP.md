@@ -10,7 +10,7 @@ Uma fase só fecha quando backend, banco, validações, permissões, integraçõ
 | 1 | Auditoria do Finance (read-only) | Concluída (ver `AUDIT-FINANCE.md`) |
 | 2 | Fundação (Next, Prisma, modular, RBAC base, erros, logging) | Concluída |
 | 3 | Autenticação e empresa | Concluída (fundação) |
-| 4 | CRM | Pendente — **próxima** |
+| 4 | CRM | Em andamento |
 | 5 | Produtos e serviços | Pendente |
 | 6 | Estoque | Pendente |
 | 7 | Vendas | Pendente |
@@ -25,17 +25,24 @@ Uma fase só fecha quando backend, banco, validações, permissões, integraçõ
 | 16 | Deploy independente | Pendente |
 | 17 | Lançamento | Pendente |
 
-## O que a FASE 2/3 entregou
+## FASE 4 — CRM (detalhe)
 
-- PostgreSQL isolado (`businessos_one`, porta host `5434`)
-- Migration inicial Auth/tenant
-- Auth.js (cadastro, login, logout, reset, convite)
-- Sessão JWT com `companyId` + `role` + `sessionVersion`
-- Multi-tenant + RBAC centralizado
-- Middleware e rotas `/app` protegidas
-- App shell (sidebar/header) + shadcn/ui
-- Scripts `db:verify` e `verify:foundation`
+| Subfase | Escopo | Status |
+|---|---|---|
+| 4.1 | Clientes (CRUD, tenant, busca, filtros, RBAC, auditoria) | **Concluída** |
+| 4.2 | Leads | Pendente — **próxima** |
+| 4.3 | Oportunidades / funil | Pendente |
+| 4.4 | Atividades | Pendente |
+
+### O que a FASE 4.1 entregou
+
+- Model `Customer` + migration `add_customers`
+- Repository / service / actions em `src/modules/crm`
+- Rotas `/app/crm`, `/app/crm/new`, `/app/crm/[id]`, `/app/crm/[id]/edit`
+- Soft delete, busca, filtros, detalhes com histórico de auditoria
+- RBAC: `crm:view` / `crm:manage` (FINANCE com view)
+- Script `npm run verify:customers`
 
 ## Próximo passo imediato
 
-Iniciar **FASE 4 — CRM** (clientes, leads, oportunidades, funil, atividades), sem alterar o BusinessOS Finance.
+Validar FASE 4.1 e, somente depois, iniciar **FASE 4.2 — Leads**. Não alterar o BusinessOS Finance.

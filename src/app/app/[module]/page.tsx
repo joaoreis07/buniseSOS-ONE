@@ -13,11 +13,6 @@ const MODULE_META: Record<
   string,
   { title: string; permission: Permission; description: string }
 > = {
-  crm: {
-    title: "CRM",
-    permission: "crm:view",
-    description: "Módulo de CRM — implementação na FASE 4.",
-  },
   sales: {
     title: "Vendas",
     permission: "sales:view",

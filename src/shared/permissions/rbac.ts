@@ -54,6 +54,7 @@ const ROLE_PERMISSIONS: Record<Role, ReadonlyArray<Permission | "*">> = {
   ],
   FINANCE: [
     "dashboard:view",
+    "crm:view",
     "finance:view",
     "finance:manage",
     "dre:view",

@@ -29,6 +29,17 @@ enum LogLevel {
   DEBUG
 }
 
+enum CustomerType {
+  INDIVIDUAL
+  COMPANY
+}
+
+enum CustomerStatus {
+  ACTIVE
+  INACTIVE
+  BLOCKED
+}
+
 model User {
   id             String    @id @default(cuid())
   name           String?
@@ -41,12 +52,13 @@ model User {
   updatedAt      DateTime  @updatedAt
   deletedAt      DateTime?
 
-  accounts    Account[]
-  sessions    Session[]
-  memberships Membership[]
-  auditLogs   AuditLog[]
-  systemLogs  SystemLog[]
-  invitesSent Invite[]     @relation("InviteInviter")
+  accounts           Account[]
+  sessions           Session[]
+  memberships        Membership[]
+  auditLogs          AuditLog[]
+  systemLogs         SystemLog[]
+  invitesSent        Invite[]     @relation("InviteInviter")
+  customersOwned     Customer[]   @relation("CustomerOwner")
 
   @@index([deletedAt])
 }
@@ -101,6 +113,7 @@ model Company {
   invites     Invite[]
   auditLogs   AuditLog[]
   systemLogs  SystemLog[]
+  customers   Customer[]
 
   @@index([deletedAt])
 }
@@ -193,4 +206,44 @@ model SystemLog {
   @@index([companyId, createdAt])
   @@index([level, createdAt])
   @@index([module, createdAt])
+}
+
+model Customer {
+  id         String         @id @default(cuid())
+  companyId  String
+  type       CustomerType   @default(INDIVIDUAL)
+  name       String
+  tradeName  String?
+  document   String?
+  email      String?
+  phone      String?
+  mobile     String?
+  whatsapp   String?
+  zipCode    String?
+  street     String?
+  number     String?
+  complement String?
+  district   String?
+  city       String?
+  state      String?
+  country    String         @default("BR")
+  status     CustomerStatus @default(ACTIVE)
+  origin     String?
+  notes      String?        @db.Text
+  ownerId    String?
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+  deletedAt  DateTime?
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  owner   User?   @relation("CustomerOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+
+  @@index([companyId, deletedAt])
+  @@index([companyId, name])
+  @@index([companyId, email])
+  @@index([companyId, document])
+  @@index([companyId, status, deletedAt])
+  @@index([companyId, origin, deletedAt])
+  @@index([companyId, ownerId, deletedAt])
+  @@index([companyId, createdAt])
 }

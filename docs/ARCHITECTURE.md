@@ -121,11 +121,22 @@ Ver `docs/PROTECTION.md` e `docs/ISOLATION-CHECK.md`.
 npm run db:up
 npm run db:verify
 npm run verify:foundation
+npm run verify:customers
 npm run typecheck
 npm run lint
 npm run build
 ```
 
+## CRM — Clientes (FASE 4.1)
+
+- Model `Customer` multi-tenant (`companyId` da sessão)
+- Soft delete (`deletedAt`)
+- Camadas: `schemas` → `repositories` → `services` → `actions` → UI
+- Permissões: `crm:view` (listar/detalhe), `crm:manage` (criar/editar/excluir)
+- FINANCE possui `crm:view` para consulta; INVENTORY não acessa CRM nesta fase
+- Rotas: `/app/crm`, `/app/crm/new`, `/app/crm/[id]`, `/app/crm/[id]/edit`
+- Detalhe preparado para histórico futuro (hoje: AuditLog)
+
 ## Fases
 
-Ver `docs/ROADMAP.md`. Fundação Auth/tenant = FASE 2/3.
+Ver `docs/ROADMAP.md`.
