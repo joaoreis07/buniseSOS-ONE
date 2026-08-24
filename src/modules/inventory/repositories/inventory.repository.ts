@@ -188,6 +188,105 @@ function computeNewQuantity(params: {
   }
 }
 
+export async function applyInventoryMovement(
+  tx: Prisma.TransactionClient,
+  params: {
+    companyId: string;
+    productId: string;
+    createdById: string;
+    type: InventoryMovementType;
+    quantity: number;
+    targetQuantity?: number;
+    reason?: string | null;
+    notes?: string | null;
+    saleId?: string | null;
+  },
+) {
+  const product = await tx.product.findFirst({
+    where: {
+      id: params.productId,
+      companyId: params.companyId,
+      type: "PRODUCT",
+      ...notDeletedFilter,
+    },
+  });
+  if (!product) {
+    throw new Error("Produto físico não encontrado neste tenant");
+  }
+
+  let inventory = await tx.inventory.findUnique({
+    where: { productId: params.productId },
+  });
+  if (!inventory) {
+    inventory = await tx.inventory.create({
+      data: {
+        companyId: params.companyId,
+        productId: params.productId,
+        quantity: 0,
+        minimumQuantity: 0,
+      },
+    });
+  } else if (inventory.companyId !== params.companyId) {
+    throw new Error("Estoque inválido para esta empresa");
+  }
+
+  const balanceBefore = inventory.quantity;
+  const balanceAfter = computeNewQuantity({
+    type: params.type,
+    current: balanceBefore,
+    quantity: params.quantity,
+    targetQuantity: params.targetQuantity,
+  });
+
+  if (balanceAfter < 0) {
+    throw new Error("Saldo insuficiente — operação não permitida");
+  }
+
+  if (params.type === "ADJUSTMENT") {
+    const delta = Math.abs(balanceAfter - balanceBefore);
+    if (delta === 0) {
+      throw new Error("Ajuste sem alteração de saldo");
+    }
+  }
+
+  const movementQuantity =
+    params.type === "ADJUSTMENT"
+      ? Math.abs(balanceAfter - balanceBefore)
+      : params.quantity;
+
+  const updated = await tx.inventory.update({
+    where: { id: inventory.id },
+    data: { quantity: balanceAfter },
+  });
+
+  const movement = await tx.inventoryMovement.create({
+    data: {
+      companyId: params.companyId,
+      productId: params.productId,
+      type: params.type,
+      quantity: movementQuantity,
+      reason: params.reason,
+      notes:
+        params.type === "ADJUSTMENT"
+          ? [
+              params.notes,
+              `Saldo anterior: ${balanceBefore}`,
+              `Saldo final: ${balanceAfter}`,
+            ]
+              .filter(Boolean)
+              .join(" · ")
+          : params.notes,
+      saleId: params.saleId,
+      createdById: params.createdById,
+    },
+    include: {
+      createdBy: { select: { id: true, name: true, email: true } },
+    },
+  });
+
+  return { inventory: updated, movement, balanceBefore, balanceAfter };
+}
+
 export async function registerMovement(params: {
   companyId: string;
   productId: string;
@@ -195,93 +294,21 @@ export async function registerMovement(params: {
   data: MovementFormInput;
 }) {
   return prisma.$transaction(async (tx) => {
-    const product = await tx.product.findFirst({
-      where: {
-        id: params.productId,
-        companyId: params.companyId,
-        type: "PRODUCT",
-        ...notDeletedFilter,
-      },
-    });
-    if (!product) {
-      throw new Error("Produto físico não encontrado neste tenant");
-    }
-
-    let inventory = await tx.inventory.findUnique({
-      where: { productId: params.productId },
-    });
-    if (!inventory) {
-      inventory = await tx.inventory.create({
-        data: {
-          companyId: params.companyId,
-          productId: params.productId,
-          quantity: 0,
-          minimumQuantity: 0,
-        },
-      });
-    } else if (inventory.companyId !== params.companyId) {
-      throw new Error("Estoque inválido para esta empresa");
-    }
-
     const targetQuantity =
       params.data.type === "ADJUSTMENT"
         ? Number(params.data.targetQuantity)
         : undefined;
 
-    const balanceBefore = inventory.quantity;
-    const balanceAfter = computeNewQuantity({
+    return applyInventoryMovement(tx, {
+      companyId: params.companyId,
+      productId: params.productId,
+      createdById: params.createdById,
       type: params.data.type,
-      current: balanceBefore,
       quantity: params.data.quantity,
       targetQuantity,
+      reason: params.data.reason,
+      notes: params.data.notes,
     });
-
-    if (balanceAfter < 0) {
-      throw new Error("Saldo insuficiente — operação não permitida");
-    }
-
-    if (params.data.type === "ADJUSTMENT") {
-      const delta = Math.abs(balanceAfter - balanceBefore);
-      if (delta === 0) {
-        throw new Error("Ajuste sem alteração de saldo");
-      }
-    }
-
-    const movementQuantity =
-      params.data.type === "ADJUSTMENT"
-        ? Math.abs(balanceAfter - balanceBefore)
-        : params.data.quantity;
-
-    const updated = await tx.inventory.update({
-      where: { id: inventory.id },
-      data: { quantity: balanceAfter },
-    });
-
-    const movement = await tx.inventoryMovement.create({
-      data: {
-        companyId: params.companyId,
-        productId: params.productId,
-        type: params.data.type,
-        quantity: movementQuantity,
-        reason: params.data.reason,
-        notes:
-          params.data.type === "ADJUSTMENT"
-            ? [
-                params.data.notes,
-                `Saldo anterior: ${balanceBefore}`,
-                `Saldo final: ${balanceAfter}`,
-              ]
-                .filter(Boolean)
-                .join(" · ")
-            : params.data.notes,
-        createdById: params.createdById,
-      },
-      include: {
-        createdBy: { select: { id: true, name: true, email: true } },
-      },
-    });
-
-    return { inventory: updated, movement, balanceBefore, balanceAfter };
   });
 }
 

@@ -207,6 +207,19 @@ npm run build
 - Rotas: `/app/inventory`, `/app/inventory/[productId]`, `/app/inventory/[productId]/movements`
 - Verificação: `npm run verify:inventory`
 
+## Vendas (FASE 7)
+
+- Models `Sale` e `SaleItem` multi-tenant; item vinculado a `Product` com snapshot de nome, SKU, tipo e preço
+- Status: `DRAFT` | `COMPLETED` | `CANCELLED` (PDV conclui atomicamente)
+- Formas de pagamento (conceito do Finance, sem parcelas): CASH, PIX, CARD, CARD_CREDIT, CARD_DEBIT, TED, OTHER
+- Totais recalculados no servidor (centavos); desconto não gera total negativo
+- Serviços não movimentam estoque; produtos físicos geram `EXIT` na conclusão e `RETURN` no cancelamento
+- `InventoryMovement.saleId` opcional para rastreio; movimentações continuam imutáveis
+- Sem `Installment` / financeiro — FASE 8
+- Permissões: `sales:view`, `sales:create`, `sales:manage`, `sales:cancel`
+- Rotas: `/app/sales`, `/app/sales/new`, `/app/sales/[id]`
+- Verificação: `npm run verify:sales`
+
 ## Fases
 
 Ver `docs/ROADMAP.md`.
