@@ -40,6 +40,25 @@ enum CustomerStatus {
   BLOCKED
 }
 
+enum LeadOrigin {
+  WEBSITE
+  INSTAGRAM
+  FACEBOOK
+  WHATSAPP
+  REFERRAL
+  ECOMMERCE
+  OTHER
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  QUALIFIED
+  UNQUALIFIED
+  CONVERTED
+  LOST
+}
+
 model User {
   id             String    @id @default(cuid())
   name           String?
@@ -59,6 +78,7 @@ model User {
   systemLogs         SystemLog[]
   invitesSent        Invite[]     @relation("InviteInviter")
   customersOwned     Customer[]   @relation("CustomerOwner")
+  leadsOwned         Lead[]       @relation("LeadOwner")
 
   @@index([deletedAt])
 }
@@ -114,6 +134,7 @@ model Company {
   auditLogs   AuditLog[]
   systemLogs  SystemLog[]
   customers   Customer[]
+  leads       Lead[]
 
   @@index([deletedAt])
 }
@@ -237,6 +258,7 @@ model Customer {
 
   company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
   owner   User?   @relation("CustomerOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+  convertedFromLeads Lead[] @relation("LeadConvertedCustomer")
 
   @@index([companyId, deletedAt])
   @@index([companyId, name])
@@ -246,4 +268,37 @@ model Customer {
   @@index([companyId, origin, deletedAt])
   @@index([companyId, ownerId, deletedAt])
   @@index([companyId, createdAt])
+}
+
+model Lead {
+  id              String     @id @default(cuid())
+  companyId       String
+  name            String
+  companyName     String?
+  email           String?
+  phone           String?
+  whatsapp        String?
+  origin          LeadOrigin @default(OTHER)
+  status          LeadStatus @default(NEW)
+  ownerId         String?
+  estimatedValue  Decimal?   @db.Decimal(14, 2)
+  notes           String?    @db.Text
+  /// Reserved for future Lead → Customer conversion (FASE 4.3+)
+  convertedCustomerId String?
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+  deletedAt       DateTime?
+
+  company           Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  owner             User?     @relation("LeadOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+  convertedCustomer Customer? @relation("LeadConvertedCustomer", fields: [convertedCustomerId], references: [id], onDelete: SetNull)
+
+  @@index([companyId, deletedAt])
+  @@index([companyId, name])
+  @@index([companyId, email])
+  @@index([companyId, status, deletedAt])
+  @@index([companyId, origin, deletedAt])
+  @@index([companyId, ownerId, deletedAt])
+  @@index([companyId, createdAt])
+  @@index([convertedCustomerId])
 }

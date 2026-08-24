@@ -29,20 +29,22 @@ Uma fase só fecha quando backend, banco, validações, permissões, integraçõ
 
 | Subfase | Escopo | Status |
 |---|---|---|
-| 4.1 | Clientes (CRUD, tenant, busca, filtros, RBAC, auditoria) | **Concluída** |
-| 4.2 | Leads | Pendente — **próxima** |
-| 4.3 | Oportunidades / funil | Pendente |
-| 4.4 | Atividades | Pendente |
+| 4.1 | Clientes | **Concluída** |
+| 4.2 | Leads | **Concluída** |
+| 4.3 | Oportunidades | Pendente — **próxima** |
+| 4.4 | Funil de vendas | Pendente |
+| 4.5 | Atividades / Follow-up | Pendente |
+| 4.6 | Dashboard CRM | Pendente |
 
-### O que a FASE 4.1 entregou
+### O que a FASE 4.2 entregou
 
-- Model `Customer` + migration `add_customers`
-- Repository / service / actions em `src/modules/crm`
-- Rotas `/app/crm`, `/app/crm/new`, `/app/crm/[id]`, `/app/crm/[id]/edit`
-- Soft delete, busca, filtros, detalhes com histórico de auditoria
-- RBAC: `crm:view` / `crm:manage` (FINANCE com view)
-- Script `npm run verify:customers`
+- Model `Lead` + migration `add_leads`
+- Origem/status enums, responsável, valor estimado, soft delete
+- Rotas `/app/crm/leads`, `/new`, `/[id]`, `/[id]/edit`
+- Permissões `crm:leads:view` / `crm:leads:manage` (FINANCE e INVENTORY sem acesso a leads)
+- Campo reservado `convertedCustomerId` para conversão futura (sem Opportunity nesta fase)
+- Script `npm run verify:leads`
 
 ## Próximo passo imediato
 
-Validar FASE 4.1 e, somente depois, iniciar **FASE 4.2 — Leads**. Não alterar o BusinessOS Finance.
+Validar FASE 4.2 e, somente depois, iniciar **FASE 4.3 — Oportunidades**. Não alterar o BusinessOS Finance.

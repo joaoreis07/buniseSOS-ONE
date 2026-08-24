@@ -9,6 +9,7 @@ import {
 } from "@/modules/crm/services/customer.service";
 import { CustomersFilters } from "@/modules/crm/components/customers-filters";
 import { CustomersTable } from "@/modules/crm/components/customers-table";
+import { CrmSubnav } from "@/modules/crm/components/crm-subnav";
 import { Button } from "@/shared/ui/button";
 
 export default async function CrmCustomersPage({
@@ -47,6 +48,8 @@ export default async function CrmCustomersPage({
 
   return (
     <div className="space-y-6">
+      <CrmSubnav role={user.role} active="customers" />
+
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Clientes</h1>

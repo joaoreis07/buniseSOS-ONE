@@ -137,6 +137,16 @@ npm run build
 - Rotas: `/app/crm`, `/app/crm/new`, `/app/crm/[id]`, `/app/crm/[id]/edit`
 - Detalhe preparado para histórico futuro (hoje: AuditLog)
 
+## CRM — Leads (FASE 4.2)
+
+- Model `Lead` multi-tenant com soft delete
+- Enums: `LeadOrigin`, `LeadStatus` (NEW → CONTACTED → QUALIFIED / UNQUALIFIED / CONVERTED / LOST)
+- Permissões granulares: `crm:leads:view`, `crm:leads:manage`
+- ADMIN/MANAGER/SALES gerenciam; FINANCE e INVENTORY sem leads
+- Rotas: `/app/crm/leads`, `/app/crm/leads/new`, `/app/crm/leads/[id]`, `/app/crm/leads/[id]/edit`
+- `convertedCustomerId` reservado para conversão futura (sem Opportunity nesta fase)
+- Verificação: `npm run verify:leads`
+
 ## Fases
 
 Ver `docs/ROADMAP.md`.
