@@ -5,6 +5,9 @@ import {
   formatDocument,
   formatPhone,
 } from "@/modules/crm/lib/customer-labels";
+import type { CustomerListMetrics } from "@/modules/crm/repositories/customer.repository";
+import { formatDateBR } from "@/modules/finance/lib/finance-labels";
+import { formatMoneyBRL } from "@/modules/sales/lib/sale-labels";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
 import {
@@ -18,6 +21,7 @@ import {
 
 type CustomerRow = Customer & {
   owner: { id: string; name: string | null; email: string } | null;
+  metrics: CustomerListMetrics;
 };
 
 function statusVariant(status: CustomerStatus) {
@@ -29,9 +33,13 @@ function statusVariant(status: CustomerStatus) {
 export function CustomersTable({
   items,
   canManage,
+  canSales,
+  canFinance,
 }: {
   items: CustomerRow[];
   canManage: boolean;
+  canSales: boolean;
+  canFinance: boolean;
 }) {
   if (items.length === 0) {
     return (
@@ -54,11 +62,19 @@ export function CustomersTable({
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Nome</TableHead>
-            <TableHead className="hidden md:table-cell">Documento</TableHead>
-            <TableHead className="hidden lg:table-cell">Contato</TableHead>
+            <TableHead>Cliente</TableHead>
+            <TableHead className="hidden md:table-cell">Contato</TableHead>
+            {canSales ? (
+              <>
+                <TableHead className="hidden lg:table-cell">Vendas</TableHead>
+                <TableHead className="hidden lg:table-cell">Total</TableHead>
+                <TableHead className="hidden xl:table-cell">Última compra</TableHead>
+              </>
+            ) : null}
+            {canFinance ? (
+              <TableHead className="hidden md:table-cell">Em aberto</TableHead>
+            ) : null}
             <TableHead>Status</TableHead>
-            <TableHead className="hidden sm:table-cell">Responsável</TableHead>
             <TableHead className="text-right">Ações</TableHead>
           </TableRow>
         </TableHeader>
@@ -67,28 +83,38 @@ export function CustomersTable({
             <TableRow key={customer.id}>
               <TableCell>
                 <div className="font-medium">{customer.name}</div>
-                {customer.tradeName ? (
-                  <div className="text-xs text-muted-foreground">
-                    {customer.tradeName}
-                  </div>
-                ) : null}
+                <div className="text-xs text-muted-foreground">
+                  {formatDocument(customer.document)}
+                </div>
               </TableCell>
               <TableCell className="hidden md:table-cell">
-                {formatDocument(customer.document)}
-              </TableCell>
-              <TableCell className="hidden lg:table-cell">
                 <div>{customer.email ?? "—"}</div>
                 <div className="text-xs text-muted-foreground">
                   {formatPhone(customer.mobile ?? customer.phone)}
                 </div>
               </TableCell>
+              {canSales ? (
+                <>
+                  <TableCell className="hidden lg:table-cell">
+                    {customer.metrics.salesCount}
+                  </TableCell>
+                  <TableCell className="hidden lg:table-cell">
+                    {formatMoneyBRL(customer.metrics.salesTotal)}
+                  </TableCell>
+                  <TableCell className="hidden xl:table-cell">
+                    {formatDateBR(customer.metrics.lastSaleAt)}
+                  </TableCell>
+                </>
+              ) : null}
+              {canFinance ? (
+                <TableCell className="hidden md:table-cell">
+                  {formatMoneyBRL(customer.metrics.openBalance)}
+                </TableCell>
+              ) : null}
               <TableCell>
                 <Badge variant={statusVariant(customer.status)}>
                   {CUSTOMER_STATUS_LABELS[customer.status]}
                 </Badge>
-              </TableCell>
-              <TableCell className="hidden sm:table-cell">
-                {customer.owner?.name ?? customer.owner?.email ?? "—"}
               </TableCell>
               <TableCell className="text-right">
                 <Button asChild variant="ghost" size="sm">

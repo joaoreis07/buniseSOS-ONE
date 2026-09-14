@@ -51,6 +51,12 @@ export const customerFormSchema = z.object({
   ownerId: z.preprocess(emptyToNull, z.string().cuid().nullable()),
 });
 
+export const customerCommerceFilterSchema = z.enum([
+  "with_sales",
+  "without_sales",
+]);
+export const customerBalanceFilterSchema = z.enum(["open", "overdue"]);
+
 export const customerListQuerySchema = z.object({
   q: z.preprocess(emptyToNull, z.string().max(120).nullable()).optional(),
   status: z.preprocess(
@@ -61,6 +67,14 @@ export const customerListQuerySchema = z.object({
   ownerId: z.preprocess(emptyToNull, z.string().cuid().nullable()).optional(),
   createdFrom: z.preprocess(emptyToNull, z.string().nullable()).optional(),
   createdTo: z.preprocess(emptyToNull, z.string().nullable()).optional(),
+  commerce: z.preprocess(
+    emptyToNull,
+    customerCommerceFilterSchema.nullable(),
+  ).optional(),
+  balance: z.preprocess(
+    emptyToNull,
+    customerBalanceFilterSchema.nullable(),
+  ).optional(),
   page: z.coerce.number().int().min(1).default(1),
   pageSize: z.coerce.number().int().min(1).max(50).default(20),
 });

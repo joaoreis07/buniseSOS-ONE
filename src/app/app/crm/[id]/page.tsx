@@ -1,13 +1,16 @@
+import type { ReactNode } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requirePermission } from "@/shared/auth/session";
+import { hasPermission } from "@/shared/permissions/rbac";
 import {
   canManageCustomers,
-  getCustomerForTenant,
+  getCustomerProfileForTenant,
 } from "@/modules/crm/services/customer.service";
 import { CrmSubnav } from "@/modules/crm/components/crm-subnav";
 import { DeleteCustomerButton } from "@/modules/crm/components/delete-customer-button";
 import { EntityActivitiesPanel } from "@/modules/crm/components/entity-activities-panel";
+import { Customer360View } from "@/modules/crm/components/customer-360";
 import {
   CUSTOMER_STATUS_LABELS,
   CUSTOMER_TYPE_LABELS,
@@ -30,7 +33,7 @@ function DetailItem({
   value,
 }: {
   label: string;
-  value: React.ReactNode;
+  value: ReactNode;
 }) {
   return (
     <div>
@@ -49,16 +52,18 @@ export default async function CustomerDetailPage({
 }) {
   const user = await requirePermission("crm:view");
   const { id } = await params;
-  const customer = await getCustomerForTenant({
+  const profile = await getCustomerProfileForTenant({
     companyId: user.companyId,
     role: user.role,
     customerId: id,
   });
-  if (!customer) {
+  if (!profile) {
     notFound();
   }
 
+  const { customer, overview, sections } = profile;
   const canManage = canManageCustomers(user.role);
+  const canCreateSale = hasPermission(user.role, "sales:create");
   const history = await prisma.auditLog.findMany({
     where: {
       companyId: user.companyId,
@@ -103,16 +108,23 @@ export default async function CustomerDetailPage({
             </Badge>
           </div>
           <p className="text-muted-foreground">
-            {customer.tradeName || "Ficha do cliente"}
+            {customer.tradeName || "Visão 360º do cliente"}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
           <Button asChild variant="outline">
             <Link href="/app/crm">Voltar</Link>
           </Button>
+          {canCreateSale ? (
+            <Button asChild>
+              <Link href={`/app/sales/new?customerId=${customer.id}`}>
+                Nova venda
+              </Link>
+            </Button>
+          ) : null}
           {canManage ? (
             <>
-              <Button asChild>
+              <Button asChild variant="outline">
                 <Link href={`/app/crm/${customer.id}/edit`}>Editar</Link>
               </Button>
               <DeleteCustomerButton customerId={customer.id} />
@@ -138,9 +150,7 @@ export default async function CustomerDetailPage({
               <DetailItem label="Origem" value={customer.origin} />
               <DetailItem
                 label="Responsável"
-                value={
-                  customer.owner?.name ?? customer.owner?.email ?? "—"
-                }
+                value={customer.owner?.name ?? customer.owner?.email ?? "—"}
               />
             </dl>
           </CardContent>
@@ -184,14 +194,16 @@ export default async function CustomerDetailPage({
         </Card>
       </div>
 
+      {overview ? (
+        <Customer360View overview={overview} sections={sections} />
+      ) : null}
+
       <EntityActivitiesPanel user={user} customerId={customer.id} />
 
       <Card>
         <CardHeader>
           <CardTitle>Histórico</CardTitle>
-          <CardDescription>
-            Auditoria e eventos do cliente
-          </CardDescription>
+          <CardDescription>Auditoria e eventos do cadastro</CardDescription>
         </CardHeader>
         <CardContent>
           {history.length === 0 ? (

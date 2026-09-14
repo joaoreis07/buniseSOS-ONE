@@ -26,6 +26,8 @@ export default async function CrmCustomersPage({
     ownerId: typeof raw.ownerId === "string" ? raw.ownerId : undefined,
     createdFrom: typeof raw.createdFrom === "string" ? raw.createdFrom : undefined,
     createdTo: typeof raw.createdTo === "string" ? raw.createdTo : undefined,
+    commerce: typeof raw.commerce === "string" ? raw.commerce : undefined,
+    balance: typeof raw.balance === "string" ? raw.balance : undefined,
     page: typeof raw.page === "string" ? raw.page : "1",
     pageSize: typeof raw.pageSize === "string" ? raw.pageSize : "20",
   });
@@ -44,7 +46,8 @@ export default async function CrmCustomersPage({
   ]);
 
   const canManage = canManageCustomers(user.role);
-  const canView = hasPermission(user.role, "crm:view");
+  const canSales = hasPermission(user.role, "sales:view");
+  const canFinance = hasPermission(user.role, "finance:view");
 
   return (
     <div className="space-y-6">
@@ -54,7 +57,8 @@ export default async function CrmCustomersPage({
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Clientes</h1>
           <p className="text-muted-foreground">
-            Base do CRM — multi-tenant e preparado para leads/vendas.
+            Relacionamento comercial · {result.total} cliente
+            {result.total === 1 ? "" : "s"}
           </p>
         </div>
         {canManage ? (
@@ -64,15 +68,18 @@ export default async function CrmCustomersPage({
         ) : null}
       </div>
 
-      {canView ? (
-        <CustomersFilters
-          query={query}
-          origins={meta.origins}
-          owners={meta.owners}
-        />
-      ) : null}
+      <CustomersFilters
+        query={query}
+        origins={meta.origins}
+        owners={meta.owners}
+      />
 
-      <CustomersTable items={result.items} canManage={canManage} />
+      <CustomersTable
+        items={result.items}
+        canManage={canManage}
+        canSales={canSales}
+        canFinance={canFinance}
+      />
 
       <div className="flex items-center justify-between text-sm text-muted-foreground">
         <span>

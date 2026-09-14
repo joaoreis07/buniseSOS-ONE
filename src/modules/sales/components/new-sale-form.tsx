@@ -54,9 +54,11 @@ type CartLine = {
 export function NewSaleForm({
   products,
   customers,
+  defaultCustomerId,
 }: {
   products: CatalogProduct[];
   customers: Array<{ id: string; name: string }>;
+  defaultCustomerId?: string;
 }) {
   const [state, formAction, pending] = useActionState<
     SaleActionResult | undefined,
@@ -64,7 +66,11 @@ export function NewSaleForm({
   >(completeSaleAction, undefined);
 
   const [query, setQuery] = useState("");
-  const [customerId, setCustomerId] = useState("");
+  const [customerId, setCustomerId] = useState(
+    defaultCustomerId && customers.some((item) => item.id === defaultCustomerId)
+      ? defaultCustomerId
+      : "",
+  );
   const [paymentMethod, setPaymentMethod] = useState("PIX");
   const [paymentMode, setPaymentMode] = useState("CASH");
   const [installmentsCount, setInstallmentsCount] = useState("2");

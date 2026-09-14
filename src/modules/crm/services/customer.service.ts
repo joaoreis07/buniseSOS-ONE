@@ -6,6 +6,8 @@ import {
   createCustomer,
   findCustomerById,
   findCustomers,
+  findDuplicateCustomer,
+  getCustomer360,
   listCompanyOwners,
   listCustomerOrigins,
   softDeleteCustomer,
@@ -60,6 +62,11 @@ export async function createCustomerForTenant(params: {
     }
   }
 
+  await assertCustomerNotDuplicate({
+    companyId: params.companyId,
+    data: params.data,
+  });
+
   const customer = await createCustomer({
     companyId: params.companyId,
     data: params.data,
@@ -94,6 +101,12 @@ export async function updateCustomerForTenant(params: {
       throw new Error("Responsável inválido para esta empresa");
     }
   }
+
+  await assertCustomerNotDuplicate({
+    companyId: params.companyId,
+    data: params.data,
+    excludeId: params.customerId,
+  });
 
   const customer = await updateCustomer({
     companyId: params.companyId,
@@ -144,6 +157,53 @@ export async function deleteCustomerForTenant(params: {
   });
 
   return customer;
+}
+
+export async function getCustomerProfileForTenant(params: {
+  companyId: string;
+  role: Role;
+  customerId: string;
+}) {
+  assertPermission(params.role, "crm:view");
+  const customer = await findCustomerById({
+    companyId: params.companyId,
+    customerId: params.customerId,
+  });
+  if (!customer) return null;
+
+  const canSales = hasPermission(params.role, "sales:view");
+  const canFinance = hasPermission(params.role, "finance:view");
+  const overview =
+    canSales || canFinance
+      ? await getCustomer360({
+          companyId: params.companyId,
+          customerId: params.customerId,
+          includeSales: canSales,
+          includeFinance: canFinance,
+        })
+      : null;
+
+  return {
+    customer,
+    sections: { sales: canSales, finance: canFinance },
+    overview,
+  };
+}
+
+async function assertCustomerNotDuplicate(params: {
+  companyId: string;
+  data: CustomerFormInput;
+  excludeId?: string;
+}) {
+  const duplicate = await findDuplicateCustomer(params);
+  if (!duplicate) return;
+  if (duplicate.field === "document") {
+    throw new Error("Já existe um cliente com este CPF/CNPJ");
+  }
+  if (duplicate.field === "email") {
+    throw new Error("Já existe um cliente com este e-mail");
+  }
+  throw new Error("Já existe um cliente com este telefone");
 }
 
 export async function getCustomerFormMeta(companyId: string) {

@@ -4,8 +4,15 @@ import { getSaleFormMeta } from "@/modules/sales/services/sale.service";
 import { NewSaleForm } from "@/modules/sales/components/new-sale-form";
 import { Button } from "@/shared/ui/button";
 
-export default async function NewSalePage() {
+export default async function NewSalePage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   const user = await requirePermission("sales:create");
+  const raw = await searchParams;
+  const customerId =
+    typeof raw.customerId === "string" ? raw.customerId : undefined;
   const meta = await getSaleFormMeta(user.companyId);
 
   return (
@@ -21,7 +28,11 @@ export default async function NewSalePage() {
           <Link href="/app/sales">Voltar</Link>
         </Button>
       </div>
-      <NewSaleForm products={meta.products} customers={meta.customers} />
+      <NewSaleForm
+        products={meta.products}
+        customers={meta.customers}
+        defaultCustomerId={customerId}
+      />
     </div>
   );
 }
