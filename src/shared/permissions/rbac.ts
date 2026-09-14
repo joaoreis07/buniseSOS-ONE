@@ -135,6 +135,7 @@ const ROLE_PERMISSIONS: Record<Role, ReadonlyArray<Permission | "*">> = {
     "purchases:receive",
     "purchases:cancel",
     "suppliers:view",
+    "reports:view",
   ],
 };
 
