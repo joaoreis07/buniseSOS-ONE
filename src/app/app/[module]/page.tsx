@@ -13,11 +13,6 @@ const MODULE_META: Record<
   string,
   { title: string; permission: Permission; description: string }
 > = {
-  finance: {
-    title: "Financeiro",
-    permission: "finance:view",
-    description: "Financeiro do One — implementação na FASE 8.",
-  },
   dre: {
     title: "DRE",
     permission: "dre:view",

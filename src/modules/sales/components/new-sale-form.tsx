@@ -66,6 +66,10 @@ export function NewSaleForm({
   const [query, setQuery] = useState("");
   const [customerId, setCustomerId] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("PIX");
+  const [paymentMode, setPaymentMode] = useState("CASH");
+  const [installmentsCount, setInstallmentsCount] = useState("2");
+  const [firstDueDate, setFirstDueDate] = useState("");
+  const [period, setPeriod] = useState("MONTHLY");
   const [discountAmount, setDiscountAmount] = useState("0");
   const [notes, setNotes] = useState("");
   const [lines, setLines] = useState<CartLine[]>([]);
@@ -176,6 +180,10 @@ export function NewSaleForm({
       <input type="hidden" name="items" value={itemsPayload} />
       <input type="hidden" name="customerId" value={customerId} />
       <input type="hidden" name="paymentMethod" value={paymentMethod} />
+      <input type="hidden" name="paymentMode" value={paymentMode} />
+      <input type="hidden" name="installmentsCount" value={installmentsCount} />
+      <input type="hidden" name="firstDueDate" value={firstDueDate} />
+      <input type="hidden" name="period" value={period} />
 
       <div className="grid gap-4 lg:grid-cols-3">
         <div className="space-y-4 lg:col-span-2">
@@ -326,6 +334,39 @@ export function NewSaleForm({
             </Select>
           </div>
           <div className="space-y-2">
+            <Label>Condição</Label>
+            <Select value={paymentMode} onValueChange={setPaymentMode}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="CASH">À vista</SelectItem>
+                <SelectItem value="INSTALLMENT">Parcelado / a prazo</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          {paymentMode === "INSTALLMENT" ? (
+            <>
+              <div className="space-y-2">
+                <Label htmlFor="installmentsCount">Parcelas</Label>
+                <Input id="installmentsCount" type="number" min="1" max="120" value={installmentsCount} onChange={(event) => setInstallmentsCount(event.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="firstDueDate">Primeiro vencimento</Label>
+                <Input id="firstDueDate" type="date" required value={firstDueDate} onChange={(event) => setFirstDueDate(event.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label>Periodicidade</Label>
+                <Select value={period} onValueChange={setPeriod}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="WEEKLY">Semanal</SelectItem>
+                    <SelectItem value="BIWEEKLY">Quinzenal</SelectItem>
+                    <SelectItem value="MONTHLY">Mensal</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </>
+          ) : null}
+          <div className="space-y-2">
             <Label htmlFor="discountAmount">Desconto geral</Label>
             <Input
               id="discountAmount"
@@ -362,6 +403,11 @@ export function NewSaleForm({
               <span>{formatMoneyBRL(totals.total)}</span>
             </p>
           </div>
+          <p className="text-xs text-muted-foreground">
+            {paymentMode === "CASH"
+              ? "Uma conta e uma parcela quitada serão registradas automaticamente."
+              : "As parcelas serão calculadas no servidor, com ajuste determinístico dos centavos."}
+          </p>
           {"error" in totals && totals.error ? (
             <Alert variant="destructive">
               <AlertDescription>{totals.error}</AlertDescription>

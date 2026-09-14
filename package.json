@@ -24,7 +24,8 @@
     "verify:crm": "tsx scripts/verify-crm.ts",
     "verify:products": "tsx scripts/verify-products.ts",
     "verify:inventory": "tsx scripts/verify-inventory.ts",
-    "verify:sales": "tsx scripts/verify-sales.ts"
+    "verify:sales": "tsx scripts/verify-sales.ts",
+    "verify:finance": "tsx scripts/verify-finance.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",

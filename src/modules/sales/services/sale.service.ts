@@ -18,6 +18,10 @@ import {
   nextSaleNumber,
 } from "@/modules/sales/repositories/sale.repository";
 import { computeSaleTotals } from "@/modules/sales/lib/sale-totals";
+import {
+  cancelReceivableForSale,
+  createReceivableForSale,
+} from "@/modules/finance/services/finance.service";
 
 export function canViewSales(role: Role): boolean {
   return hasPermission(role, "sales:view");
@@ -131,6 +135,10 @@ export async function completeSaleForTenant(params: {
     throw new Error("Você não tem permissão para registrar vendas");
   }
 
+  const paymentMode = params.data.paymentMode ?? "CASH";
+  const installmentsCount = params.data.installmentsCount ?? 1;
+  const period = params.data.period ?? "MONTHLY";
+
   if (params.data.customerId) {
     const customer = await prisma.customer.findFirst({
       where: {
@@ -172,6 +180,13 @@ export async function completeSaleForTenant(params: {
         number,
         status: "COMPLETED",
         paymentMethod: params.data.paymentMethod,
+        paymentMode,
+        installmentsCount:
+          paymentMode === "CASH" ? 1 : installmentsCount,
+        firstDueDate: params.data.firstDueDate
+          ? new Date(`${params.data.firstDueDate}T12:00:00.000`)
+          : null,
+        period,
         subtotal: totals.subtotal,
         discountAmount: totals.discountAmount,
         total: totals.total,
@@ -208,7 +223,17 @@ export async function completeSaleForTenant(params: {
       });
     }
 
-    return created;
+    const receivable = await createReceivableForSale(tx, {
+      companyId: params.companyId,
+      userId: params.userId,
+      sale: created,
+      paymentMode,
+      installmentsCount,
+      firstDueDate: params.data.firstDueDate,
+      period,
+    });
+
+    return { sale: created, receivable };
   });
 
   await writeAuditLog({
@@ -217,16 +242,45 @@ export async function completeSaleForTenant(params: {
     module: "sales",
     action: "SALE_COMPLETE",
     entity: "Sale",
-    entityId: sale.id,
+    entityId: sale.sale.id,
     metadata: {
-      number: sale.number,
-      total: Number(sale.total),
-      paymentMethod: sale.paymentMethod,
+      number: sale.sale.number,
+      total: Number(sale.sale.total),
+      paymentMethod: sale.sale.paymentMethod,
       itemCount: params.data.items.length,
     },
   });
+  await writeAuditLog({
+    companyId: params.companyId,
+    userId: params.userId,
+    module: "finance",
+    action: "ACCOUNT_RECEIVABLE_CREATED",
+    entity: "AccountReceivable",
+    entityId: sale.receivable.id,
+    metadata: { saleId: sale.sale.id, installmentsCount: sale.receivable.installments.length },
+  });
+  await writeAuditLog({
+    companyId: params.companyId,
+    userId: params.userId,
+    module: "finance",
+    action: "INSTALLMENT_CREATED",
+    entity: "AccountReceivable",
+    entityId: sale.receivable.id,
+    metadata: { count: sale.receivable.installments.length },
+  });
+  if (paymentMode === "CASH") {
+    await writeAuditLog({
+      companyId: params.companyId,
+      userId: params.userId,
+      module: "finance",
+      action: "PAYMENT_RECEIVED",
+      entity: "AccountReceivable",
+      entityId: sale.receivable.id,
+      metadata: { amount: Number(sale.sale.total), paymentMethod: sale.sale.paymentMethod },
+    });
+  }
 
-  return sale;
+  return sale.sale;
 }
 
 export async function cancelSaleForTenant(params: {
@@ -271,7 +325,12 @@ export async function cancelSaleForTenant(params: {
       });
     }
 
-    return updated;
+    const receivable = await cancelReceivableForSale(tx, {
+      companyId: params.companyId,
+      saleId: existing.id,
+    });
+
+    return { sale: updated, receivable };
   });
 
   await writeAuditLog({
@@ -280,9 +339,20 @@ export async function cancelSaleForTenant(params: {
     module: "sales",
     action: "SALE_CANCEL",
     entity: "Sale",
-    entityId: sale.id,
-    metadata: { number: sale.number, total: Number(sale.total) },
+    entityId: sale.sale.id,
+    metadata: { number: sale.sale.number, total: Number(sale.sale.total) },
   });
+  if (sale.receivable) {
+    await writeAuditLog({
+      companyId: params.companyId,
+      userId: params.userId,
+      module: "finance",
+      action: "ACCOUNT_RECEIVABLE_CANCEL",
+      entity: "AccountReceivable",
+      entityId: sale.receivable.id,
+      metadata: { saleId: sale.sale.id },
+    });
+  }
 
-  return sale;
+  return sale.sale;
 }

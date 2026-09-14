@@ -284,6 +284,15 @@ async function main() {
   await prisma.inventoryMovement.deleteMany({
     where: { companyId: { in: [a.company.id, b.company.id] } },
   });
+  await prisma.installmentPayment.deleteMany({
+    where: { companyId: { in: [a.company.id, b.company.id] } },
+  });
+  await prisma.installment.deleteMany({
+    where: { companyId: { in: [a.company.id, b.company.id] } },
+  });
+  await prisma.accountReceivable.deleteMany({
+    where: { companyId: { in: [a.company.id, b.company.id] } },
+  });
   await prisma.saleItem.deleteMany({
     where: { companyId: { in: [a.company.id, b.company.id] } },
   });

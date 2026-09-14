@@ -38,6 +38,10 @@ export async function completeSaleAction(
   const parsed = completeSaleSchema.safeParse({
     customerId: formData.get("customerId"),
     paymentMethod: formData.get("paymentMethod") || "PIX",
+    paymentMode: formData.get("paymentMode") || "CASH",
+    installmentsCount: formData.get("installmentsCount") || 1,
+    firstDueDate: formData.get("firstDueDate"),
+    period: formData.get("period") || "MONTHLY",
     discountAmount: formData.get("discountAmount") || 0,
     notes: formData.get("notes"),
     items: parseItems(formData),
@@ -58,6 +62,7 @@ export async function completeSaleAction(
     });
     revalidatePath("/app/sales");
     revalidatePath("/app/inventory");
+    revalidatePath("/app/finance");
     redirect(`/app/sales/${sale.id}`);
   } catch (error) {
     if (isRedirectError(error)) throw error;
@@ -89,6 +94,7 @@ export async function cancelSaleAction(
     revalidatePath("/app/sales");
     revalidatePath(`/app/sales/${saleId}`);
     revalidatePath("/app/inventory");
+    revalidatePath("/app/finance");
     return { ok: true };
   } catch (error) {
     return {

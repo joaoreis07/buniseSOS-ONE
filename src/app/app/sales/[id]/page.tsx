@@ -13,6 +13,7 @@ import {
   formatMoneyBRL,
 } from "@/modules/sales/lib/sale-labels";
 import { formatSaleNumber } from "@/modules/sales/lib/sale-totals";
+import { RECEIVABLE_STATUS_LABELS } from "@/modules/finance/lib/finance-labels";
 import { PRODUCT_TYPE_LABELS } from "@/modules/products/lib/product-labels";
 import { INVENTORY_MOVEMENT_LABELS } from "@/modules/inventory/lib/inventory-labels";
 import { Badge } from "@/shared/ui/badge";
@@ -33,6 +34,7 @@ import {
   TableRow,
 } from "@/shared/ui/table";
 import { prisma } from "@/shared/db/prisma";
+import { canViewFinance } from "@/modules/finance/services/finance.service";
 
 export default async function SaleDetailPage({
   params,
@@ -50,6 +52,7 @@ export default async function SaleDetailPage({
 
   const canCancel =
     canCancelSales(user.role) && sale.status === "COMPLETED";
+  const canViewFinancialDetail = canViewFinance(user.role);
 
   const history = await prisma.auditLog.findMany({
     where: {
@@ -169,6 +172,20 @@ export default async function SaleDetailPage({
           </Table>
         </CardContent>
       </Card>
+
+      {sale.accountReceivable ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>Financeiro</CardTitle>
+            <CardDescription>Conta a receber gerada na conclusão da venda</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-2 text-sm">
+            <p>Status: <span className="font-medium">{RECEIVABLE_STATUS_LABELS[sale.accountReceivable.status]}</span></p>
+            <p>Pago: {formatMoneyBRL(sale.accountReceivable.paidAmount)} · Saldo: {formatMoneyBRL(sale.accountReceivable.remainingAmount)}</p>
+            {canViewFinancialDetail ? <Button asChild size="sm" variant="outline"><Link href={`/app/finance/${sale.accountReceivable.id}`}>Ver parcelas e pagamentos</Link></Button> : null}
+          </CardContent>
+        </Card>
+      ) : null}
 
       {sale.notes ? (
         <Card>

@@ -20,6 +20,19 @@ const saleInclude = {
       product: { select: { id: true, name: true, sku: true } },
     },
   },
+  accountReceivable: {
+    include: {
+      installments: {
+        orderBy: { number: "asc" as const },
+        include: {
+          payments: {
+            orderBy: { paidAt: "desc" as const },
+            include: { paidBy: { select: { name: true, email: true } } },
+          },
+        },
+      },
+    },
+  },
 };
 
 export async function findSales(filters: SaleListFilters) {
