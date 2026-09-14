@@ -22,6 +22,10 @@ import {
   cancelReceivableForSale,
   createReceivableForSale,
 } from "@/modules/finance/services/finance.service";
+import {
+  notifySaleCompleted,
+  notifyStockForProducts,
+} from "@/modules/communications/services/notification.service";
 
 export function canViewSales(role: Role): boolean {
   return hasPermission(role, "sales:view");
@@ -280,6 +284,19 @@ export async function completeSaleForTenant(params: {
     });
   }
 
+  await notifySaleCompleted({
+    companyId: params.companyId,
+    actorUserId: params.userId,
+    saleId: sale.sale.id,
+    saleNumber: sale.sale.number,
+    total: sale.sale.total,
+  }).catch(() => undefined);
+  await notifyStockForProducts({
+    companyId: params.companyId,
+    actorUserId: params.userId,
+    productIds: params.data.items.map((item) => item.productId),
+  }).catch(() => undefined);
+
   return sale.sale;
 }
 
@@ -353,6 +370,12 @@ export async function cancelSaleForTenant(params: {
       metadata: { saleId: sale.sale.id },
     });
   }
+
+  await notifyStockForProducts({
+    companyId: params.companyId,
+    actorUserId: params.userId,
+    productIds: existing.items.map((item) => item.productId),
+  }).catch(() => undefined);
 
   return sale.sale;
 }

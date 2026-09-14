@@ -16,6 +16,7 @@ import {
   registerMovement,
   updateMinimumQuantity,
 } from "@/modules/inventory/repositories/inventory.repository";
+import { notifyStockForProducts } from "@/modules/communications/services/notification.service";
 
 export function canViewInventory(role: Role): boolean {
   return hasPermission(role, "inventory:view");
@@ -128,6 +129,12 @@ export async function updateMinimumQuantityForTenant(params: {
     },
   });
 
+  await notifyStockForProducts({
+    companyId: params.companyId,
+    actorUserId: params.userId,
+    productIds: [params.productId],
+  }).catch(() => undefined);
+
   return inventory;
 }
 
@@ -175,6 +182,12 @@ export async function registerMovementForTenant(params: {
       balanceAfter: result.balanceAfter,
     },
   });
+
+  await notifyStockForProducts({
+    companyId: params.companyId,
+    actorUserId: params.userId,
+    productIds: [params.productId],
+  }).catch(() => undefined);
 
   return result;
 }

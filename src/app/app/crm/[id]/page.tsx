@@ -11,6 +11,13 @@ import { CrmSubnav } from "@/modules/crm/components/crm-subnav";
 import { DeleteCustomerButton } from "@/modules/crm/components/delete-customer-button";
 import { EntityActivitiesPanel } from "@/modules/crm/components/entity-activities-panel";
 import { Customer360View } from "@/modules/crm/components/customer-360";
+import { CustomerCommunicationsPanel } from "@/modules/communications/components/customer-communications-panel";
+import {
+  canSendCommunications,
+  canViewCommunications,
+  listCustomerCommunicationsForTenant,
+} from "@/modules/communications/services/communication.service";
+import { pickCustomerWhatsApp } from "@/modules/communications/lib/whatsapp";
 import {
   CUSTOMER_STATUS_LABELS,
   CUSTOMER_TYPE_LABELS,
@@ -64,6 +71,17 @@ export default async function CustomerDetailPage({
   const { customer, overview, sections } = profile;
   const canManage = canManageCustomers(user.role);
   const canCreateSale = hasPermission(user.role, "sales:create");
+  const canViewComms = canViewCommunications(user.role);
+  const canSendComms = canSendCommunications(user.role);
+  const whatsappNumber = pickCustomerWhatsApp(customer);
+  const communications = canViewComms
+    ? await listCustomerCommunicationsForTenant({
+        companyId: user.companyId,
+        role: user.role,
+        customerId: customer.id,
+        take: 8,
+      })
+    : [];
   const history = await prisma.auditLog.findMany({
     where: {
       companyId: user.companyId,
@@ -115,6 +133,15 @@ export default async function CustomerDetailPage({
           <Button asChild variant="outline">
             <Link href="/app/crm">Voltar</Link>
           </Button>
+          {canSendComms ? (
+            <Button asChild variant="outline">
+              <Link
+                href={`/app/communications/new?customerId=${customer.id}&intent=followup`}
+              >
+                Enviar WhatsApp
+              </Link>
+            </Button>
+          ) : null}
           {canCreateSale ? (
             <Button asChild>
               <Link href={`/app/sales/new?customerId=${customer.id}`}>
@@ -167,7 +194,23 @@ export default async function CustomerDetailPage({
               <DetailItem label="Celular" value={formatPhone(customer.mobile)} />
               <DetailItem
                 label="WhatsApp"
-                value={formatPhone(customer.whatsapp)}
+                value={
+                  whatsappNumber ? (
+                    <span className="flex flex-wrap items-center gap-2">
+                      {formatPhone(customer.whatsapp ?? customer.mobile ?? customer.phone)}
+                      {canSendComms ? (
+                        <Link
+                          href={`/app/communications/new?customerId=${customer.id}&intent=followup`}
+                          className="text-emerald-700 underline"
+                        >
+                          Preparar mensagem
+                        </Link>
+                      ) : null}
+                    </span>
+                  ) : (
+                    formatPhone(customer.whatsapp)
+                  )
+                }
               />
             </dl>
           </CardContent>
@@ -196,6 +239,15 @@ export default async function CustomerDetailPage({
 
       {overview ? (
         <Customer360View overview={overview} sections={sections} />
+      ) : null}
+
+      {canViewComms ? (
+        <CustomerCommunicationsPanel
+          customerId={customer.id}
+          items={communications}
+          canSend={canSendComms}
+          hasWhatsApp={Boolean(whatsappNumber)}
+        />
       ) : null}
 
       <EntityActivitiesPanel user={user} customerId={customer.id} />

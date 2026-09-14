@@ -35,6 +35,7 @@ import {
 } from "@/shared/ui/table";
 import { prisma } from "@/shared/db/prisma";
 import { canViewFinance } from "@/modules/finance/services/finance.service";
+import { canSendCommunications } from "@/modules/communications/services/communication.service";
 
 export default async function SaleDetailPage({
   params,
@@ -53,6 +54,10 @@ export default async function SaleDetailPage({
   const canCancel =
     canCancelSales(user.role) && sale.status === "COMPLETED";
   const canViewFinancialDetail = canViewFinance(user.role);
+  const canSendSaleWhatsApp =
+    canSendCommunications(user.role) &&
+    sale.status === "COMPLETED" &&
+    Boolean(sale.customer);
 
   const history = await prisma.auditLog.findMany({
     where: {
@@ -89,6 +94,15 @@ export default async function SaleDetailPage({
           <Button asChild variant="outline">
             <Link href="/app/sales">Voltar</Link>
           </Button>
+          {canSendSaleWhatsApp && sale.customer ? (
+            <Button asChild>
+              <Link
+                href={`/app/communications/new?customerId=${sale.customer.id}&saleId=${sale.id}&intent=sale`}
+              >
+                Enviar resumo pelo WhatsApp
+              </Link>
+            </Button>
+          ) : null}
           {canCancel ? <CancelSaleButton saleId={sale.id} /> : null}
         </div>
       </div>

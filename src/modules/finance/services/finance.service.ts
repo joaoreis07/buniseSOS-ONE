@@ -19,6 +19,7 @@ import type {
   FinanceListQuery,
   ReceivePaymentInput,
 } from "@/modules/finance/schemas/finance.schemas";
+import { notifyPaymentReceived } from "@/modules/communications/services/notification.service";
 
 type CreateReceivableParams = {
   companyId: string;
@@ -382,6 +383,15 @@ export async function receiveInstallmentPayment(params: {
       entityId: payment.receivableId,
     });
   }
+
+  await notifyPaymentReceived({
+    companyId: params.companyId,
+    actorUserId: params.userId,
+    paymentId: payment.payment.id,
+    receivableId: payment.receivableId,
+    amount: params.data.amount,
+  }).catch(() => undefined);
+
   return payment;
 }
 

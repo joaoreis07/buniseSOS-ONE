@@ -147,6 +147,51 @@ enum PurchaseStatus {
   CANCELLED
 }
 
+enum CommunicationChannel {
+  WHATSAPP
+  EMAIL
+  SMS
+  INTERNAL
+  OTHER
+}
+
+enum CommunicationType {
+  MANUAL
+  REMINDER
+  FOLLOW_UP
+  TRANSACTIONAL
+  OTHER
+}
+
+enum CommunicationStatus {
+  PREPARED
+  OPENED
+  SENT
+  DELIVERED
+  FAILED
+  CANCELLED
+}
+
+enum CommunicationOrigin {
+  CRM
+  SALE
+  FINANCE
+  ACTIVITY
+  MANUAL
+  SYSTEM
+}
+
+enum NotificationType {
+  LOW_STOCK
+  OUT_OF_STOCK
+  OVERDUE_RECEIVABLE
+  PAYMENT_RECEIVED
+  SALE_COMPLETED
+  PURCHASE_RECEIVED
+  TASK_ASSIGNED
+  SYSTEM
+}
+
 model User {
   id             String    @id @default(cuid())
   name           String?
@@ -173,6 +218,8 @@ model User {
   salesSold          Sale[]              @relation("SaleSeller")
   installmentPayments InstallmentPayment[] @relation("InstallmentPaymentReceiver")
   purchasesCreated   Purchase[]          @relation("PurchaseCreator")
+  communications     Communication[]     @relation("CommunicationAuthor")
+  notifications      Notification[]      @relation("NotificationRecipient")
 
   @@index([deletedAt])
 }
@@ -243,6 +290,9 @@ model Company {
   suppliers          Supplier[]
   purchases          Purchase[]
   purchaseItems      PurchaseItem[]
+  communicationTemplates CommunicationTemplate[]
+  communications         Communication[]
+  notifications          Notification[]
 
   @@index([deletedAt])
 }
@@ -371,6 +421,7 @@ model Customer {
   activities Activity[]
   sales      Sale[]
   accountReceivables AccountReceivable[]
+  communications     Communication[]
 
   @@index([companyId, deletedAt])
   @@index([companyId, name])
@@ -471,6 +522,7 @@ model Activity {
   customer    Customer?    @relation(fields: [customerId], references: [id], onDelete: SetNull)
   lead        Lead?        @relation(fields: [leadId], references: [id], onDelete: SetNull)
   opportunity Opportunity? @relation(fields: [opportunityId], references: [id], onDelete: SetNull)
+  communications Communication[]
 
   @@index([companyId, deletedAt])
   @@index([companyId, status, deletedAt])
@@ -604,6 +656,7 @@ model Sale {
   items              SaleItem[]
   inventoryMovements InventoryMovement[]
   accountReceivable  AccountReceivable?
+  communications     Communication[]
 
   @@unique([companyId, number])
   @@index([companyId, status])
@@ -679,6 +732,7 @@ model Installment {
   company           Company              @relation(fields: [companyId], references: [id], onDelete: Cascade)
   accountReceivable AccountReceivable    @relation(fields: [accountReceivableId], references: [id], onDelete: Cascade)
   payments          InstallmentPayment[]
+  communications    Communication[]
 
   @@unique([accountReceivableId, number])
   @@index([companyId, status])
@@ -789,4 +843,90 @@ model PurchaseItem {
   @@index([companyId])
   @@index([purchaseId, sortOrder])
   @@index([productId])
+}
+
+model CommunicationTemplate {
+  id        String                @id @default(cuid())
+  companyId String
+  name      String
+  channel   CommunicationChannel  @default(WHATSAPP)
+  type      CommunicationType     @default(MANUAL)
+  subject   String?
+  body      String                @db.Text
+  active    Boolean               @default(true)
+  createdAt DateTime              @default(now())
+  updatedAt DateTime              @updatedAt
+  deletedAt DateTime?
+
+  company        Company         @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  communications Communication[]
+
+  @@index([companyId, deletedAt])
+  @@index([companyId, channel, active])
+  @@index([companyId, createdAt])
+}
+
+model Communication {
+  id             String                @id @default(cuid())
+  companyId      String
+  customerId     String?
+  userId         String
+  templateId     String?
+  activityId     String?
+  saleId         String?
+  installmentId  String?
+  channel        CommunicationChannel
+  type           CommunicationType     @default(MANUAL)
+  origin         CommunicationOrigin   @default(MANUAL)
+  status         CommunicationStatus   @default(PREPARED)
+  subject        String?
+  body           String                @db.Text
+  recipient      String?
+  externalId     String?
+  preparedAt     DateTime              @default(now())
+  openedAt       DateTime?
+  sentAt         DateTime?
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
+
+  company     Company                 @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  customer    Customer?               @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  user        User                    @relation("CommunicationAuthor", fields: [userId], references: [id], onDelete: Restrict)
+  template    CommunicationTemplate?  @relation(fields: [templateId], references: [id], onDelete: SetNull)
+  activity    Activity?               @relation(fields: [activityId], references: [id], onDelete: SetNull)
+  sale        Sale?                   @relation(fields: [saleId], references: [id], onDelete: SetNull)
+  installment Installment?            @relation(fields: [installmentId], references: [id], onDelete: SetNull)
+
+  @@index([companyId, createdAt])
+  @@index([companyId, status])
+  @@index([companyId, channel])
+  @@index([companyId, type])
+  @@index([companyId, customerId, createdAt])
+  @@index([companyId, userId, createdAt])
+  @@index([saleId])
+  @@index([installmentId])
+  @@index([activityId])
+}
+
+model Notification {
+  id              String           @id @default(cuid())
+  companyId       String
+  userId          String
+  type            NotificationType
+  title           String
+  message         String
+  link            String?
+  readAt          DateTime?
+  metadata        Json?
+  idempotencyKey  String
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  user    User    @relation("NotificationRecipient", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([companyId, idempotencyKey])
+  @@index([companyId, userId, createdAt])
+  @@index([companyId, userId, readAt])
+  @@index([companyId, type, createdAt])
 }

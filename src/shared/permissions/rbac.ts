@@ -39,6 +39,10 @@ export const PERMISSIONS = [
   "ecommerce:view",
   "ecommerce:manage",
   "reports:view",
+  "communications:view",
+  "communications:send",
+  "communications:templates",
+  "notifications:view",
   "settings:view",
   "settings:manage",
 ] as const;
@@ -86,6 +90,10 @@ const ROLE_PERMISSIONS: Record<Role, ReadonlyArray<Permission | "*">> = {
     "ecommerce:view",
     "ecommerce:manage",
     "reports:view",
+    "communications:view",
+    "communications:send",
+    "communications:templates",
+    "notifications:view",
     "settings:view",
     "settings:manage",
   ],
@@ -110,6 +118,9 @@ const ROLE_PERMISSIONS: Record<Role, ReadonlyArray<Permission | "*">> = {
     "categories:view",
     "inventory:view",
     "reports:view",
+    "communications:view",
+    "communications:send",
+    "notifications:view",
   ],
   FINANCE: [
     "dashboard:view",
@@ -121,6 +132,9 @@ const ROLE_PERMISSIONS: Record<Role, ReadonlyArray<Permission | "*">> = {
     "dre:view",
     "reports:view",
     "sales:view",
+    "communications:view",
+    "communications:send",
+    "notifications:view",
   ],
   INVENTORY: [
     "dashboard:view",
@@ -136,6 +150,7 @@ const ROLE_PERMISSIONS: Record<Role, ReadonlyArray<Permission | "*">> = {
     "purchases:cancel",
     "suppliers:view",
     "reports:view",
+    "notifications:view",
   ],
 };
 

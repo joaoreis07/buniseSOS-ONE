@@ -1,10 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requirePermission } from "@/shared/auth/session";
-import {
-  canManageActivities,
-  getActivityForTenant,
-} from "@/modules/crm/services/activity.service";
+import { canManageActivities, getActivityForTenant } from "@/modules/crm/services/activity.service";
+import { canSendCommunications } from "@/modules/communications/services/communication.service";
 import { CrmSubnav } from "@/modules/crm/components/crm-subnav";
 import { ActivitiesList } from "@/modules/crm/components/activities-list";
 import {
@@ -35,6 +33,8 @@ export default async function ActivityDetailPage({
   });
   if (!activity) notFound();
   const canManage = canManageActivities(user.role);
+  const canSend =
+    canSendCommunications(user.role) && Boolean(activity.customerId);
 
   return (
     <div className="space-y-6">
@@ -59,6 +59,15 @@ export default async function ActivityDetailPage({
           <Button asChild variant="outline">
             <Link href="/app/crm/activities">Voltar</Link>
           </Button>
+          {canSend && activity.customerId ? (
+            <Button asChild variant="outline">
+              <Link
+                href={`/app/communications/new?customerId=${activity.customerId}&activityId=${activity.id}&intent=followup`}
+              >
+                WhatsApp
+              </Link>
+            </Button>
+          ) : null}
           {canManage ? (
             <Button asChild>
               <Link href={`/app/crm/activities/${activity.id}/edit`}>

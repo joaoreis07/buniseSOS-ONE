@@ -7,9 +7,29 @@ type AppShellProps = {
   user: AppSessionUser;
   companyName: string;
   children: React.ReactNode;
+  notifications?: {
+    unreadCount: number;
+    items: Array<{
+      id: string;
+      type:
+        | "LOW_STOCK"
+        | "OUT_OF_STOCK"
+        | "OVERDUE_RECEIVABLE"
+        | "PAYMENT_RECEIVED"
+        | "SALE_COMPLETED"
+        | "PURCHASE_RECEIVED"
+        | "TASK_ASSIGNED"
+        | "SYSTEM";
+      title: string;
+      message: string;
+      link: string | null;
+      readAt: Date | null;
+      createdAt: Date;
+    }>;
+  } | null;
 };
 
-export function AppShell({ user, companyName, children }: AppShellProps) {
+export function AppShell({ user, companyName, children, notifications }: AppShellProps) {
   return (
     <div className="flex min-h-screen bg-background text-foreground">
       <AppSidebar role={user.role} companyName={companyName} />
@@ -19,6 +39,7 @@ export function AppShell({ user, companyName, children }: AppShellProps) {
           userEmail={user.email}
           role={user.role}
           initials={getUserInitials(user.name, user.email)}
+          notifications={notifications}
         />
         <main className="flex-1 p-4 md:p-6">{children}</main>
       </div>

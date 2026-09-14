@@ -6,6 +6,7 @@ import type { Role } from "@prisma/client";
 import { logoutAction } from "@/modules/auth/actions/auth.actions";
 import { can } from "@/shared/permissions/can";
 import { APP_NAV_ITEMS } from "@/modules/app-shell/nav";
+import { NotificationBell } from "@/modules/communications/components/notification-bell";
 import { Button } from "@/shared/ui/button";
 import {
   Sheet,
@@ -17,11 +18,33 @@ import {
 import { Badge } from "@/shared/ui/badge";
 import { Avatar, AvatarFallback } from "@/shared/ui/avatar";
 
+type NotificationItem = {
+  id: string;
+  type:
+    | "LOW_STOCK"
+    | "OUT_OF_STOCK"
+    | "OVERDUE_RECEIVABLE"
+    | "PAYMENT_RECEIVED"
+    | "SALE_COMPLETED"
+    | "PURCHASE_RECEIVED"
+    | "TASK_ASSIGNED"
+    | "SYSTEM";
+  title: string;
+  message: string;
+  link: string | null;
+  readAt: Date | null;
+  createdAt: Date;
+};
+
 type AppHeaderProps = {
   userName: string | null;
   userEmail: string | null;
   role: Role;
   initials: string;
+  notifications?: {
+    unreadCount: number;
+    items: NotificationItem[];
+  } | null;
 };
 
 export function AppHeader({
@@ -29,6 +52,7 @@ export function AppHeader({
   userEmail,
   role,
   initials,
+  notifications,
 }: AppHeaderProps) {
   const items = APP_NAV_ITEMS.filter((item) => can(role, item.permission));
 
@@ -67,6 +91,12 @@ export function AppHeader({
       </div>
 
       <div className="flex items-center gap-3">
+        {notifications ? (
+          <NotificationBell
+            unreadCount={notifications.unreadCount}
+            items={notifications.items}
+          />
+        ) : null}
         <Badge variant="secondary">{role}</Badge>
         <div className="hidden text-right sm:block">
           <p className="text-sm font-medium leading-none">

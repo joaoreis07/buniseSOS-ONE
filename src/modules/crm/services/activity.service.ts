@@ -23,6 +23,7 @@ import {
   listTenantCustomers,
   listTenantLeads,
 } from "@/modules/crm/repositories/opportunity.repository";
+import { notifyTaskAssigned } from "@/modules/communications/services/notification.service";
 
 export function canViewActivities(role: Role): boolean {
   return hasPermission(role, "crm:activities:view");
@@ -114,6 +115,13 @@ export async function createActivityForTenant(params: {
       status: activity.status,
     },
   });
+  await notifyTaskAssigned({
+    companyId: params.companyId,
+    actorUserId: params.userId,
+    activityId: activity.id,
+    ownerId: activity.ownerId,
+    title: activity.title,
+  }).catch(() => undefined);
   return activity;
 }
 
@@ -141,6 +149,13 @@ export async function updateActivityForTenant(params: {
     entityId: activity.id,
     metadata: { title: activity.title, status: activity.status },
   });
+  await notifyTaskAssigned({
+    companyId: params.companyId,
+    actorUserId: params.userId,
+    activityId: activity.id,
+    ownerId: activity.ownerId,
+    title: activity.title,
+  }).catch(() => undefined);
   return activity;
 }
 

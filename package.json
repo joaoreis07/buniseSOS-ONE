@@ -27,7 +27,8 @@
     "verify:sales": "tsx scripts/verify-sales.ts",
     "verify:finance": "tsx scripts/verify-finance.ts",
     "verify:purchases": "tsx scripts/verify-purchases.ts",
-    "verify:reports": "tsx scripts/verify-reports.ts"
+    "verify:reports": "tsx scripts/verify-reports.ts",
+    "verify:communications": "tsx scripts/verify-communications.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",

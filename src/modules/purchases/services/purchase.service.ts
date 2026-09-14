@@ -17,6 +17,10 @@ import {
   nextPurchaseNumber,
 } from "@/modules/purchases/repositories/purchase.repository";
 import { listActiveSuppliers, listSuppliersLite } from "@/modules/purchases/repositories/supplier.repository";
+import {
+  notifyPurchaseReceived,
+  notifyStockForProducts,
+} from "@/modules/communications/services/notification.service";
 
 export function canViewPurchases(role: Role) {
   return hasPermission(role, "purchases:view");
@@ -216,6 +220,17 @@ export async function createPurchaseForTenant(params: {
       entityId: purchase.id,
       metadata: { number: purchase.number },
     });
+    await notifyPurchaseReceived({
+      companyId: params.companyId,
+      actorUserId: params.userId,
+      purchaseId: purchase.id,
+      purchaseNumber: purchase.number,
+    }).catch(() => undefined);
+    await notifyStockForProducts({
+      companyId: params.companyId,
+      actorUserId: params.userId,
+      productIds: purchase.items.map((item) => item.productId),
+    }).catch(() => undefined);
   }
   return purchase;
 }
@@ -383,6 +398,17 @@ export async function receivePurchaseForTenant(params: {
     entityId: purchase.id,
     metadata: { number: purchase.number, total: Number(purchase.total) },
   });
+  await notifyPurchaseReceived({
+    companyId: params.companyId,
+    actorUserId: params.userId,
+    purchaseId: purchase.id,
+    purchaseNumber: purchase.number,
+  }).catch(() => undefined);
+  await notifyStockForProducts({
+    companyId: params.companyId,
+    actorUserId: params.userId,
+    productIds: purchase.items.map((item) => item.productId),
+  }).catch(() => undefined);
   return purchase;
 }
 
