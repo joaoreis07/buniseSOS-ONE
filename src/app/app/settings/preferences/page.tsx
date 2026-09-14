@@ -1,5 +1,7 @@
 import { requirePermission } from "@/shared/auth/session";
-import { getCompanySettingsOverview } from "@/modules/team/services/team.service";
+import { hasPermission } from "@/shared/permissions/rbac";
+import { getCompanyProfileForTenant } from "@/modules/settings/services/settings.service";
+import { PreferencesForm } from "@/modules/settings/components/preferences-form";
 import { SettingsSubnav } from "@/modules/team/components/settings-subnav";
 import {
   Card,
@@ -11,11 +13,12 @@ import {
 
 export default async function SettingsPreferencesPage() {
   const user = await requirePermission("settings:view");
-  const overview = await getCompanySettingsOverview({
+  const profile = await getCompanyProfileForTenant({
     companyId: user.companyId,
     role: user.role,
   });
-  const settings = overview.settings;
+  const settings = profile.settings;
+  const canManage = hasPermission(user.role, "settings:manage");
 
   return (
     <div className="space-y-6">
@@ -24,7 +27,7 @@ export default async function SettingsPreferencesPage() {
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Preferências</h1>
         <p className="text-muted-foreground">
-          Preferências da empresa já persistidas no tenant
+          Localidade e formato já persistidos neste tenant.
         </p>
       </div>
 
@@ -32,30 +35,18 @@ export default async function SettingsPreferencesPage() {
         <CardHeader>
           <CardTitle>Localidade</CardTitle>
           <CardDescription>
-            Valores padrão da empresa. Edição avançada fica para uma fase posterior.
+            Valores realmente usados pelo One hoje. Sem construtor de temas.
           </CardDescription>
         </CardHeader>
-        <CardContent className="grid gap-4 text-sm sm:grid-cols-2">
-          <div>
-            <p className="text-muted-foreground">Idioma</p>
-            <p>{settings?.language ?? "pt-BR"}</p>
-          </div>
-          <div>
-            <p className="text-muted-foreground">Moeda</p>
-            <p>{settings?.currency ?? "BRL"}</p>
-          </div>
-          <div>
-            <p className="text-muted-foreground">Fuso horário</p>
-            <p>{settings?.timezone ?? "America/Sao_Paulo"}</p>
-          </div>
-          <div>
-            <p className="text-muted-foreground">Formato de data</p>
-            <p>{settings?.dateFormat ?? "dd/MM/yyyy"}</p>
-          </div>
-          <div>
-            <p className="text-muted-foreground">Tema</p>
-            <p>{settings?.theme ?? "light"}</p>
-          </div>
+        <CardContent>
+          <PreferencesForm
+            language={settings.language}
+            currency={settings.currency}
+            timezone={settings.timezone}
+            dateFormat={settings.dateFormat}
+            theme={settings.theme}
+            canManage={canManage}
+          />
         </CardContent>
       </Card>
     </div>

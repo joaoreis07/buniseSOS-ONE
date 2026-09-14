@@ -163,6 +163,14 @@ export function Customer360View({
                       >
                         {formatSaleNumber(sale.number)}
                       </Link>
+      {sale.status === "COMPLETED" ? (
+                        <Link
+                          href={`/app/documents/sale/${sale.id}`}
+                          className="text-emerald-700 underline"
+                        >
+                          Recibo
+                        </Link>
+                      ) : null}
                       <Badge
                         variant={
                           sale.status === "CANCELLED" ? "destructive" : "secondary"

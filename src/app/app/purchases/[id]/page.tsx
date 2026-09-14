@@ -108,6 +108,9 @@ export default async function PurchaseDetailPage({
               received={purchase.status === "RECEIVED"}
             />
           ) : null}
+          <Button asChild variant="outline">
+            <Link href={`/app/documents/purchase/${purchase.id}`}>Imprimir</Link>
+          </Button>
         </div>
       </div>
 

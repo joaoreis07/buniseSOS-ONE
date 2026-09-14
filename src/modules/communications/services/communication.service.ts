@@ -6,6 +6,7 @@ import { notDeletedFilter } from "@/shared/tenant/tenant";
 import { formatMoneyBRL } from "@/modules/sales/lib/sale-labels";
 import { formatDateBR } from "@/modules/finance/lib/finance-labels";
 import { formatSaleNumber } from "@/modules/sales/lib/sale-totals";
+import { buildCompanySignature } from "@/modules/settings/lib/company-identity";
 import { toCsv, csvFilename } from "@/modules/reports/lib/csv";
 import { getCommunicationProvider } from "@/modules/communications/lib/provider";
 import {
@@ -75,12 +76,23 @@ function typeFromIntent(
   return "MANUAL";
 }
 
-async function loadCompanyName(companyId: string) {
+async function loadCompanyIdentity(companyId: string) {
   const company = await prisma.company.findFirst({
     where: { id: companyId, ...notDeletedFilter },
-    select: { name: true },
+    select: {
+      name: true,
+      phone: true,
+      whatsapp: true,
+      email: true,
+      settings: {
+        select: {
+          displayName: true,
+          communicationSignature: true,
+        },
+      },
+    },
   });
-  return company?.name ?? "Empresa";
+  return company;
 }
 
 async function loadCustomer(companyId: string, customerId: string | null | undefined) {
@@ -199,8 +211,8 @@ export async function buildTemplateValues(params: {
   sale: Awaited<ReturnType<typeof loadSale>>;
   installment: Awaited<ReturnType<typeof loadInstallment>>;
 }> {
-  const [companyName, sale, installment, customerDirect] = await Promise.all([
-    loadCompanyName(params.companyId),
+  const [company, sale, installment, customerDirect] = await Promise.all([
+    loadCompanyIdentity(params.companyId),
     loadSale(params.companyId, params.saleId),
     loadInstallment(params.companyId, params.installmentId),
     loadCustomer(params.companyId, params.customerId),
@@ -212,8 +224,22 @@ export async function buildTemplateValues(params: {
     sale?.customer ??
     null;
 
+  const companyName = company?.settings?.displayName?.trim() || company?.name || "Empresa";
   const values: TemplateValues = {
     "company.name": companyName,
+    "company.phone": company?.phone ?? undefined,
+    "company.whatsapp": company?.whatsapp ?? undefined,
+    "company.email": company?.email ?? undefined,
+    "company.signature": company
+      ? buildCompanySignature({
+          name: company.name,
+          displayName: company.settings?.displayName,
+          configured: company.settings?.communicationSignature,
+          whatsapp: company.whatsapp,
+          phone: company.phone,
+          email: company.email,
+        })
+      : undefined,
     "customer.name": customer?.name,
     "customer.phone": customer?.phone ?? customer?.mobile ?? undefined,
     "customer.whatsapp": customer?.whatsapp ?? customer?.mobile ?? customer?.phone ?? undefined,

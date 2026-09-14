@@ -17,7 +17,7 @@ export function AppSidebar({ role, companyName }: AppSidebarProps) {
   const items = APP_NAV_ITEMS.filter((item) => can(role, item.permission));
 
   return (
-    <aside className="hidden w-60 shrink-0 border-r border-border bg-card md:flex md:flex-col">
+    <aside className="hidden w-60 shrink-0 border-r border-border bg-card print:hidden md:flex md:flex-col">
       <div className="border-b border-border px-4 py-4">
         <p className="text-xs font-medium tracking-wider text-emerald-700 uppercase">
           BusinessOS One

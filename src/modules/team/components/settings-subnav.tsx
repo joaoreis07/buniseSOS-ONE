@@ -5,7 +5,13 @@ import { cn } from "@/shared/utilities/cn";
 
 type SettingsSubnavProps = {
   role: Role;
-  active: "company" | "team" | "permissions" | "preferences";
+  active:
+    | "company"
+    | "branding"
+    | "documents"
+    | "preferences"
+    | "team"
+    | "permissions";
 };
 
 const ITEMS = [
@@ -13,6 +19,24 @@ const ITEMS = [
     id: "company" as const,
     href: "/app/settings",
     title: "Empresa",
+    permission: "settings:view" as const,
+  },
+  {
+    id: "branding" as const,
+    href: "/app/settings/branding",
+    title: "Identidade",
+    permission: "settings:view" as const,
+  },
+  {
+    id: "documents" as const,
+    href: "/app/settings/documents",
+    title: "Documentos",
+    permission: "settings:view" as const,
+  },
+  {
+    id: "preferences" as const,
+    href: "/app/settings/preferences",
+    title: "Preferências",
     permission: "settings:view" as const,
   },
   {
@@ -26,12 +50,6 @@ const ITEMS = [
     href: "/app/settings/permissions",
     title: "Permissões",
     permission: "team:view" as const,
-  },
-  {
-    id: "preferences" as const,
-    href: "/app/settings/preferences",
-    title: "Preferências",
-    permission: "settings:view" as const,
   },
 ];
 

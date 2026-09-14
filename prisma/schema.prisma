@@ -192,6 +192,12 @@ enum NotificationType {
   SYSTEM
 }
 
+enum OperationalDocumentKind {
+  SALE_RECEIPT
+  PAYMENT_RECEIPT
+  PURCHASE_RECORD
+}
+
 model User {
   id             String    @id @default(cuid())
   name           String?
@@ -220,6 +226,7 @@ model User {
   purchasesCreated   Purchase[]          @relation("PurchaseCreator")
   communications     Communication[]     @relation("CommunicationAuthor")
   notifications      Notification[]      @relation("NotificationRecipient")
+  operationalDocuments OperationalDocument[] @relation("OperationalDocumentCreator")
 
   @@index([deletedAt])
 }
@@ -263,11 +270,25 @@ model VerificationToken {
 }
 
 model Company {
-  id        String    @id @default(cuid())
-  name      String
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime?
+  id          String    @id @default(cuid())
+  name        String
+  tradeName   String?
+  document    String?
+  email       String?
+  phone       String?
+  whatsapp    String?
+  website     String?
+  description String?   @db.Text
+  zipCode     String?
+  street      String?
+  number      String?
+  complement  String?
+  district    String?
+  city        String?
+  state       String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
 
   memberships Membership[]
   settings    CompanySettings?
@@ -293,6 +314,8 @@ model Company {
   communicationTemplates CommunicationTemplate[]
   communications         Communication[]
   notifications          Notification[]
+  documentSequences      DocumentSequence[]
+  operationalDocuments   OperationalDocument[]
 
   @@index([deletedAt])
 }
@@ -315,15 +338,28 @@ model Membership {
 }
 
 model CompanySettings {
-  id         String   @id @default(cuid())
-  companyId  String   @unique
-  theme      String   @default("light")
-  language   String   @default("pt-BR")
-  currency   String   @default("BRL")
-  timezone   String   @default("America/Sao_Paulo")
-  dateFormat String   @default("dd/MM/yyyy")
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id                       String   @id @default(cuid())
+  companyId                String   @unique
+  theme                    String   @default("light")
+  language                 String   @default("pt-BR")
+  currency                 String   @default("BRL")
+  timezone                 String   @default("America/Sao_Paulo")
+  dateFormat               String   @default("dd/MM/yyyy")
+  displayName              String?
+  logoPath                 String?
+  primaryColor             String   @default("#047857")
+  secondaryColor           String   @default("#0f172a")
+  documentTitle            String?
+  documentHeader           String?  @db.Text
+  documentFooter           String?  @db.Text
+  communicationSignature   String?  @db.Text
+  defaultSaleNotes         String?  @db.Text
+  defaultPurchaseNotes     String?  @db.Text
+  defaultReceiptNotes      String?  @db.Text
+  allowSaleWithoutCustomer Boolean  @default(true)
+  defaultInstallmentCount  Int      @default(1)
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
 
   company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
 }
@@ -655,8 +691,9 @@ model Sale {
   seller             User                @relation("SaleSeller", fields: [sellerId], references: [id], onDelete: Restrict)
   items              SaleItem[]
   inventoryMovements InventoryMovement[]
-  accountReceivable  AccountReceivable?
-  communications     Communication[]
+  accountReceivable    AccountReceivable?
+  communications       Communication[]
+  operationalDocuments OperationalDocument[]
 
   @@unique([companyId, number])
   @@index([companyId, status])
@@ -751,9 +788,10 @@ model InstallmentPayment {
   paidById      String?
   createdAt     DateTime      @default(now())
 
-  company     Company     @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  installment Installment @relation(fields: [installmentId], references: [id], onDelete: Restrict)
-  paidBy      User?       @relation("InstallmentPaymentReceiver", fields: [paidById], references: [id], onDelete: SetNull)
+  company              Company               @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  installment          Installment           @relation(fields: [installmentId], references: [id], onDelete: Restrict)
+  paidBy               User?                 @relation("InstallmentPaymentReceiver", fields: [paidById], references: [id], onDelete: SetNull)
+  operationalDocuments OperationalDocument[]
 
   @@index([companyId, paidAt])
   @@index([installmentId, createdAt])
@@ -811,8 +849,9 @@ model Purchase {
   company            Company             @relation(fields: [companyId], references: [id], onDelete: Cascade)
   supplier           Supplier            @relation(fields: [supplierId], references: [id], onDelete: Restrict)
   createdBy          User                @relation("PurchaseCreator", fields: [createdById], references: [id], onDelete: Restrict)
-  items              PurchaseItem[]
-  inventoryMovements InventoryMovement[]
+  items                PurchaseItem[]
+  inventoryMovements   InventoryMovement[]
+  operationalDocuments OperationalDocument[]
 
   @@unique([companyId, number])
   @@index([companyId, status])
@@ -929,4 +968,41 @@ model Notification {
   @@index([companyId, userId, createdAt])
   @@index([companyId, userId, readAt])
   @@index([companyId, type, createdAt])
+}
+
+model DocumentSequence {
+  id        String                   @id @default(cuid())
+  companyId String
+  kind      OperationalDocumentKind
+  lastValue Int                      @default(0)
+  createdAt DateTime                 @default(now())
+  updatedAt DateTime                 @updatedAt
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@unique([companyId, kind])
+}
+
+model OperationalDocument {
+  id                   String                   @id @default(cuid())
+  companyId            String
+  kind                 OperationalDocumentKind
+  number               Int
+  saleId               String?
+  purchaseId           String?
+  installmentPaymentId String?
+  createdAt            DateTime                 @default(now())
+  createdById          String?
+
+  company              Company              @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  createdBy            User?                @relation("OperationalDocumentCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  sale                 Sale?                @relation(fields: [saleId], references: [id], onDelete: SetNull)
+  purchase             Purchase?            @relation(fields: [purchaseId], references: [id], onDelete: SetNull)
+  installmentPayment   InstallmentPayment?  @relation(fields: [installmentPaymentId], references: [id], onDelete: SetNull)
+
+  @@unique([companyId, kind, number])
+  @@index([companyId, createdAt])
+  @@index([companyId, saleId])
+  @@index([companyId, purchaseId])
+  @@index([companyId, installmentPaymentId])
 }

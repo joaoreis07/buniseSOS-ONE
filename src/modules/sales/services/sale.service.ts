@@ -155,6 +155,14 @@ export async function completeSaleForTenant(params: {
     if (!customer) {
       throw new Error("Cliente inválido para esta empresa");
     }
+  } else {
+    const settings = await prisma.companySettings.findUnique({
+      where: { companyId: params.companyId },
+      select: { allowSaleWithoutCustomer: true },
+    });
+    if (settings && settings.allowSaleWithoutCustomer === false) {
+      throw new Error("Informe um cliente para concluir a venda");
+    }
   }
 
   const sale = await prisma.$transaction(async (tx) => {

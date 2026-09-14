@@ -1,9 +1,11 @@
-import Link from "next/link";
 import { requirePermission } from "@/shared/auth/session";
 import { hasPermission } from "@/shared/permissions/rbac";
-import { getCompanySettingsOverview } from "@/modules/team/services/team.service";
+import { getCompanyProfileForTenant } from "@/modules/settings/services/settings.service";
+import { CompanyProfileForm } from "@/modules/settings/components/company-profile-form";
 import { SettingsSubnav } from "@/modules/team/components/settings-subnav";
 import { formatDateTimeBR } from "@/modules/team/lib/labels";
+import { getCompanySettingsOverview } from "@/modules/team/services/team.service";
+import Link from "next/link";
 import { Button } from "@/shared/ui/button";
 import {
   Card,
@@ -15,11 +17,22 @@ import {
 
 export default async function SettingsCompanyPage() {
   const user = await requirePermission("settings:view");
-  const overview = await getCompanySettingsOverview({
-    companyId: user.companyId,
-    role: user.role,
-  });
+  const [overview, profile] = await Promise.all([
+    getCompanySettingsOverview({
+      companyId: user.companyId,
+      role: user.role,
+    }),
+    getCompanyProfileForTenant({
+      companyId: user.companyId,
+      role: user.role,
+    }),
+  ]);
+  const canManage = hasPermission(user.role, "settings:manage");
   const canViewTeam = hasPermission(user.role, "team:view");
+  const company = profile.company;
+  if (!company) {
+    return <p>Empresa não encontrada.</p>;
+  }
 
   return (
     <div className="space-y-6">
@@ -28,32 +41,21 @@ export default async function SettingsCompanyPage() {
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Empresa</h1>
         <p className="text-muted-foreground">
-          Dados do tenant atual e resumo de acessos
+          Dados do tenant atuais. Isolado pelo companyId da sessão.
         </p>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>{overview.company?.name ?? "Empresa"}</CardTitle>
-          <CardDescription>Isolado pelo companyId da sessão</CardDescription>
+          <CardTitle>{company.name}</CardTitle>
+          <CardDescription>
+            Criada em {formatDateTimeBR(company.createdAt)} · {overview.activeMembers}{" "}
+            membros · {overview.pendingInvites} convites
+          </CardDescription>
         </CardHeader>
-        <CardContent className="grid gap-4 text-sm sm:grid-cols-2">
-          <div>
-            <p className="text-muted-foreground">Identificador</p>
-            <p className="font-mono text-xs">{overview.company?.id}</p>
-          </div>
-          <div>
-            <p className="text-muted-foreground">Criada em</p>
-            <p>{formatDateTimeBR(overview.company?.createdAt ?? null)}</p>
-          </div>
-          <div>
-            <p className="text-muted-foreground">Membros ativos</p>
-            <p>{overview.activeMembers}</p>
-          </div>
-          <div>
-            <p className="text-muted-foreground">Convites pendentes</p>
-            <p>{overview.pendingInvites}</p>
-          </div>
+        <CardContent>
+          <p className="mb-4 font-mono text-xs text-muted-foreground">{company.id}</p>
+          <CompanyProfileForm company={company} canManage={canManage} />
         </CardContent>
       </Card>
 

@@ -103,6 +103,11 @@ export default async function SaleDetailPage({
               </Link>
             </Button>
           ) : null}
+          {sale.completedAt ? (
+            <Button asChild variant="outline">
+              <Link href={`/app/documents/sale/${sale.id}`}>Gerar recibo</Link>
+            </Button>
+          ) : null}
           {canCancel ? <CancelSaleButton saleId={sale.id} /> : null}
         </div>
       </div>

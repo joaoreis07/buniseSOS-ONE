@@ -12,6 +12,10 @@ export const TEMPLATE_VARIABLES = [
   "installment.remaining",
   "installment.amount",
   "company.name",
+  "company.phone",
+  "company.whatsapp",
+  "company.email",
+  "company.signature",
 ] as const;
 
 export type TemplateVariable = (typeof TEMPLATE_VARIABLES)[number];

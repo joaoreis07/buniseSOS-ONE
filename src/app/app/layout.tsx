@@ -12,7 +12,10 @@ export default async function AppLayout({
   const user = await requireSession();
   const company = await prisma.company.findFirst({
     where: { id: user.companyId, deletedAt: null },
-    select: { name: true },
+    select: {
+      name: true,
+      settings: { select: { displayName: true } },
+    },
   });
   const notifications = hasPermission(user.role, "notifications:view")
     ? await listNotificationsForTenant({
@@ -26,7 +29,7 @@ export default async function AppLayout({
   return (
     <AppShell
       user={user}
-      companyName={company?.name ?? "Empresa"}
+      companyName={company?.settings?.displayName?.trim() || company?.name || "Empresa"}
       notifications={
         notifications
           ? { unreadCount: notifications.unreadCount, items: notifications.items }

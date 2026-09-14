@@ -41,7 +41,7 @@ export function AppShell({ user, companyName, children, notifications }: AppShel
           initials={getUserInitials(user.name, user.email)}
           notifications={notifications}
         />
-        <main className="flex-1 p-4 md:p-6">{children}</main>
+        <main className="flex-1 p-4 md:p-6 print:p-0">{children}</main>
       </div>
     </div>
   );

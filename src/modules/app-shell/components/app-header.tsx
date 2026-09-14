@@ -57,7 +57,7 @@ export function AppHeader({
   const items = APP_NAV_ITEMS.filter((item) => can(role, item.permission));
 
   return (
-    <header className="flex h-14 items-center justify-between border-b border-border bg-card px-4">
+    <header className="flex h-14 items-center justify-between border-b border-border bg-card px-4 print:hidden">
       <div className="flex items-center gap-2">
         <Sheet>
           <SheetTrigger asChild>

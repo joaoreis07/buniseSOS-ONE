@@ -29,7 +29,9 @@
     "verify:purchases": "tsx scripts/verify-purchases.ts",
     "verify:reports": "tsx scripts/verify-reports.ts",
     "verify:communications": "tsx scripts/verify-communications.ts",
-    "verify:team": "tsx scripts/verify-team.ts"
+    "verify:team": "tsx scripts/verify-team.ts",
+    "verify:settings": "tsx scripts/verify-settings.ts",
+    "verify:documents": "tsx scripts/verify-documents.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",
@@ -53,6 +55,7 @@
     "lucide-react": "^1.33.0",
     "next": "15.5.2",
     "next-auth": "^5.0.0-beta.32",
+    "pdf-lib": "^1.17.1",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-hook-form": "^7.85.0",

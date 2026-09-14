@@ -76,6 +76,13 @@ export const AUDIT_ACTION_LABELS: Record<string, string> = {
   MEMBER_ROLE_CHANGE: "Função alterada",
   MEMBER_DEACTIVATE: "Membro desativado",
   MEMBER_ACTIVATE: "Membro reativado",
+  COMPANY_SETTINGS_UPDATED: "Configurações da empresa atualizadas",
+  BRANDING_UPDATED: "Identidade visual atualizada",
+  DOCUMENT_SETTINGS_UPDATED: "Documentos atualizados",
+  NUMBERING_SETTINGS_UPDATED: "Numeração atualizada",
+  LOGO_UPDATED: "Logo atualizada",
+  DOCUMENT_GENERATED: "Documento gerado",
+  RECEIPT_GENERATED: "Recibo gerado",
 };
 
 export function formatDateTimeBR(value: Date | string | null | undefined): string {

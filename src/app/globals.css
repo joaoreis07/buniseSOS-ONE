@@ -60,3 +60,19 @@ body {
   color: hsl(var(--foreground));
   font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
 }
+
+@media print {
+  @page {
+    margin: 12mm;
+  }
+
+  body {
+    background: white;
+    color: black;
+  }
+
+  [data-print-document] {
+    box-shadow: none !important;
+    border-radius: 0 !important;
+  }
+}

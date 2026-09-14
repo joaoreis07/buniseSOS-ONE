@@ -55,10 +55,16 @@ export function NewSaleForm({
   products,
   customers,
   defaultCustomerId,
+  defaultNotes,
+  defaultInstallmentCount,
+  allowSaleWithoutCustomer = true,
 }: {
   products: CatalogProduct[];
   customers: Array<{ id: string; name: string }>;
   defaultCustomerId?: string;
+  defaultNotes?: string | null;
+  defaultInstallmentCount?: number;
+  allowSaleWithoutCustomer?: boolean;
 }) {
   const [state, formAction, pending] = useActionState<
     SaleActionResult | undefined,
@@ -73,11 +79,13 @@ export function NewSaleForm({
   );
   const [paymentMethod, setPaymentMethod] = useState("PIX");
   const [paymentMode, setPaymentMode] = useState("CASH");
-  const [installmentsCount, setInstallmentsCount] = useState("2");
+  const [installmentsCount, setInstallmentsCount] = useState(
+    String(Math.min(24, Math.max(1, defaultInstallmentCount ?? 2))),
+  );
   const [firstDueDate, setFirstDueDate] = useState("");
   const [period, setPeriod] = useState("MONTHLY");
   const [discountAmount, setDiscountAmount] = useState("0");
-  const [notes, setNotes] = useState("");
+  const [notes, setNotes] = useState(defaultNotes ?? "");
   const [lines, setLines] = useState<CartLine[]>([]);
   const [localError, setLocalError] = useState<string | null>(null);
 
@@ -312,10 +320,12 @@ export function NewSaleForm({
               }
             >
               <SelectTrigger>
-                <SelectValue placeholder="Sem cliente" />
+                <SelectValue placeholder={allowSaleWithoutCustomer ? "Sem cliente" : "Selecione um cliente"} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="none">Venda sem cliente</SelectItem>
+                {allowSaleWithoutCustomer ? (
+                  <SelectItem value="none">Venda sem cliente</SelectItem>
+                ) : null}
                 {customers.map((customer) => (
                   <SelectItem key={customer.id} value={customer.id}>
                     {customer.name}
@@ -432,7 +442,11 @@ export function NewSaleForm({
           <Button
             type="submit"
             className="w-full"
-            disabled={pending || lines.length === 0}
+            disabled={
+              pending ||
+              lines.length === 0 ||
+              (!allowSaleWithoutCustomer && !customerId)
+            }
           >
             {pending ? "Concluindo..." : "Concluir venda"}
           </Button>
