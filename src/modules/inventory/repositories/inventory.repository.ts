@@ -200,6 +200,7 @@ export async function applyInventoryMovement(
     reason?: string | null;
     notes?: string | null;
     saleId?: string | null;
+    purchaseId?: string | null;
   },
 ) {
   const product = await tx.product.findFirst({
@@ -277,6 +278,7 @@ export async function applyInventoryMovement(
               .join(" · ")
           : params.notes,
       saleId: params.saleId,
+      purchaseId: params.purchaseId,
       createdById: params.createdById,
     },
     include: {

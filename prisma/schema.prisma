@@ -136,6 +136,17 @@ enum ReceivableStatus {
   CANCELLED
 }
 
+enum SupplierStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum PurchaseStatus {
+  DRAFT
+  RECEIVED
+  CANCELLED
+}
+
 model User {
   id             String    @id @default(cuid())
   name           String?
@@ -161,6 +172,7 @@ model User {
   inventoryMovements InventoryMovement[] @relation("InventoryMovementCreator")
   salesSold          Sale[]              @relation("SaleSeller")
   installmentPayments InstallmentPayment[] @relation("InstallmentPaymentReceiver")
+  purchasesCreated   Purchase[]          @relation("PurchaseCreator")
 
   @@index([deletedAt])
 }
@@ -228,6 +240,9 @@ model Company {
   accountReceivables AccountReceivable[]
   installments       Installment[]
   installmentPayments InstallmentPayment[]
+  suppliers          Supplier[]
+  purchases          Purchase[]
+  purchaseItems      PurchaseItem[]
 
   @@index([deletedAt])
 }
@@ -507,6 +522,7 @@ model Product {
   inventory Inventory?
   inventoryMovements InventoryMovement[]
   saleItems SaleItem[]
+  purchaseItems PurchaseItem[]
 
   @@index([companyId, deletedAt])
   @@index([companyId, name])
@@ -544,18 +560,21 @@ model InventoryMovement {
   reason      String?
   notes       String?               @db.Text
   saleId      String?
+  purchaseId  String?
   createdById String?
   createdAt   DateTime              @default(now())
 
   company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
   product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
   sale      Sale?   @relation(fields: [saleId], references: [id], onDelete: SetNull)
+  purchase  Purchase? @relation(fields: [purchaseId], references: [id], onDelete: SetNull)
   createdBy User?   @relation("InventoryMovementCreator", fields: [createdById], references: [id], onDelete: SetNull)
 
   @@index([companyId, productId, createdAt])
   @@index([companyId, createdAt])
   @@index([productId])
   @@index([saleId])
+  @@index([purchaseId])
 }
 
 model Sale {
@@ -685,4 +704,89 @@ model InstallmentPayment {
   @@index([companyId, paidAt])
   @@index([installmentId, createdAt])
   @@index([paidById])
+}
+
+model Supplier {
+  id         String         @id @default(cuid())
+  companyId  String
+  name       String
+  tradeName  String?
+  document   String?
+  email      String?
+  phone      String?
+  mobile     String?
+  zipCode    String?
+  street     String?
+  number     String?
+  complement String?
+  district   String?
+  city       String?
+  state      String?
+  country    String         @default("BR")
+  status     SupplierStatus @default(ACTIVE)
+  notes      String?        @db.Text
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+
+  company   Company    @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  purchases Purchase[]
+
+  @@index([companyId, status])
+  @@index([companyId, name])
+  @@index([companyId, document])
+  @@index([companyId, createdAt])
+}
+
+model Purchase {
+  id             String         @id @default(cuid())
+  companyId      String
+  supplierId     String
+  createdById    String
+  number         Int
+  status         PurchaseStatus @default(DRAFT)
+  subtotal       Decimal        @db.Decimal(14, 2)
+  discountAmount Decimal        @default(0) @db.Decimal(14, 2)
+  total          Decimal        @db.Decimal(14, 2)
+  notes          String?        @db.Text
+  purchasedAt    DateTime       @default(now())
+  receivedAt     DateTime?
+  cancelledAt    DateTime?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  company            Company             @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  supplier           Supplier            @relation(fields: [supplierId], references: [id], onDelete: Restrict)
+  createdBy          User                @relation("PurchaseCreator", fields: [createdById], references: [id], onDelete: Restrict)
+  items              PurchaseItem[]
+  inventoryMovements InventoryMovement[]
+
+  @@unique([companyId, number])
+  @@index([companyId, status])
+  @@index([companyId, createdAt])
+  @@index([companyId, supplierId])
+  @@index([companyId, receivedAt])
+}
+
+model PurchaseItem {
+  id             String      @id @default(cuid())
+  companyId      String
+  purchaseId     String
+  productId      String
+  productName    String
+  productSku     String
+  productType    ProductType
+  quantity       Int
+  unitCost       Decimal     @db.Decimal(14, 2)
+  discountAmount Decimal     @default(0) @db.Decimal(14, 2)
+  lineTotal      Decimal     @db.Decimal(14, 2)
+  sortOrder      Int         @default(0)
+  createdAt      DateTime    @default(now())
+
+  company  Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  purchase Purchase @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
+  product  Product  @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  @@index([companyId])
+  @@index([purchaseId, sortOrder])
+  @@index([productId])
 }
