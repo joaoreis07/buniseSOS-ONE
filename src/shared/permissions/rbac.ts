@@ -45,6 +45,8 @@ export const PERMISSIONS = [
   "notifications:view",
   "settings:view",
   "settings:manage",
+  "team:view",
+  "team:manage",
 ] as const;
 
 export type Permission = (typeof PERMISSIONS)[number];
@@ -96,6 +98,8 @@ const ROLE_PERMISSIONS: Record<Role, ReadonlyArray<Permission | "*">> = {
     "notifications:view",
     "settings:view",
     "settings:manage",
+    "team:view",
+    "team:manage",
   ],
   SALES: [
     "dashboard:view",
@@ -172,4 +176,28 @@ export function listPermissions(role: Role): Permission[] {
   return ROLE_PERMISSIONS[role].filter(
     (permission): permission is Permission => permission !== "*",
   );
+}
+
+const ALL_ROLES: Role[] = ["ADMIN", "MANAGER", "SALES", "FINANCE", "INVENTORY"];
+
+export function listRoles(): Role[] {
+  return [...ALL_ROLES];
+}
+
+export function rolesAssignableBy(actor: Role): Role[] {
+  if (actor === "ADMIN") return listRoles();
+  if (actor === "MANAGER") {
+    return ALL_ROLES.filter((role) => role !== "ADMIN");
+  }
+  return [];
+}
+
+export function getRolePermissionMatrix(): Record<Role, Permission[]> {
+  return {
+    ADMIN: [...PERMISSIONS],
+    MANAGER: listPermissions("MANAGER"),
+    SALES: listPermissions("SALES"),
+    FINANCE: listPermissions("FINANCE"),
+    INVENTORY: listPermissions("INVENTORY"),
+  };
 }

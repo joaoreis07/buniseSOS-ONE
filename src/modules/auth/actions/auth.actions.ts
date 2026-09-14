@@ -6,19 +6,17 @@ import { signIn, signOut } from "@/shared/auth/auth";
 import {
   acceptInviteSchema,
   forgotPasswordSchema,
-  inviteMemberSchema,
   loginSchema,
   registerSchema,
   resetPasswordSchema,
 } from "@/modules/auth/schemas/auth.schemas";
 import {
   acceptInvite,
-  createInvite,
   createPasswordResetToken,
   registerTenant,
   resetPasswordWithToken,
 } from "@/modules/auth/services/auth.service";
-import { requirePermission, requireSession } from "@/shared/auth/session";
+import { requireSession } from "@/shared/auth/session";
 import { writeAuditLog } from "@/shared/audit/audit";
 
 export type ActionResult = {
@@ -159,42 +157,6 @@ export async function resetPasswordAction(
     return {
       ok: false,
       error: error instanceof Error ? error.message : "Falha ao redefinir senha",
-    };
-  }
-}
-
-export async function inviteMemberAction(
-  _prev: ActionResult | undefined,
-  formData: FormData,
-): Promise<ActionResult> {
-  const user = await requirePermission("settings:manage");
-  const parsed = inviteMemberSchema.safeParse({
-    email: formData.get("email"),
-    role: formData.get("role"),
-  });
-  if (!parsed.success) {
-    return { ok: false, error: parsed.error.issues[0]?.message ?? "Dados inválidos" };
-  }
-
-  try {
-    const { token } = await createInvite({
-      companyId: user.companyId,
-      invitedById: user.id,
-      email: parsed.data.email,
-      role: parsed.data.role,
-    });
-    if (process.env.NODE_ENV === "development") {
-      console.info(`[auth] invite token for ${parsed.data.email}: ${token}`);
-    }
-    return {
-      ok: true,
-      message: "Convite criado.",
-      token: process.env.NODE_ENV === "development" ? token : undefined,
-    };
-  } catch (error) {
-    return {
-      ok: false,
-      error: error instanceof Error ? error.message : "Falha ao convidar",
     };
   }
 }

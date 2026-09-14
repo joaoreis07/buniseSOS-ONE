@@ -206,14 +206,25 @@ export async function createInvite(params: {
   const existingMembership = await prisma.membership.findFirst({
     where: {
       companyId: params.companyId,
-      ...notDeletedFilter,
       user: { email, deletedAt: null },
     },
-    select: { id: true },
+    select: { id: true, deletedAt: true },
   });
-  if (existingMembership) {
+  if (existingMembership && !existingMembership.deletedAt) {
     throw new Error("Este usuário já é membro da empresa");
   }
+  if (existingMembership?.deletedAt) {
+    throw new Error("Este usuário está inativo. Reative-o pela ficha do membro.");
+  }
+
+  await prisma.invite.updateMany({
+    where: {
+      companyId: params.companyId,
+      email,
+      status: "PENDING",
+    },
+    data: { status: "REVOKED" },
+  });
 
   const token = createToken();
   const invite = await prisma.invite.create({
@@ -241,6 +252,35 @@ export async function createInvite(params: {
   return { invite, token };
 }
 
+export async function getInvitePreview(rawToken: string) {
+  const hashed = hashToken(rawToken);
+  const invite = await prisma.invite.findFirst({
+    where: { token: hashed },
+    include: { company: { select: { name: true } } },
+  });
+  if (!invite) {
+    return { status: "INVALID" as const, companyName: null, email: null, role: null };
+  }
+  if (invite.status === "PENDING" && invite.expiresAt < new Date()) {
+    await prisma.invite.update({
+      where: { id: invite.id },
+      data: { status: "EXPIRED" },
+    });
+    return {
+      status: "EXPIRED" as const,
+      companyName: invite.company.name,
+      email: invite.email,
+      role: invite.role,
+    };
+  }
+  return {
+    status: invite.status,
+    companyName: invite.company.name,
+    email: invite.email,
+    role: invite.role,
+  };
+}
+
 export async function acceptInvite(params: {
   token: string;
   name: string;
@@ -248,9 +288,24 @@ export async function acceptInvite(params: {
 }) {
   const hashed = hashToken(params.token);
   const invite = await prisma.invite.findFirst({
-    where: { token: hashed, status: "PENDING" },
+    where: { token: hashed },
   });
-  if (!invite || invite.expiresAt < new Date()) {
+  if (!invite) {
+    throw new Error("Convite inválido ou expirado");
+  }
+  if (invite.status === "ACCEPTED") {
+    throw new Error("Este convite já foi utilizado");
+  }
+  if (invite.status === "REVOKED") {
+    throw new Error("Este convite foi cancelado");
+  }
+  if (invite.status !== "PENDING" || invite.expiresAt < new Date()) {
+    if (invite.status === "PENDING") {
+      await prisma.invite.update({
+        where: { id: invite.id },
+        data: { status: "EXPIRED" },
+      });
+    }
     throw new Error("Convite inválido ou expirado");
   }
 
@@ -285,10 +340,14 @@ export async function acceptInvite(params: {
       where: {
         userId: user.id,
         companyId: invite.companyId,
-        ...notDeletedFilter,
       },
     });
-    if (!existing) {
+    if (existing) {
+      await tx.membership.update({
+        where: { id: existing.id },
+        data: { deletedAt: null, role: invite.role },
+      });
+    } else {
       await tx.membership.create({
         data: {
           userId: user.id,
