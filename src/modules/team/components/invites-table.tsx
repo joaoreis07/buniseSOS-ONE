@@ -38,10 +38,7 @@ function InviteActionAlert({ state }: { state: TeamActionResult | undefined }) {
   if (!state?.error && !state?.ok) return null;
   return (
     <Alert variant={state.error ? "destructive" : "default"}>
-      <AlertDescription>
-        {state.error ?? state.message}
-        {state.token ? ` Token: ${state.token}` : null}
-      </AlertDescription>
+      <AlertDescription>{state.error ?? state.message}</AlertDescription>
     </Alert>
   );
 }

@@ -13,6 +13,7 @@ import {
   acceptInvite,
   getInvitePreview,
   getPrimaryMembership,
+  getUserSessionVersion,
   hashToken,
   validateMembership,
 } from "../src/modules/auth/services/auth.service";
@@ -28,6 +29,10 @@ import {
   resendInviteForTenant,
   revokeInviteForTenant,
 } from "../src/modules/team/services/team.service";
+import { createActivityForTenant } from "../src/modules/crm/services/activity.service";
+import { listCompanyOwners } from "../src/modules/crm/repositories/opportunity.repository";
+import { listNotificationsForTenant } from "../src/modules/communications/services/notification.service";
+import { getSalesReportForTenant } from "../src/modules/reports/services/reports.service";
 
 const prisma = new PrismaClient();
 
@@ -126,6 +131,18 @@ async function main() {
     name: "Vendas A",
     email: `team-sales-${suffix}@example.com`,
     role: "SALES",
+  });
+  const finance = await addMember({
+    companyId: a.company.id,
+    name: "Finance A",
+    email: `team-fin-${suffix}@example.com`,
+    role: "FINANCE",
+  });
+  const inventory = await addMember({
+    companyId: a.company.id,
+    name: "Estoque A",
+    email: `team-inv-${suffix}@example.com`,
+    role: "INVENTORY",
   });
   const secondAdmin = await addMember({
     companyId: a.company.id,
@@ -231,6 +248,136 @@ async function main() {
   assert(salesSheet.permissions.includes("sales:view"), "inherited sales permission");
   assert(!salesSheet.permissions.includes("team:manage"), "sales has no team:manage");
 
+  const search = await listTeamForTenant({
+    companyId: a.company.id,
+    role: "ADMIN",
+    query: { q: sales.user.email, page: 1, pageSize: 20 },
+  });
+  assert(
+    search.items.length === 1 && search.items[0]?.user.id === sales.user.id,
+    "search by email",
+  );
+
+  let salesCannotSeeMatrix = false;
+  try {
+    getAccessMatrixForRole("SALES");
+  } catch {
+    salesCannotSeeMatrix = true;
+  }
+  assert(salesCannotSeeMatrix, "sales cannot view permission matrix");
+  await expectThrow(
+    () =>
+      listTeamForTenant({
+        companyId: a.company.id,
+        role: "FINANCE",
+        query: { page: 1, pageSize: 20 },
+      }),
+    "finance cannot list team",
+  );
+  await expectThrow(
+    () =>
+      inviteMemberForTenant({
+        companyId: a.company.id,
+        userId: inventory.user.id,
+        role: "INVENTORY",
+        email: `team-escalation-${suffix}@example.com`,
+        inviteRole: "ADMIN",
+      }),
+    "inventory cannot invite",
+  );
+  await expectThrow(
+    () =>
+      changeMemberRoleForTenant({
+        companyId: a.company.id,
+        actorUserId: sales.user.id,
+        actorRole: "SALES",
+        membershipId: sales.membership.id,
+        role: "ADMIN",
+      }),
+    "sales cannot self-promote",
+  );
+  await expectThrow(
+    () =>
+      changeMemberRoleForTenant({
+        companyId: a.company.id,
+        actorUserId: finance.user.id,
+        actorRole: "FINANCE",
+        membershipId: finance.membership.id,
+        role: "ADMIN",
+      }),
+    "finance cannot self-promote",
+  );
+  await expectThrow(
+    () =>
+      changeMemberRoleForTenant({
+        companyId: a.company.id,
+        actorUserId: inventory.user.id,
+        actorRole: "INVENTORY",
+        membershipId: manager.membership.id,
+        role: "SALES",
+      }),
+    "inventory cannot change another member role",
+  );
+
+  const customer = await prisma.customer.create({
+    data: {
+      companyId: a.company.id,
+      name: `Cliente Team ${suffix}`,
+      type: "INDIVIDUAL",
+      status: "ACTIVE",
+    },
+  });
+  await createActivityForTenant({
+    companyId: a.company.id,
+    userId: a.user.id,
+    role: "ADMIN",
+    data: {
+      title: `Tarefa notificada ${suffix}`,
+      description: null,
+      type: "TASK",
+      status: "PENDING",
+      ownerId: sales.user.id,
+      dueAt: null,
+      customerId: customer.id,
+      leadId: null,
+      opportunityId: null,
+    },
+  });
+  const salesNotes = await listNotificationsForTenant({
+    companyId: a.company.id,
+    userId: sales.user.id,
+    role: "SALES",
+    query: { page: 1, pageSize: 20 },
+  });
+  assert(
+    salesNotes.items.some((item) => item.type === "TASK_ASSIGNED"),
+    "assigned activity creates notification",
+  );
+  const leakedNotes = await listNotificationsForTenant({
+    companyId: b.company.id,
+    userId: b.user.id,
+    role: "ADMIN",
+    query: { page: 1, pageSize: 20 },
+  });
+  assert(
+    leakedNotes.items.every((item) => item.type !== "TASK_ASSIGNED" || !item.message?.includes(suffix)),
+    "tenant B does not receive tenant A assignment",
+  );
+
+  await prisma.sale.create({
+    data: {
+      companyId: a.company.id,
+      customerId: customer.id,
+      sellerId: sales.user.id,
+      number: 1,
+      status: "COMPLETED",
+      paymentMethod: "PIX",
+      subtotal: 150,
+      total: 150,
+      completedAt: new Date(),
+    },
+  });
+
   const firstInvite = await inviteMemberForTenant({
     companyId: a.company.id,
     userId: a.user.id,
@@ -256,6 +403,14 @@ async function main() {
   const oldPreview = await getInvitePreview(firstInvite.token);
   assert(oldPreview.status === "REVOKED", "previous pending invite revoked");
   assert(secondInvite.invite.role === "FINANCE", "latest invite role kept");
+  const pendingDup = await prisma.invite.count({
+    where: {
+      companyId: a.company.id,
+      email: `team-new-${suffix}@example.com`,
+      status: "PENDING",
+    },
+  });
+  assert(pendingDup === 1, "only one pending invite per email");
 
   await expectThrow(
     () =>
@@ -288,6 +443,10 @@ async function main() {
   });
   assert(accepted.companyId === a.company.id, "accepted into tenant A");
   assert(accepted.role === "FINANCE", "accepted role");
+  assert(
+    accepted.user.email === `team-new-${suffix}@example.com`,
+    "membership bound to invited email",
+  );
   await expectThrow(
     () =>
       acceptInvite({
@@ -424,7 +583,29 @@ async function main() {
       }),
     "manager cannot promote to admin",
   );
+  await expectThrow(
+    () =>
+      deactivateMemberForTenant({
+        companyId: a.company.id,
+        actorUserId: manager.user.id,
+        actorRole: "MANAGER",
+        membershipId: secondAdmin.membership.id,
+      }),
+    "manager cannot deactivate admin",
+  );
+  await expectThrow(
+    () =>
+      changeMemberRoleForTenant({
+        companyId: b.company.id,
+        actorUserId: b.user.id,
+        actorRole: "ADMIN",
+        membershipId: sales.membership.id,
+        role: "MANAGER",
+      }),
+    "tenant B cannot change tenant A role",
+  );
 
+  const salesVersionBefore = await getUserSessionVersion(sales.user.id);
   await changeMemberRoleForTenant({
     companyId: a.company.id,
     actorUserId: a.user.id,
@@ -436,6 +617,18 @@ async function main() {
     where: { id: sales.membership.id },
   });
   assert(afterRole.role === "FINANCE", "role changed");
+  const salesVersionAfterRole = await getUserSessionVersion(sales.user.id);
+  assert(
+    (salesVersionAfterRole ?? 0) > (salesVersionBefore ?? 0),
+    "role change invalidates session",
+  );
+  const afterRoleSheet = await getMemberForTenant({
+    companyId: a.company.id,
+    role: "ADMIN",
+    membershipId: sales.membership.id,
+  });
+  assert(afterRoleSheet?.permissions.includes("finance:manage"), "effective finance perms");
+  assert(!afterRoleSheet?.permissions.includes("sales:create"), "lost sales create after role change");
 
   await deactivateMemberForTenant({
     companyId: a.company.id,
@@ -453,6 +646,49 @@ async function main() {
   assert(
     (await getPrimaryMembership(sales.user.id)) === null,
     "deactivated member cannot login via membership",
+  );
+  const salesVersionAfterDeactivate = await getUserSessionVersion(sales.user.id);
+  assert(
+    (salesVersionAfterDeactivate ?? 0) > (salesVersionAfterRole ?? 0),
+    "deactivate invalidates session",
+  );
+
+  const activityStillThere = await prisma.activity.count({
+    where: { companyId: a.company.id, ownerId: sales.user.id, deletedAt: null },
+  });
+  assert(activityStillThere >= 2, "inactivation keeps assigned activities");
+  const saleStillThere = await prisma.sale.findFirst({
+    where: { companyId: a.company.id, sellerId: sales.user.id },
+  });
+  assert(saleStillThere, "inactivation keeps historical sales");
+  const noteStillThere = await prisma.notification.count({
+    where: { companyId: a.company.id, userId: sales.user.id, type: "TASK_ASSIGNED" },
+  });
+  assert(noteStillThere >= 1, "inactivation keeps notifications");
+
+  const report = await getSalesReportForTenant({
+    companyId: a.company.id,
+    role: "ADMIN",
+    query: {
+      preset: "last_30",
+      sellerId: sales.user.id,
+      status: "COMPLETED",
+      page: 1,
+      pageSize: 20,
+    },
+  });
+  assert(
+    report.items.some((row) => row.sellerName.includes("Vendas A")),
+    "sales report still names inactive seller",
+  );
+  assert(
+    report.lookups.sellers.some((seller) => seller.id === sales.user.id),
+    "report seller filter keeps inactive member",
+  );
+  const activeOwners = await listCompanyOwners(a.company.id);
+  assert(
+    activeOwners.every((owner) => owner.userId !== sales.user.id),
+    "inactive member is not assignable as owner",
   );
   await expectThrow(
     () =>
@@ -476,6 +712,14 @@ async function main() {
     where: { id: sales.membership.id },
   });
   assert(restored.deletedAt === null, "membership restored not duplicated");
+  assert(restored.role === "FINANCE", "role preserved on reactivate");
+  assert(
+    (await validateMembership({
+      userId: sales.user.id,
+      companyId: a.company.id,
+    })) != null,
+    "reactivated member can operate",
+  );
   const membershipCount = await prisma.membership.count({
     where: { userId: sales.user.id, companyId: a.company.id },
   });
@@ -497,6 +741,85 @@ async function main() {
       }),
     "last remaining admin cannot deactivate self",
   );
+  await expectThrow(
+    () =>
+      changeMemberRoleForTenant({
+        companyId: a.company.id,
+        actorUserId: a.user.id,
+        actorRole: "ADMIN",
+        membershipId: adminMembership.id,
+        role: "MANAGER",
+      }),
+    "last remaining admin cannot demote self",
+  );
+  await expectThrow(
+    () =>
+      changeMemberRoleForTenant({
+        companyId: a.company.id,
+        actorUserId: manager.user.id,
+        actorRole: "ADMIN",
+        membershipId: adminMembership.id,
+        role: "SALES",
+      }),
+    "last admin cannot be demoted even if role is spoofed",
+  );
+
+  const solo = await registerTenant({
+    name: "Admin Solo",
+    email: `team-solo-${suffix}@example.com`,
+    companyName: `Empresa Solo ${suffix}`,
+  });
+  const soloMembership = await prisma.membership.findFirstOrThrow({
+    where: { userId: solo.user.id, companyId: solo.company.id },
+  });
+  await expectThrow(
+    () =>
+      deactivateMemberForTenant({
+        companyId: solo.company.id,
+        actorUserId: solo.user.id,
+        actorRole: "ADMIN",
+        membershipId: soloMembership.id,
+      }),
+    "solo admin cannot deactivate self",
+  );
+  await expectThrow(
+    () =>
+      changeMemberRoleForTenant({
+        companyId: solo.company.id,
+        actorUserId: solo.user.id,
+        actorRole: "ADMIN",
+        membershipId: soloMembership.id,
+        role: "SALES",
+      }),
+    "solo admin cannot remove own admin role",
+  );
+
+  await expectThrow(
+    () =>
+      resendInviteForTenant({
+        companyId: b.company.id,
+        userId: b.user.id,
+        role: "ADMIN",
+        inviteId: resendTarget.invite.id,
+      }),
+    "cannot resend other tenant invite",
+  );
+
+  const inviteAudits = await prisma.auditLog.findMany({
+    where: {
+      companyId: a.company.id,
+      action: { in: ["INVITE_CREATE", "INVITE_RESEND"] },
+    },
+    select: { metadata: true },
+  });
+  const auditBlob = JSON.stringify(inviteAudits);
+  assert(!auditBlob.includes(firstInvite.token), "raw invite token not stored in audit");
+  assert(!auditBlob.includes(resent.token), "raw resent token not stored in audit");
+
+  const leakedRoleAudits = await prisma.auditLog.count({
+    where: { companyId: b.company.id, action: "MEMBER_ROLE_CHANGE" },
+  });
+  assert(leakedRoleAudits === 0, "tenant B has no leaked role-change audit");
 
   const audits = await prisma.auditLog.findMany({
     where: { companyId: a.company.id, module: "members" },

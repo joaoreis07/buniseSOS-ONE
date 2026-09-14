@@ -57,10 +57,7 @@ export function InviteMemberForm({ allowedRoles }: { allowedRoles: Role[] }) {
       ) : null}
       {state?.ok ? (
         <Alert>
-          <AlertDescription>
-            {state.message}
-            {state.token ? ` Token: ${state.token}` : null}
-          </AlertDescription>
+          <AlertDescription>{state.message}</AlertDescription>
         </Alert>
       ) : null}
       <Button type="submit" disabled={pending}>

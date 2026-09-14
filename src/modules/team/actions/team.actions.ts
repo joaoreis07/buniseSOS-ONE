@@ -21,7 +21,6 @@ export type TeamActionResult = {
   ok: boolean;
   error?: string;
   message?: string;
-  token?: string;
 };
 
 function revalidateTeam(membershipId?: string) {
@@ -47,21 +46,17 @@ export async function inviteMemberAction(
   }
 
   try {
-    const { token } = await inviteMemberForTenant({
+    await inviteMemberForTenant({
       companyId: user.companyId,
       userId: user.id,
       role: user.role,
       email: parsed.data.email,
       inviteRole: parsed.data.role,
     });
-    if (process.env.NODE_ENV === "development") {
-      console.info(`[team] invite token for ${parsed.data.email}: ${token}`);
-    }
     revalidateTeam();
     return {
       ok: true,
       message: "Convite criado.",
-      token: process.env.NODE_ENV === "development" ? token : undefined,
     };
   } catch (error) {
     return {
@@ -82,21 +77,14 @@ export async function resendInviteAction(
   }
 
   try {
-    const { token } = await resendInviteForTenant({
+    await resendInviteForTenant({
       companyId: user.companyId,
       userId: user.id,
       role: user.role,
       inviteId: parsed.data.inviteId,
     });
-    if (process.env.NODE_ENV === "development") {
-      console.info(`[team] resent invite token: ${token}`);
-    }
     revalidateTeam();
-    return {
-      ok: true,
-      message: "Convite reenviado.",
-      token: process.env.NODE_ENV === "development" ? token : undefined,
-    };
+    return { ok: true, message: "Convite reenviado." };
   } catch (error) {
     return {
       ok: false,

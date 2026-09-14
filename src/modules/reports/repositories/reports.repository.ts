@@ -395,9 +395,9 @@ export async function listReportLookups(companyId: string) {
       take: 200,
     }),
     prisma.membership.findMany({
-      where: { companyId, ...notDeletedFilter },
+      where: { companyId, user: { deletedAt: null } },
       include: { user: { select: { id: true, name: true, email: true } } },
-      orderBy: { createdAt: "asc" },
+      orderBy: [{ deletedAt: { sort: "asc", nulls: "first" } }, { createdAt: "asc" }],
     }),
     prisma.product.findMany({
       where: { companyId, status: "ACTIVE", ...notDeletedFilter },
