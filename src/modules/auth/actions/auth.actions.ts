@@ -18,12 +18,15 @@ import {
 } from "@/modules/auth/services/auth.service";
 import { requireSession } from "@/shared/auth/session";
 import { writeAuditLog } from "@/shared/audit/audit";
+import { publicErrorMessage } from "@/shared/errors/public-error";
+import { safeInternalPath } from "@/shared/security/callback-url";
+import { assertRateLimit, RateLimitError } from "@/shared/security/rate-limit";
+import { clientRateKey } from "@/shared/security/request-key";
 
 export type ActionResult = {
   ok: boolean;
   error?: string;
   message?: string;
-  token?: string;
 };
 
 function isNextRedirect(error: unknown): boolean {
@@ -42,13 +45,18 @@ export async function loginAction(
     return { ok: false, error: parsed.error.issues[0]?.message ?? "Dados inválidos" };
   }
 
-  const callbackUrl = String(formData.get("callbackUrl") || "/app");
+  const callbackUrl = safeInternalPath(formData.get("callbackUrl"));
 
   try {
+    assertRateLimit({
+      key: await clientRateKey("login", parsed.data.email),
+      limit: 8,
+      windowMs: 15 * 60 * 1000,
+    });
     await signIn("credentials", {
       email: parsed.data.email,
       password: parsed.data.password,
-      redirectTo: callbackUrl.startsWith("/") ? callbackUrl : "/app",
+      redirectTo: callbackUrl,
     });
     return { ok: true };
   } catch (error) {
@@ -57,6 +65,9 @@ export async function loginAction(
     }
     if (error instanceof AuthError) {
       return { ok: false, error: "E-mail ou senha inválidos" };
+    }
+    if (error instanceof RateLimitError) {
+      return { ok: false, error: error.message };
     }
     return { ok: false, error: "Não foi possível entrar" };
   }
@@ -77,6 +88,11 @@ export async function registerAction(
   }
 
   try {
+    assertRateLimit({
+      key: await clientRateKey("register", parsed.data.email),
+      limit: 5,
+      windowMs: 15 * 60 * 1000,
+    });
     await registerTenant(parsed.data);
     await signIn("credentials", {
       email: parsed.data.email,
@@ -88,9 +104,12 @@ export async function registerAction(
     if (isNextRedirect(error)) {
       throw error;
     }
+    if (error instanceof RateLimitError) {
+      return { ok: false, error: error.message };
+    }
     return {
       ok: false,
-      error: error instanceof Error ? error.message : "Falha no cadastro",
+      error: publicErrorMessage(error, "Falha no cadastro"),
     };
   }
 }
@@ -121,14 +140,20 @@ export async function forgotPasswordAction(
     return { ok: false, error: "E-mail inválido" };
   }
 
-  const result = await createPasswordResetToken(parsed.data.email);
-  // In development, surface token for local testing (no email provider yet)
-  if (process.env.NODE_ENV === "development" && result.token) {
-    console.info(`[auth] reset token for ${result.email}: ${result.token}`);
+  try {
+    assertRateLimit({
+      key: await clientRateKey("forgot", parsed.data.email),
+      limit: 5,
+      windowMs: 15 * 60 * 1000,
+    });
+    await createPasswordResetToken(parsed.data.email);
+  } catch (error) {
+    if (error instanceof RateLimitError) {
+      return { ok: false, error: error.message };
+    }
     return {
-      ok: true,
-      message: "Se o e-mail existir, enviaremos instruções. (token no console)",
-      token: result.token,
+      ok: false,
+      error: publicErrorMessage(error, "Não foi possível enviar as instruções"),
     };
   }
 
@@ -151,12 +176,20 @@ export async function resetPasswordAction(
   }
 
   try {
+    assertRateLimit({
+      key: await clientRateKey("reset", parsed.data.token.slice(0, 8)),
+      limit: 8,
+      windowMs: 15 * 60 * 1000,
+    });
     await resetPasswordWithToken(parsed.data);
     return { ok: true, message: "Senha atualizada. Faça login." };
   } catch (error) {
+    if (error instanceof RateLimitError) {
+      return { ok: false, error: error.message };
+    }
     return {
       ok: false,
-      error: error instanceof Error ? error.message : "Falha ao redefinir senha",
+      error: publicErrorMessage(error, "Falha ao redefinir senha"),
     };
   }
 }
@@ -175,6 +208,11 @@ export async function acceptInviteAction(
   }
 
   try {
+    assertRateLimit({
+      key: await clientRateKey("invite", parsed.data.token.slice(0, 8)),
+      limit: 10,
+      windowMs: 15 * 60 * 1000,
+    });
     const result = await acceptInvite(parsed.data);
     await signIn("credentials", {
       email: result.user.email,
@@ -186,9 +224,12 @@ export async function acceptInviteAction(
     if (isNextRedirect(error)) {
       throw error;
     }
+    if (error instanceof RateLimitError) {
+      return { ok: false, error: error.message };
+    }
     return {
       ok: false,
-      error: error instanceof Error ? error.message : "Falha ao aceitar convite",
+      error: publicErrorMessage(error, "Falha ao aceitar convite"),
     };
   }
 }

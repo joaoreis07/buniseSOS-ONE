@@ -31,20 +31,7 @@ export function ForgotPasswordForm() {
       ) : null}
       {state?.ok ? (
         <Alert>
-          <AlertDescription>
-            {state.message}
-            {state.token ? (
-              <>
-                {" "}
-                <Link
-                  href={`/reset-password?token=${state.token}`}
-                  className="underline"
-                >
-                  Abrir redefinição
-                </Link>
-              </>
-            ) : null}
-          </AlertDescription>
+          <AlertDescription>{state.message}</AlertDescription>
         </Alert>
       ) : null}
       <Button type="submit" className="w-full" disabled={pending}>

@@ -15,6 +15,7 @@ import {
   cancelSaleForTenant,
   completeSaleForTenant,
 } from "../src/modules/sales/services/sale.service";
+import { assertVerificationDatabase } from "./lib/assert-one-database";
 
 const prisma = new PrismaClient();
 
@@ -40,9 +41,7 @@ async function tenant(name: string, suffix: string) {
 }
 
 async function main() {
-  const url = process.env.DATABASE_URL ?? "";
-  assert(url.includes("businessos_one"), "must use businessos_one");
-  assert(!/localhost:5432\b/.test(url), "must not use Finance port");
+  assertVerificationDatabase();
 
   assert(
     JSON.stringify(splitCents(100000, 3)) ===

@@ -194,16 +194,19 @@ export async function refreshFinanceStatuses(companyId: string) {
     },
     select: {
       id: true,
+      status: true,
       installments: { select: { amount: true, paidAmount: true, status: true } },
     },
   });
   await Promise.all(
-    openAccounts.map((account) =>
-      prisma.accountReceivable.update({
+    openAccounts.map((account) => {
+      const nextStatus = statusForAccount(account.installments);
+      if (nextStatus === account.status) return Promise.resolve();
+      return prisma.accountReceivable.update({
         where: { id: account.id },
-        data: { status: statusForAccount(account.installments) },
-      }),
-    ),
+        data: { status: nextStatus },
+      });
+    }),
   );
 }
 

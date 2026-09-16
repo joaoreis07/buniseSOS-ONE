@@ -1,5 +1,6 @@
 "use server";
 
+import { publicErrorMessage } from "@/shared/errors/public-error";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
@@ -58,7 +59,7 @@ export async function createSupplierAction(
     if (isRedirectError(error)) throw error;
     return {
       ok: false,
-      error: error instanceof Error ? error.message : "Falha ao criar fornecedor",
+      error: publicErrorMessage(error, "Falha ao criar fornecedor"),
     };
   }
 }
@@ -90,7 +91,7 @@ export async function updateSupplierAction(
     return {
       ok: false,
       error:
-        error instanceof Error ? error.message : "Falha ao atualizar fornecedor",
+        publicErrorMessage(error, "Falha ao atualizar fornecedor"),
     };
   }
 }

@@ -7,6 +7,7 @@
 import { PrismaClient, type Role } from "@prisma/client";
 import { createHash, randomBytes } from "crypto";
 import { hash, compare } from "bcryptjs";
+import { assertVerificationDatabase } from "./lib/assert-one-database";
 
 const prisma = new PrismaClient();
 
@@ -107,17 +108,7 @@ function hasPermission(role: Role, permission: string): boolean {
 async function main() {
   const databaseUrl = process.env.DATABASE_URL ?? "";
   console.log("DATABASE:", maskDatabaseUrl(databaseUrl));
-
-  assert(databaseUrl.includes("5434"), "DATABASE_URL must use port 5434");
-  assert(
-    databaseUrl.includes("businessos_one"),
-    "DATABASE_URL must target businessos_one",
-  );
-  assert(
-    !databaseUrl.includes("businessos_finance") &&
-      !/localhost:5432\b/.test(databaseUrl),
-    "DATABASE_URL must not point to Finance",
-  );
+  assertVerificationDatabase(databaseUrl);
 
   // Tables exist
   const tables = await prisma.$queryRaw<Array<{ tablename: string }>>`

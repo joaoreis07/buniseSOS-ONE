@@ -1,5 +1,6 @@
 "use server";
 
+import { publicErrorMessage } from "@/shared/errors/public-error";
 import { revalidatePath } from "next/cache";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
 import { requirePermission } from "@/shared/auth/session";
@@ -50,7 +51,7 @@ export async function createCategoryAction(
     return {
       ok: false,
       error:
-        error instanceof Error ? error.message : "Falha ao criar categoria",
+        publicErrorMessage(error, "Falha ao criar categoria"),
     };
   }
 }
@@ -87,7 +88,7 @@ export async function updateCategoryAction(
     return {
       ok: false,
       error:
-        error instanceof Error ? error.message : "Falha ao atualizar categoria",
+        publicErrorMessage(error, "Falha ao atualizar categoria"),
     };
   }
 }
@@ -115,7 +116,7 @@ export async function deleteCategoryAction(
     return {
       ok: false,
       error:
-        error instanceof Error ? error.message : "Falha ao excluir categoria",
+        publicErrorMessage(error, "Falha ao excluir categoria"),
     };
   }
 }

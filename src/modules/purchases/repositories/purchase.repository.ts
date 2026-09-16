@@ -1,5 +1,6 @@
 import type { Prisma, PurchaseStatus } from "@prisma/client";
 import { prisma } from "@/shared/db/prisma";
+import { lockTenantResource } from "@/shared/db/advisory-lock";
 import { notDeletedFilter } from "@/shared/tenant/tenant";
 import type { PurchaseListQuery } from "@/modules/purchases/schemas/purchase.schemas";
 
@@ -111,6 +112,7 @@ export async function nextPurchaseNumber(
   tx: Prisma.TransactionClient,
   companyId: string,
 ) {
+  await lockTenantResource(tx, "purchase-number", companyId);
   const last = await tx.purchase.findFirst({
     where: { companyId },
     orderBy: { number: "desc" },

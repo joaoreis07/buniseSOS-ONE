@@ -1,7 +1,10 @@
 "use server";
 
+import { publicErrorMessage } from "@/shared/errors/public-error";
 import { revalidatePath } from "next/cache";
 import { requirePermission } from "@/shared/auth/session";
+import { assertRateLimit, RateLimitError } from "@/shared/security/rate-limit";
+import { clientRateKey } from "@/shared/security/request-key";
 import { inviteMemberSchema } from "@/modules/auth/schemas/auth.schemas";
 import {
   changeMemberRoleSchema,
@@ -46,6 +49,11 @@ export async function inviteMemberAction(
   }
 
   try {
+    assertRateLimit({
+      key: await clientRateKey("invite-create", user.companyId),
+      limit: 20,
+      windowMs: 15 * 60 * 1000,
+    });
     await inviteMemberForTenant({
       companyId: user.companyId,
       userId: user.id,
@@ -59,9 +67,12 @@ export async function inviteMemberAction(
       message: "Convite criado.",
     };
   } catch (error) {
+    if (error instanceof RateLimitError) {
+      return { ok: false, error: error.message };
+    }
     return {
       ok: false,
-      error: error instanceof Error ? error.message : "Falha ao convidar",
+      error: publicErrorMessage(error, "Falha ao convidar"),
     };
   }
 }
@@ -77,6 +88,11 @@ export async function resendInviteAction(
   }
 
   try {
+    assertRateLimit({
+      key: await clientRateKey("invite-resend", user.companyId),
+      limit: 20,
+      windowMs: 15 * 60 * 1000,
+    });
     await resendInviteForTenant({
       companyId: user.companyId,
       userId: user.id,
@@ -86,9 +102,12 @@ export async function resendInviteAction(
     revalidateTeam();
     return { ok: true, message: "Convite reenviado." };
   } catch (error) {
+    if (error instanceof RateLimitError) {
+      return { ok: false, error: error.message };
+    }
     return {
       ok: false,
-      error: error instanceof Error ? error.message : "Falha ao reenviar convite",
+      error: publicErrorMessage(error, "Falha ao reenviar convite"),
     };
   }
 }
@@ -115,7 +134,7 @@ export async function revokeInviteAction(
   } catch (error) {
     return {
       ok: false,
-      error: error instanceof Error ? error.message : "Falha ao cancelar convite",
+      error: publicErrorMessage(error, "Falha ao cancelar convite"),
     };
   }
 }
@@ -146,7 +165,7 @@ export async function changeMemberRoleAction(
   } catch (error) {
     return {
       ok: false,
-      error: error instanceof Error ? error.message : "Falha ao alterar função",
+      error: publicErrorMessage(error, "Falha ao alterar função"),
     };
   }
 }
@@ -175,7 +194,7 @@ export async function deactivateMemberAction(
   } catch (error) {
     return {
       ok: false,
-      error: error instanceof Error ? error.message : "Falha ao desativar membro",
+      error: publicErrorMessage(error, "Falha ao desativar membro"),
     };
   }
 }
@@ -204,7 +223,7 @@ export async function activateMemberAction(
   } catch (error) {
     return {
       ok: false,
-      error: error instanceof Error ? error.message : "Falha ao reativar membro",
+      error: publicErrorMessage(error, "Falha ao reativar membro"),
     };
   }
 }

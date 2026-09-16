@@ -15,6 +15,7 @@ import {
   renderSaleReceiptPdf,
 } from "../src/modules/documents/services/document.service";
 import { formatOperationalDocumentNumber } from "../src/modules/documents/lib/document-labels";
+import { assertVerificationDatabase } from "./lib/assert-one-database";
 
 const prisma = new PrismaClient();
 
@@ -68,9 +69,7 @@ async function addMember(params: {
 }
 
 async function main() {
-  const url = process.env.DATABASE_URL ?? "";
-  assert(url.includes("businessos_one"), "must use businessos_one");
-  assert(!/localhost:5432\b/.test(url), "must not use Finance port");
+  assertVerificationDatabase();
 
   assert(hasPermission("SALES", "sales:view"), "SALES receipts via sales:view");
   assert(!hasPermission("SALES", "finance:view"), "SALES no payment receipts");

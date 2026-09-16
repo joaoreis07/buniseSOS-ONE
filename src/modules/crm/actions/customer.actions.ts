@@ -1,5 +1,6 @@
 "use server";
 
+import { publicErrorMessage } from "@/shared/errors/public-error";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
@@ -68,7 +69,7 @@ export async function createCustomerAction(
     if (isRedirectError(error)) throw error;
     return {
       ok: false,
-      error: error instanceof Error ? error.message : "Falha ao criar cliente",
+      error: publicErrorMessage(error, "Falha ao criar cliente"),
     };
   }
 }
@@ -106,7 +107,7 @@ export async function updateCustomerAction(
     if (isRedirectError(error)) throw error;
     return {
       ok: false,
-      error: error instanceof Error ? error.message : "Falha ao atualizar cliente",
+      error: publicErrorMessage(error, "Falha ao atualizar cliente"),
     };
   }
 }
@@ -134,7 +135,7 @@ export async function deleteCustomerAction(
     if (isRedirectError(error)) throw error;
     return {
       ok: false,
-      error: error instanceof Error ? error.message : "Falha ao excluir cliente",
+      error: publicErrorMessage(error, "Falha ao excluir cliente"),
     };
   }
 }

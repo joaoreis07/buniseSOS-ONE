@@ -1,5 +1,6 @@
 "use server";
 
+import { publicErrorMessage } from "@/shared/errors/public-error";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
@@ -58,7 +59,7 @@ export async function createLeadAction(
     if (isRedirectError(error)) throw error;
     return {
       ok: false,
-      error: error instanceof Error ? error.message : "Falha ao criar lead",
+      error: publicErrorMessage(error, "Falha ao criar lead"),
     };
   }
 }
@@ -96,7 +97,7 @@ export async function updateLeadAction(
     if (isRedirectError(error)) throw error;
     return {
       ok: false,
-      error: error instanceof Error ? error.message : "Falha ao atualizar lead",
+      error: publicErrorMessage(error, "Falha ao atualizar lead"),
     };
   }
 }
@@ -124,7 +125,7 @@ export async function deleteLeadAction(
     if (isRedirectError(error)) throw error;
     return {
       ok: false,
-      error: error instanceof Error ? error.message : "Falha ao excluir lead",
+      error: publicErrorMessage(error, "Falha ao excluir lead"),
     };
   }
 }

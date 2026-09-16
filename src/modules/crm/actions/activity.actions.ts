@@ -1,5 +1,6 @@
 "use server";
 
+import { publicErrorMessage } from "@/shared/errors/public-error";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
@@ -72,7 +73,7 @@ export async function createActivityAction(
     if (isRedirectError(error)) throw error;
     return {
       ok: false,
-      error: error instanceof Error ? error.message : "Falha ao criar atividade",
+      error: publicErrorMessage(error, "Falha ao criar atividade"),
     };
   }
 }
@@ -108,7 +109,7 @@ export async function updateActivityAction(
     return {
       ok: false,
       error:
-        error instanceof Error ? error.message : "Falha ao atualizar atividade",
+        publicErrorMessage(error, "Falha ao atualizar atividade"),
     };
   }
 }
@@ -137,7 +138,7 @@ export async function setActivityStatusAction(
     return {
       ok: false,
       error:
-        error instanceof Error ? error.message : "Falha ao alterar status",
+        publicErrorMessage(error, "Falha ao alterar status"),
     };
   }
 }
@@ -164,7 +165,7 @@ export async function deleteActivityAction(
     return {
       ok: false,
       error:
-        error instanceof Error ? error.message : "Falha ao excluir atividade",
+        publicErrorMessage(error, "Falha ao excluir atividade"),
     };
   }
 }

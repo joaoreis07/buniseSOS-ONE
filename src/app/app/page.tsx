@@ -5,6 +5,7 @@ import { canViewReports } from "@/modules/reports/services/reports.service";
 import { DashboardView } from "@/modules/reports/components/dashboard-view";
 import { ErrorBlock } from "@/modules/reports/components/kpi-card";
 import { requirePermission } from "@/shared/auth/session";
+import { publicErrorMessage } from "@/shared/errors/public-error";
 
 export default async function AppDashboardPage({
   searchParams,
@@ -33,9 +34,7 @@ export default async function AppDashboardPage({
     );
   } catch (error) {
     const message =
-      error instanceof Error
-        ? error.message
-        : "Não foi possível carregar o dashboard.";
+      publicErrorMessage(error, "Não foi possível carregar o dashboard.");
     return (
       <div className="space-y-4">
         <div>

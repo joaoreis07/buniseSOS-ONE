@@ -18,6 +18,7 @@ import {
   updatePreferencesForTenant,
   uploadCompanyLogoForTenant,
 } from "@/modules/settings/services/settings.service";
+import { publicErrorMessage } from "@/shared/errors/public-error";
 
 export type SettingsActionResult = {
   ok: boolean;
@@ -27,7 +28,7 @@ export type SettingsActionResult = {
 function fail(error: unknown, fallback: string): SettingsActionResult {
   return {
     ok: false,
-    error: error instanceof Error ? error.message : fallback,
+    error: publicErrorMessage(error, fallback),
   };
 }
 

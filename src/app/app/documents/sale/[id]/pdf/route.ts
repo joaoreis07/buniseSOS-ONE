@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { requirePermission } from "@/shared/auth/session";
 import { renderSaleReceiptPdf } from "@/modules/documents/services/document.service";
 import { formatOperationalDocumentNumber } from "@/modules/documents/lib/document-labels";
+import { publicErrorMessage } from "@/shared/errors/public-error";
 
 export async function GET(
   _request: Request,
@@ -24,7 +25,7 @@ export async function GET(
       },
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Falha ao gerar PDF";
+    const message = publicErrorMessage(error, "Falha ao gerar PDF");
     return NextResponse.json({ error: message }, { status: 400 });
   }
 }

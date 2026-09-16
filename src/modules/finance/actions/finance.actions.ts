@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { requireSession } from "@/shared/auth/session";
 import { receivePaymentSchema } from "@/modules/finance/schemas/finance.schemas";
 import { receiveInstallmentPayment } from "@/modules/finance/services/finance.service";
+import { publicErrorMessage } from "@/shared/errors/public-error";
 
 export type FinanceActionResult = { ok: boolean; error?: string };
 
@@ -26,6 +27,6 @@ export async function receivePaymentAction(
     revalidatePath("/app/sales");
     return { ok: true };
   } catch (error) {
-    return { ok: false, error: error instanceof Error ? error.message : "Falha ao receber pagamento" };
+    return { ok: false, error: publicErrorMessage(error, "Falha ao receber pagamento") };
   }
 }

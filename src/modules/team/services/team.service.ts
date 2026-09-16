@@ -1,4 +1,4 @@
-import type { Role } from "@prisma/client";
+import type { Prisma, Role } from "@prisma/client";
 import {
   assertPermission,
   getRolePermissionMatrix,
@@ -15,7 +15,7 @@ import {
 } from "@/modules/auth/services/auth.service";
 import type { TeamListQuery } from "@/modules/team/schemas/team.schemas";
 import {
-  countActiveAdmins,
+  countActiveAdminsInTx,
   findInviteById,
   findInvites,
   findLastLogins,
@@ -24,8 +24,8 @@ import {
   findMembershipById,
   findMembers,
   getCompanyOverview,
+  lockActiveAdmins,
   setMembershipDeletedAt,
-  updateMembershipRole,
 } from "@/modules/team/repositories/team.repository";
 import { prisma } from "@/shared/db/prisma";
 
@@ -43,12 +43,13 @@ function assertAssignableRole(actorRole: Role, targetRole: Role) {
   }
 }
 
-async function assertNotLastAdmin(params: {
-  companyId: string;
-  currentRole: Role;
-}) {
+async function assertNotLastAdminTx(
+  tx: Prisma.TransactionClient,
+  params: { companyId: string; currentRole: Role },
+) {
   if (params.currentRole !== "ADMIN") return;
-  const admins = await countActiveAdmins(params.companyId);
+  await lockActiveAdmins(tx, params.companyId);
+  const admins = await countActiveAdminsInTx(tx, params.companyId);
   if (admins <= 1) {
     throw new Error("A empresa precisa manter pelo menos um administrador ativo");
   }
@@ -224,40 +225,63 @@ export async function changeMemberRoleForTenant(params: {
   role: Role;
 }) {
   assertPermission(params.actorRole, "team:manage");
-  const member = await findMembershipById({
-    companyId: params.companyId,
-    membershipId: params.membershipId,
-  });
-  if (!member || member.deletedAt) throw new Error("Membro não encontrado");
-  if (member.userId === params.actorUserId) {
-    throw new Error("Você não pode alterar a própria função");
-  }
-  if (member.role === "ADMIN" && params.actorRole !== "ADMIN") {
-    throw new Error("Somente um administrador pode alterar outro administrador");
-  }
-  assertAssignableRole(params.actorRole, params.role);
-  if (member.role === "ADMIN" && params.role !== "ADMIN") {
-    await assertNotLastAdmin({
-      companyId: params.companyId,
-      currentRole: member.role,
-    });
-  }
 
-  const updated = await updateMembershipRole({
-    membershipId: member.id,
-    role: params.role,
+  const updated = await prisma.$transaction(async (tx) => {
+    const preview = await tx.membership.findFirst({
+      where: { id: params.membershipId, companyId: params.companyId },
+      select: { role: true, deletedAt: true },
+    });
+    if (!preview || preview.deletedAt) throw new Error("Membro não encontrado");
+    if (preview.role === "ADMIN") {
+      await lockActiveAdmins(tx, params.companyId);
+    } else {
+      await tx.$queryRaw`
+        SELECT id FROM "Membership"
+        WHERE id = ${params.membershipId}
+          AND "companyId" = ${params.companyId}
+        FOR UPDATE
+      `;
+    }
+    const member = await tx.membership.findFirst({
+      where: { id: params.membershipId, companyId: params.companyId },
+    });
+    if (!member || member.deletedAt) throw new Error("Membro não encontrado");
+    if (member.userId === params.actorUserId) {
+      throw new Error("Você não pode alterar a própria função");
+    }
+    if (member.role === "ADMIN" && params.actorRole !== "ADMIN") {
+      throw new Error("Somente um administrador pode alterar outro administrador");
+    }
+    assertAssignableRole(params.actorRole, params.role);
+    if (member.role === "ADMIN" && params.role !== "ADMIN") {
+      await assertNotLastAdminTx(tx, {
+        companyId: params.companyId,
+        currentRole: member.role,
+      });
+    }
+
+    const next = await tx.membership.update({
+      where: { id: member.id },
+      data: { role: params.role },
+    });
+    return { member, next };
   });
-  await bumpUserSessionVersion(member.userId);
+
+  await bumpUserSessionVersion(updated.member.userId);
   await writeAuditLog({
     companyId: params.companyId,
     userId: params.actorUserId,
     module: "members",
     action: "MEMBER_ROLE_CHANGE",
     entity: "Membership",
-    entityId: member.id,
-    metadata: { from: member.role, to: params.role, userId: member.userId },
+    entityId: updated.member.id,
+    metadata: {
+      from: updated.member.role,
+      to: params.role,
+      userId: updated.member.userId,
+    },
   });
-  return updated;
+  return updated.next;
 }
 
 export async function deactivateMemberForTenant(params: {
@@ -267,38 +291,58 @@ export async function deactivateMemberForTenant(params: {
   membershipId: string;
 }) {
   assertPermission(params.actorRole, "team:manage");
-  const member = await findMembershipById({
-    companyId: params.companyId,
-    membershipId: params.membershipId,
-  });
-  if (!member) throw new Error("Membro não encontrado");
-  if (member.userId === params.actorUserId) {
-    throw new Error("Você não pode desativar a própria conta");
-  }
-  if (member.deletedAt) throw new Error("Membro já está inativo");
-  if (member.role === "ADMIN" && params.actorRole !== "ADMIN") {
-    throw new Error("Somente um administrador pode desativar outro administrador");
-  }
-  await assertNotLastAdmin({
-    companyId: params.companyId,
-    currentRole: member.role,
+
+  const updated = await prisma.$transaction(async (tx) => {
+    const preview = await tx.membership.findFirst({
+      where: { id: params.membershipId, companyId: params.companyId },
+      select: { role: true, deletedAt: true },
+    });
+    if (!preview) throw new Error("Membro não encontrado");
+    if (preview.deletedAt) throw new Error("Membro já está inativo");
+    if (preview.role === "ADMIN") {
+      await lockActiveAdmins(tx, params.companyId);
+    } else {
+      await tx.$queryRaw`
+        SELECT id FROM "Membership"
+        WHERE id = ${params.membershipId}
+          AND "companyId" = ${params.companyId}
+        FOR UPDATE
+      `;
+    }
+    const member = await tx.membership.findFirst({
+      where: { id: params.membershipId, companyId: params.companyId },
+    });
+    if (!member) throw new Error("Membro não encontrado");
+    if (member.userId === params.actorUserId) {
+      throw new Error("Você não pode desativar a própria conta");
+    }
+    if (member.deletedAt) throw new Error("Membro já está inativo");
+    if (member.role === "ADMIN" && params.actorRole !== "ADMIN") {
+      throw new Error("Somente um administrador pode desativar outro administrador");
+    }
+    await assertNotLastAdminTx(tx, {
+      companyId: params.companyId,
+      currentRole: member.role,
+    });
+
+    const next = await tx.membership.update({
+      where: { id: member.id },
+      data: { deletedAt: new Date() },
+    });
+    return { member, next };
   });
 
-  const updated = await setMembershipDeletedAt({
-    membershipId: member.id,
-    deletedAt: new Date(),
-  });
-  await bumpUserSessionVersion(member.userId);
+  await bumpUserSessionVersion(updated.member.userId);
   await writeAuditLog({
     companyId: params.companyId,
     userId: params.actorUserId,
     module: "members",
     action: "MEMBER_DEACTIVATE",
     entity: "Membership",
-    entityId: member.id,
-    metadata: { userId: member.userId, role: member.role },
+    entityId: updated.member.id,
+    metadata: { userId: updated.member.userId, role: updated.member.role },
   });
-  return updated;
+  return updated.next;
 }
 
 export async function activateMemberForTenant(params: {

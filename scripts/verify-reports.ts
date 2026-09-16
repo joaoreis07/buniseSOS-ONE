@@ -27,6 +27,7 @@ import {
   cancelPurchaseForTenant,
   createPurchaseForTenant,
 } from "../src/modules/purchases/services/purchase.service";
+import { assertVerificationDatabase } from "./lib/assert-one-database";
 
 const prisma = new PrismaClient();
 
@@ -67,23 +68,21 @@ async function expectThrow(fn: () => Promise<unknown>, message: string) {
 }
 
 async function main() {
-  const url = process.env.DATABASE_URL ?? "";
-  assert(url.includes("businessos_one"), "must use businessos_one");
-  assert(!/localhost:5432\b/.test(url), "must not use Finance port");
+  assertVerificationDatabase();
 
-  const today = new Date(2026, 8, 14, 15, 0, 0);
-  const todayRange = resolvePeriod({ preset: "today", now: today });
+  const periodNow = new Date(2026, 8, 14, 15, 0, 0);
+  const todayRange = resolvePeriod({ preset: "today", now: periodNow });
   assert(
     todayRange.start.getDate() === 14 && todayRange.end.getDate() === 14,
     "today range is civil day",
   );
-  const last30 = resolvePeriod({ preset: "last_30", now: today });
+  const last30 = resolvePeriod({ preset: "last_30", now: periodNow });
   assert(last30.start.getDate() === 16 && last30.start.getMonth() === 7, "last 30 start");
   const custom = resolvePeriod({
     preset: "custom",
     from: "2026-09-01",
     to: "2026-09-14",
-    now: today,
+    now: periodNow,
   });
   assert(custom.start.getDate() === 1 && custom.end.getDate() === 14, "custom inclusive");
   let invalidDates = false;
@@ -93,6 +92,8 @@ async function main() {
     invalidDates = true;
   }
   assert(invalidDates, "custom inverted dates rejected");
+
+  const today = new Date();
 
   const zero = numericChange(0, 0);
   assert(zero.label === "—" && zero.direction === "flat", "zero vs zero");

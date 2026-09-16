@@ -1,5 +1,6 @@
 import type { Prisma, SaleStatus } from "@prisma/client";
 import { prisma } from "@/shared/db/prisma";
+import { lockTenantResource } from "@/shared/db/advisory-lock";
 import { notDeletedFilter } from "@/shared/tenant/tenant";
 import type { SaleListQuery } from "@/modules/sales/schemas/sale.schemas";
 
@@ -159,6 +160,7 @@ export async function nextSaleNumber(
   tx: Prisma.TransactionClient,
   companyId: string,
 ) {
+  await lockTenantResource(tx, "sale-number", companyId);
   const last = await tx.sale.findFirst({
     where: { companyId },
     orderBy: { number: "desc" },

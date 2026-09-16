@@ -1,5 +1,6 @@
 "use server";
 
+import { publicErrorMessage } from "@/shared/errors/public-error";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
@@ -68,7 +69,7 @@ export async function completeSaleAction(
     if (isRedirectError(error)) throw error;
     return {
       ok: false,
-      error: error instanceof Error ? error.message : "Falha ao concluir venda",
+      error: publicErrorMessage(error, "Falha ao concluir venda"),
     };
   }
 }
@@ -99,7 +100,7 @@ export async function cancelSaleAction(
   } catch (error) {
     return {
       ok: false,
-      error: error instanceof Error ? error.message : "Falha ao cancelar venda",
+      error: publicErrorMessage(error, "Falha ao cancelar venda"),
     };
   }
 }

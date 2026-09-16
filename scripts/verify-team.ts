@@ -33,6 +33,7 @@ import { createActivityForTenant } from "../src/modules/crm/services/activity.se
 import { listCompanyOwners } from "../src/modules/crm/repositories/opportunity.repository";
 import { listNotificationsForTenant } from "../src/modules/communications/services/notification.service";
 import { getSalesReportForTenant } from "../src/modules/reports/services/reports.service";
+import { assertVerificationDatabase } from "./lib/assert-one-database";
 
 const prisma = new PrismaClient();
 
@@ -86,9 +87,7 @@ async function addMember(params: {
 }
 
 async function main() {
-  const url = process.env.DATABASE_URL ?? "";
-  assert(url.includes("businessos_one"), "must use businessos_one");
-  assert(!/localhost:5432\b/.test(url), "must not use Finance port");
+  assertVerificationDatabase();
 
   assert(hasPermission("ADMIN", "team:view"), "ADMIN team:view");
   assert(hasPermission("ADMIN", "team:manage"), "ADMIN team:manage");

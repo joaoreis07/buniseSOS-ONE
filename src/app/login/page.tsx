@@ -6,6 +6,7 @@ import {
   CardTitle,
 } from "@/shared/ui/card";
 import { LoginForm } from "@/modules/auth/components/login-form";
+import { safeInternalPath } from "@/shared/security/callback-url";
 
 export default async function LoginPage({
   searchParams,
@@ -22,7 +23,7 @@ export default async function LoginPage({
           <CardDescription>BusinessOS One</CardDescription>
         </CardHeader>
         <CardContent>
-          <LoginForm callbackUrl={params.callbackUrl} />
+          <LoginForm callbackUrl={safeInternalPath(params.callbackUrl)} />
         </CardContent>
       </Card>
     </main>

@@ -24,6 +24,36 @@ export async function countActiveAdmins(companyId: string) {
   });
 }
 
+export async function lockActiveAdmins(
+  tx: Prisma.TransactionClient,
+  companyId: string,
+) {
+  await tx.$queryRaw`
+    SELECT m.id
+    FROM "Membership" m
+    INNER JOIN "User" u ON u.id = m."userId"
+    WHERE m."companyId" = ${companyId}
+      AND m.role = 'ADMIN'::"Role"
+      AND m."deletedAt" IS NULL
+      AND u."deletedAt" IS NULL
+    FOR UPDATE OF m
+  `;
+}
+
+export async function countActiveAdminsInTx(
+  tx: Prisma.TransactionClient,
+  companyId: string,
+) {
+  return tx.membership.count({
+    where: {
+      companyId,
+      role: "ADMIN",
+      deletedAt: null,
+      user: { deletedAt: null },
+    },
+  });
+}
+
 export async function findMembershipById(params: {
   companyId: string;
   membershipId: string;

@@ -1,7 +1,7 @@
-import type {
-  InventoryMovementType,
+import {
   Prisma,
-  ProductStatus,
+  type InventoryMovementType,
+  type ProductStatus,
 } from "@prisma/client";
 import { prisma } from "@/shared/db/prisma";
 import { notDeletedFilter } from "@/shared/tenant/tenant";
@@ -54,16 +54,9 @@ export async function listInventoryProducts(filters: InventoryListFilters) {
     ];
   }
 
-  const products = await prisma.product.findMany({
-    where,
-    orderBy: [{ name: "asc" }, { createdAt: "desc" }],
-    include: {
-      category: { select: { id: true, name: true } },
-      inventory: true,
-    },
-  });
-
-  let rows = products.map((product) => {
+  function toRow<T extends {
+    inventory: { id: string; quantity: number; minimumQuantity: number } | null;
+  }>(product: T) {
     const quantity = product.inventory?.quantity ?? 0;
     const minimumQuantity = product.inventory?.minimumQuantity ?? 0;
     return {
@@ -73,20 +66,59 @@ export async function listInventoryProducts(filters: InventoryListFilters) {
       stockLevel: getStockLevel({ quantity, minimumQuantity }),
       inventoryId: product.inventory?.id ?? null,
     };
-  });
-
-  if (filters.stock === "out") {
-    rows = rows.filter((row) => row.quantity <= 0);
-  } else if (filters.stock === "low") {
-    rows = rows.filter((row) => row.stockLevel === "low");
   }
 
-  const total = rows.length;
+  const include = {
+    category: { select: { id: true, name: true } },
+    inventory: true,
+  } as const;
+
+  if (filters.stock === "low") {
+    const products = await prisma.product.findMany({
+      where,
+      orderBy: [{ name: "asc" }, { createdAt: "desc" }],
+      include,
+    });
+    const rows = products
+      .map(toRow)
+      .filter((row) => row.stockLevel === "low");
+    const total = rows.length;
+    const skip = (filters.page - 1) * filters.pageSize;
+    const items = rows.slice(skip, skip + filters.pageSize);
+    return {
+      items,
+      total,
+      page: filters.page,
+      pageSize: filters.pageSize,
+      pageCount: Math.max(1, Math.ceil(total / filters.pageSize)),
+    };
+  }
+
+  if (filters.stock === "out") {
+    where.AND = [
+      {
+        OR: [
+          { inventory: { is: null } },
+          { inventory: { is: { quantity: { lte: 0 } } } },
+        ],
+      },
+    ];
+  }
+
   const skip = (filters.page - 1) * filters.pageSize;
-  const items = rows.slice(skip, skip + filters.pageSize);
+  const [total, products] = await Promise.all([
+    prisma.product.count({ where }),
+    prisma.product.findMany({
+      where,
+      orderBy: [{ name: "asc" }, { createdAt: "desc" }],
+      skip,
+      take: filters.pageSize,
+      include,
+    }),
+  ]);
 
   return {
-    items,
+    items: products.map(toRow),
     total,
     page: filters.page,
     pageSize: filters.pageSize,
@@ -95,37 +127,42 @@ export async function listInventoryProducts(filters: InventoryListFilters) {
 }
 
 export async function getInventorySummary(companyId: string) {
-  const products = await prisma.product.findMany({
-    where: { companyId, type: "PRODUCT", ...notDeletedFilter },
-    include: { inventory: true },
-  });
-
-  let withStock = 0;
-  let lowStock = 0;
-  let outOfStock = 0;
-  let totalQuantity = 0;
-  let totalValue = 0;
-
-  for (const product of products) {
-    const quantity = product.inventory?.quantity ?? 0;
-    const minimumQuantity = product.inventory?.minimumQuantity ?? 0;
-    const level = getStockLevel({ quantity, minimumQuantity });
-
-    if (product.inventory) withStock += 1;
-    if (level === "low") lowStock += 1;
-    if (level === "out") outOfStock += 1;
-
-    totalQuantity += quantity;
-    totalValue += quantity * Number(product.costPrice);
-  }
+  const [row] = await prisma.$queryRaw<
+    Array<{
+      productCount: number;
+      withStock: number;
+      lowStock: number;
+      outOfStock: number;
+      totalQuantity: number;
+      totalValue: unknown;
+    }>
+  >`
+    SELECT
+      COUNT(*)::int AS "productCount",
+      COUNT(i.id)::int AS "withStock",
+      COUNT(*) FILTER (
+        WHERE COALESCE(i.quantity, 0) > 0
+          AND i."minimumQuantity" > 0
+          AND COALESCE(i.quantity, 0) <= i."minimumQuantity"
+      )::int AS "lowStock",
+      COUNT(*) FILTER (WHERE COALESCE(i.quantity, 0) <= 0)::int AS "outOfStock",
+      COALESCE(SUM(COALESCE(i.quantity, 0)), 0)::int AS "totalQuantity",
+      COALESCE(SUM(COALESCE(i.quantity, 0) * p."costPrice"), 0) AS "totalValue"
+    FROM "Product" p
+    LEFT JOIN "Inventory" i
+      ON i."productId" = p.id AND i."companyId" = p."companyId"
+    WHERE p."companyId" = ${companyId}
+      AND p.type = 'PRODUCT'
+      AND p."deletedAt" IS NULL
+  `;
 
   return {
-    productCount: products.length,
-    withStock,
-    lowStock,
-    outOfStock,
-    totalQuantity,
-    totalValue,
+    productCount: Number(row?.productCount ?? 0),
+    withStock: Number(row?.withStock ?? 0),
+    lowStock: Number(row?.lowStock ?? 0),
+    outOfStock: Number(row?.outOfStock ?? 0),
+    totalQuantity: Number(row?.totalQuantity ?? 0),
+    totalValue: Number(row?.totalValue ?? 0),
   };
 }
 
@@ -219,19 +256,42 @@ export async function applyInventoryMovement(
     where: { productId: params.productId },
   });
   if (!inventory) {
-    inventory = await tx.inventory.create({
-      data: {
-        companyId: params.companyId,
-        productId: params.productId,
-        quantity: 0,
-        minimumQuantity: 0,
-      },
-    });
-  } else if (inventory.companyId !== params.companyId) {
+    try {
+      inventory = await tx.inventory.create({
+        data: {
+          companyId: params.companyId,
+          productId: params.productId,
+          quantity: 0,
+          minimumQuantity: 0,
+        },
+      });
+    } catch (error) {
+      if (
+        !(error instanceof Prisma.PrismaClientKnownRequestError) ||
+        error.code !== "P2002"
+      ) {
+        throw error;
+      }
+      inventory = await tx.inventory.findUnique({
+        where: { productId: params.productId },
+      });
+    }
+  }
+  if (!inventory || inventory.companyId !== params.companyId) {
     throw new Error("Estoque inválido para esta empresa");
   }
 
-  const balanceBefore = inventory.quantity;
+  const locked = await tx.$queryRaw<Array<{ quantity: number }>>`
+    SELECT quantity FROM "Inventory"
+    WHERE id = ${inventory.id}
+      AND "companyId" = ${params.companyId}
+    FOR UPDATE
+  `;
+  if (!locked[0]) {
+    throw new Error("Estoque inválido para esta empresa");
+  }
+
+  const balanceBefore = locked[0].quantity;
   const balanceAfter = computeNewQuantity({
     type: params.type,
     current: balanceBefore,

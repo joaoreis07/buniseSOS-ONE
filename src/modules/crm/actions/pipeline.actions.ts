@@ -1,5 +1,6 @@
 "use server";
 
+import { publicErrorMessage } from "@/shared/errors/public-error";
 import { revalidatePath } from "next/cache";
 import { requirePermission } from "@/shared/auth/session";
 import { moveOpportunityStage } from "@/modules/crm/services/pipeline.service";
@@ -36,7 +37,7 @@ export async function moveOpportunityStageAction(
   } catch (error) {
     return {
       ok: false,
-      error: error instanceof Error ? error.message : "Falha ao mover estágio",
+      error: publicErrorMessage(error, "Falha ao mover estágio"),
     };
   }
 }

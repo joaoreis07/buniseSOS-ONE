@@ -10,6 +10,7 @@ import {
   ReportPagination,
 } from "@/modules/reports/components/report-toolbar";
 import { ErrorBlock } from "@/modules/reports/components/kpi-card";
+import { publicErrorMessage } from "@/shared/errors/public-error";
 import { Button } from "@/shared/ui/button";
 
 export default async function InventoryReportPage({
@@ -64,7 +65,7 @@ export default async function InventoryReportPage({
     );
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : "Não foi possível carregar o relatório.";
+      publicErrorMessage(error, "Não foi possível carregar o relatório.");
     return (
       <div className="space-y-4">
         <h1 className="text-2xl font-semibold tracking-tight">

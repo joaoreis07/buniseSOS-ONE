@@ -1,5 +1,6 @@
 "use server";
 
+import { publicErrorMessage } from "@/shared/errors/public-error";
 import { revalidatePath } from "next/cache";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
 import { requirePermission, requireSession } from "@/shared/auth/session";
@@ -45,7 +46,7 @@ export async function initializeInventoryAction(
     return {
       ok: false,
       error:
-        error instanceof Error ? error.message : "Falha ao inicializar estoque",
+        publicErrorMessage(error, "Falha ao inicializar estoque"),
     };
   }
 }

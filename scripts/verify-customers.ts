@@ -14,6 +14,7 @@ import {
 } from "../src/modules/crm/services/customer.service";
 import { completeSaleForTenant } from "../src/modules/sales/services/sale.service";
 import { cancelSaleForTenant } from "../src/modules/sales/services/sale.service";
+import { assertVerificationDatabase } from "./lib/assert-one-database";
 
 const prisma = new PrismaClient();
 
@@ -79,9 +80,7 @@ const blankCustomer = {
 };
 
 async function main() {
-  const url = process.env.DATABASE_URL ?? "";
-  assert(url.includes("businessos_one"), "must use businessos_one");
-  assert(!/localhost:5432\b/.test(url), "must not use Finance port");
+  assertVerificationDatabase();
 
   const suffix = randomBytes(3).toString("hex");
   const password = "TestPass123!";

@@ -1,5 +1,6 @@
 "use server";
 
+import { publicErrorMessage } from "@/shared/errors/public-error";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
@@ -74,7 +75,7 @@ export async function createPurchaseAction(
     if (isRedirectError(error)) throw error;
     return {
       ok: false,
-      error: error instanceof Error ? error.message : "Falha ao registrar compra",
+      error: publicErrorMessage(error, "Falha ao registrar compra"),
     };
   }
 }
@@ -107,7 +108,7 @@ export async function updatePurchaseAction(
     if (isRedirectError(error)) throw error;
     return {
       ok: false,
-      error: error instanceof Error ? error.message : "Falha ao atualizar compra",
+      error: publicErrorMessage(error, "Falha ao atualizar compra"),
     };
   }
 }
@@ -134,7 +135,7 @@ export async function receivePurchaseAction(
   } catch (error) {
     return {
       ok: false,
-      error: error instanceof Error ? error.message : "Falha ao receber compra",
+      error: publicErrorMessage(error, "Falha ao receber compra"),
     };
   }
 }
@@ -161,7 +162,7 @@ export async function cancelPurchaseAction(
   } catch (error) {
     return {
       ok: false,
-      error: error instanceof Error ? error.message : "Falha ao cancelar compra",
+      error: publicErrorMessage(error, "Falha ao cancelar compra"),
     };
   }
 }

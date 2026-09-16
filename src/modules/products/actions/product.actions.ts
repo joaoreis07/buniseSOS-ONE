@@ -1,5 +1,6 @@
 "use server";
 
+import { publicErrorMessage } from "@/shared/errors/public-error";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
@@ -57,7 +58,7 @@ export async function createProductAction(
     if (isRedirectError(error)) throw error;
     return {
       ok: false,
-      error: error instanceof Error ? error.message : "Falha ao criar produto",
+      error: publicErrorMessage(error, "Falha ao criar produto"),
     };
   }
 }
@@ -94,7 +95,7 @@ export async function updateProductAction(
     return {
       ok: false,
       error:
-        error instanceof Error ? error.message : "Falha ao atualizar produto",
+        publicErrorMessage(error, "Falha ao atualizar produto"),
     };
   }
 }
@@ -121,7 +122,7 @@ export async function deleteProductAction(
     return {
       ok: false,
       error:
-        error instanceof Error ? error.message : "Falha ao excluir produto",
+        publicErrorMessage(error, "Falha ao excluir produto"),
     };
   }
 }

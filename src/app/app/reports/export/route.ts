@@ -9,6 +9,7 @@ import {
   salesReportQuerySchema,
 } from "@/modules/reports/schemas/reports.schemas";
 import { exportReportCsv } from "@/modules/reports/services/reports.service";
+import { publicErrorMessage } from "@/shared/errors/public-error";
 
 export async function GET(request: Request) {
   const user = await getValidatedSessionUser();
@@ -86,7 +87,7 @@ export async function GET(request: Request) {
     });
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : "Não foi possível exportar o relatório.";
+      publicErrorMessage(error, "Não foi possível exportar o relatório.");
     const status = message.includes("permissão") ? 403 : 400;
     return NextResponse.json({ error: message }, { status });
   }

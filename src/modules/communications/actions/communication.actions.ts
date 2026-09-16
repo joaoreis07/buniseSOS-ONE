@@ -1,6 +1,9 @@
 "use server";
 
+import { publicErrorMessage } from "@/shared/errors/public-error";
 import { revalidatePath } from "next/cache";
+import { assertRateLimit, RateLimitError } from "@/shared/security/rate-limit";
+import { clientRateKey } from "@/shared/security/request-key";
 import { redirect } from "next/navigation";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
 import { requirePermission } from "@/shared/auth/session";
@@ -72,7 +75,7 @@ export async function saveTemplateAction(
     if (isRedirectError(error)) throw error;
     return {
       ok: false,
-      error: error instanceof Error ? error.message : "Falha ao salvar template",
+      error: publicErrorMessage(error, "Falha ao salvar template"),
     };
   }
 }
@@ -99,7 +102,7 @@ export async function toggleTemplateAction(
   } catch (error) {
     return {
       ok: false,
-      error: error instanceof Error ? error.message : "Falha ao atualizar template",
+      error: publicErrorMessage(error, "Falha ao atualizar template"),
     };
   }
 }
@@ -128,6 +131,11 @@ export async function prepareWhatsAppAction(
   }
 
   try {
+    assertRateLimit({
+      key: await clientRateKey("communication", user.companyId),
+      limit: 40,
+      windowMs: 15 * 60 * 1000,
+    });
     const result = await prepareWhatsAppForTenant({
       companyId: user.companyId,
       userId: user.id,
@@ -143,9 +151,12 @@ export async function prepareWhatsAppAction(
       claimedSent: false,
     };
   } catch (error) {
+    if (error instanceof RateLimitError) {
+      return { ok: false, error: error.message };
+    }
     return {
       ok: false,
-      error: error instanceof Error ? error.message : "Falha ao preparar WhatsApp",
+      error: publicErrorMessage(error, "Falha ao preparar WhatsApp"),
     };
   }
 }
@@ -175,7 +186,7 @@ export async function openWhatsAppAction(
   } catch (error) {
     return {
       ok: false,
-      error: error instanceof Error ? error.message : "Falha ao abrir WhatsApp",
+      error: publicErrorMessage(error, "Falha ao abrir WhatsApp"),
     };
   }
 }
@@ -198,6 +209,11 @@ export async function recordManualCommunicationAction(
     return { ok: false, error: parsed.error.issues[0]?.message ?? "Dados inválidos" };
   }
   try {
+    assertRateLimit({
+      key: await clientRateKey("communication", user.companyId),
+      limit: 40,
+      windowMs: 15 * 60 * 1000,
+    });
     const communication = await recordManualCommunicationForTenant({
       companyId: user.companyId,
       userId: user.id,
@@ -207,9 +223,12 @@ export async function recordManualCommunicationAction(
     revalidateCommunications(parsed.data.customerId);
     return { ok: true, id: communication.id, claimedSent: false };
   } catch (error) {
+    if (error instanceof RateLimitError) {
+      return { ok: false, error: error.message };
+    }
     return {
       ok: false,
-      error: error instanceof Error ? error.message : "Falha ao registrar comunicação",
+      error: publicErrorMessage(error, "Falha ao registrar comunicação"),
     };
   }
 }
@@ -234,7 +253,7 @@ export async function cancelCommunicationAction(
   } catch (error) {
     return {
       ok: false,
-      error: error instanceof Error ? error.message : "Falha ao cancelar",
+      error: publicErrorMessage(error, "Falha ao cancelar"),
     };
   }
 }

@@ -12,6 +12,16 @@ import { writeAuditLog } from "@/shared/audit/audit";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   trustHost: true,
+  cookies: {
+    sessionToken: {
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: process.env.NODE_ENV === "production",
+      },
+    },
+  },
   session: {
     strategy: "jwt",
     maxAge: 30 * 24 * 60 * 60,

@@ -11,6 +11,7 @@ import {
   cancelSaleForTenant,
   completeSaleForTenant,
 } from "../src/modules/sales/services/sale.service";
+import { assertVerificationDatabase } from "./lib/assert-one-database";
 
 const prisma = new PrismaClient();
 
@@ -44,9 +45,7 @@ async function registerTenant(input: {
 }
 
 async function main() {
-  const url = process.env.DATABASE_URL ?? "";
-  assert(url.includes("businessos_one"), "must use businessos_one");
-  assert(!/localhost:5432\b/.test(url), "must not use Finance port");
+  assertVerificationDatabase();
 
   const totals = computeSaleTotals(
     [
@@ -237,6 +236,88 @@ async function main() {
   }
   assert(noCreate, "FINANCE cannot create sale");
 
+  const raceProduct = await prisma.product.create({
+    data: {
+      companyId: a.company.id,
+      name: `Produto Race ${suffix}`,
+      sku: `SAL-R-${suffix}`,
+      type: "PRODUCT",
+      status: "ACTIVE",
+      salePrice: 20,
+      costPrice: 8,
+    },
+  });
+  await prisma.inventory.create({
+    data: {
+      companyId: a.company.id,
+      productId: raceProduct.id,
+      quantity: 1,
+      minimumQuantity: 0,
+    },
+  });
+
+  const [raceA, raceB] = await Promise.allSettled([
+    completeSaleForTenant({
+      companyId: a.company.id,
+      userId: a.user.id,
+      role: "ADMIN",
+      data: {
+        customerId: null,
+        paymentMethod: "PIX",
+        discountAmount: 0,
+        notes: null,
+        items: [{ productId: raceProduct.id, quantity: 1, discountAmount: 0 }],
+      },
+    }),
+    completeSaleForTenant({
+      companyId: a.company.id,
+      userId: a.user.id,
+      role: "ADMIN",
+      data: {
+        customerId: null,
+        paymentMethod: "PIX",
+        discountAmount: 0,
+        notes: null,
+        items: [{ productId: raceProduct.id, quantity: 1, discountAmount: 0 }],
+      },
+    }),
+  ]);
+  const raceWins = [raceA, raceB].filter((item) => item.status === "fulfilled").length;
+  const raceFails = [raceA, raceB].filter((item) => item.status === "rejected").length;
+  assert(raceWins === 1 && raceFails === 1, "concurrent last-unit sales");
+  const raceStock = await prisma.inventory.findUniqueOrThrow({
+    where: { productId: raceProduct.id },
+  });
+  assert(raceStock.quantity === 0, "concurrent sales do not go negative");
+
+  const [numA, numB] = await Promise.all([
+    completeSaleForTenant({
+      companyId: a.company.id,
+      userId: a.user.id,
+      role: "ADMIN",
+      data: {
+        customerId: null,
+        paymentMethod: "CASH",
+        discountAmount: 0,
+        notes: null,
+        items: [{ productId: service.id, quantity: 1, discountAmount: 0 }],
+      },
+    }),
+    completeSaleForTenant({
+      companyId: a.company.id,
+      userId: a.user.id,
+      role: "ADMIN",
+      data: {
+        customerId: null,
+        paymentMethod: "CASH",
+        discountAmount: 0,
+        notes: null,
+        items: [{ productId: service.id, quantity: 1, discountAmount: 0 }],
+      },
+    }),
+  ]);
+  assert(numA.number !== numB.number, "concurrent sale numbers unique");
+
   await cancelSaleForTenant({
     companyId: a.company.id,
     userId: a.user.id,
@@ -303,7 +384,7 @@ async function main() {
     where: { companyId: { in: [a.company.id, b.company.id] } },
   });
   await prisma.product.deleteMany({
-    where: { id: { in: [physical.id, service.id, foreignProduct.id] } },
+    where: { id: { in: [physical.id, service.id, foreignProduct.id, raceProduct.id] } },
   });
   await prisma.customer.deleteMany({ where: { id: customer.id } });
   await prisma.membership.deleteMany({
@@ -319,6 +400,7 @@ async function main() {
   console.log("OK sales totals + complete/cancel");
   console.log("OK stock EXIT/RETURN + service skipped");
   console.log("OK tenant + RBAC + failed sale atomic");
+  console.log("OK concurrent stock + sale numbers");
   console.log("SALES VERIFY PASSED");
 }
 

@@ -32,6 +32,7 @@ import { registerMovementForTenant } from "../src/modules/inventory/services/inv
 import { createActivityForTenant } from "../src/modules/crm/services/activity.service";
 import { createSupplierForTenant } from "../src/modules/purchases/services/supplier.service";
 import { createPurchaseForTenant } from "../src/modules/purchases/services/purchase.service";
+import { assertVerificationDatabase } from "./lib/assert-one-database";
 
 const prisma = new PrismaClient();
 
@@ -84,9 +85,7 @@ async function addMember(params: {
 }
 
 async function main() {
-  const url = process.env.DATABASE_URL ?? "";
-  assert(url.includes("businessos_one"), "must use businessos_one");
-  assert(!/localhost:5432\b/.test(url), "must not use Finance port");
+  assertVerificationDatabase();
 
   assert(toWhatsAppNumber("11988887777") === "5511988887777", "br mobile prefixed");
   assert(toWhatsAppNumber("5511988887777") === "5511988887777", "already e164");

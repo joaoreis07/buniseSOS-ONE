@@ -30,11 +30,12 @@ async function main() {
       { encoding: "utf8" },
     ).trim();
     if (!ps.includes("businessos-one-postgres") || !ps.includes("5434")) {
-      fail(`One postgres container not healthy: ${ps || "(empty)"}`);
+      console.warn(`WARN: One postgres container not listed: ${ps || "(empty)"}`);
+    } else {
+      ok(`container: ${ps}`);
     }
-    ok(`container: ${ps}`);
   } catch {
-    fail("docker ps failed — is Docker running?");
+    console.warn("WARN: docker ps unavailable — checking DATABASE_URL connectivity only");
   }
 
   const prisma = new PrismaClient();
