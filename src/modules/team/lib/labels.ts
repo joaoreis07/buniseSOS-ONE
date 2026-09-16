@@ -60,6 +60,9 @@ export const PERMISSION_LABELS: Record<string, string> = {
   "settings:manage": "Gerenciar configurações",
   "team:view": "Ver equipe",
   "team:manage": "Gerenciar equipe",
+  "billing:view": "Ver assinatura",
+  "billing:manage": "Gerenciar assinatura",
+  "billing:cancel": "Cancelar assinatura",
 };
 
 export const MEMBER_STATUS_LABELS = {
@@ -83,6 +86,13 @@ export const AUDIT_ACTION_LABELS: Record<string, string> = {
   LOGO_UPDATED: "Logo atualizada",
   DOCUMENT_GENERATED: "Documento gerado",
   RECEIPT_GENERATED: "Recibo gerado",
+  SUBSCRIPTION_CREATED: "Assinatura criada",
+  SUBSCRIPTION_ACTIVATED: "Assinatura ativada",
+  SUBSCRIPTION_UPDATED: "Assinatura atualizada",
+  SUBSCRIPTION_CANCELLED: "Assinatura cancelada",
+  SUBSCRIPTION_PAST_DUE: "Assinatura em atraso",
+  PAYMENT_CONFIRMED: "Pagamento de assinatura confirmado",
+  PAYMENT_FAILED: "Pagamento de assinatura falhou",
 };
 
 export function formatDateTimeBR(value: Date | string | null | undefined): string {
@@ -112,6 +122,7 @@ export function permissionModule(permission: string): string {
     notifications: "Notificações",
     settings: "Configurações",
     team: "Equipe",
+    billing: "Assinatura",
   };
   return labels[module] ?? module;
 }

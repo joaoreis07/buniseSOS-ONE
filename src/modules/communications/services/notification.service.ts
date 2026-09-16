@@ -78,6 +78,26 @@ async function notifyMany(params: {
   return createdIds;
 }
 
+export async function notifyBillingEvent(params: {
+  companyId: string;
+  actorUserId?: string | null;
+  subscriptionId: string;
+  title: string;
+  message: string;
+}) {
+  return notifyMany({
+    companyId: params.companyId,
+    actorUserId: params.actorUserId,
+    permission: "billing:view",
+    type: "BILLING",
+    title: params.title,
+    message: params.message,
+    link: "/app/settings/billing",
+    entity: "Subscription",
+    entityId: params.subscriptionId,
+  });
+}
+
 export async function notifySaleCompleted(params: {
   companyId: string;
   actorUserId: string;

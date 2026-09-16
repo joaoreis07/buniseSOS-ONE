@@ -6,11 +6,9 @@ Plataforma para gerenciar a empresa em um só lugar: CRM, vendas, produtos, esto
 
 ## Status
 
-Fases 0–14 concluídas (estoque, vendas, financeiro, compras, relatórios, CRM, comunicações, equipe, configurações e documentos).
+Fases 0–16 concluídas (estoque, vendas, financeiro interno, compras, relatórios, CRM, comunicações, equipe, configurações, documentos, preparação para produção e cobrança SaaS via Asaas).
 
-**FASE 15** — preparação para produção (segurança, integridade, performance, QA).
-
-Não inclui Asaas, assinaturas SaaS nem o painel central de assinantes. Esses itens ficam para fases posteriores.
+A cobrança da **assinatura do BusinessOS One** (Asaas) é independente do **financeiro interno** da empresa (vendas e parcelas). O painel conjunto Finance/Odonto/One fica para uma fase posterior.
 
 ## Stack
 
@@ -62,6 +60,7 @@ npm run verify:team
 npm run verify:settings
 npm run verify:documents
 npm run verify:production
+npm run verify:billing
 ```
 
 Os scripts `verify:*` recusam o banco do Finance e `NODE_ENV=production`.

@@ -47,6 +47,9 @@ export const PERMISSIONS = [
   "settings:manage",
   "team:view",
   "team:manage",
+  "billing:view",
+  "billing:manage",
+  "billing:cancel",
 ] as const;
 
 export type Permission = (typeof PERMISSIONS)[number];
@@ -100,6 +103,8 @@ const ROLE_PERMISSIONS: Record<Role, ReadonlyArray<Permission | "*">> = {
     "settings:manage",
     "team:view",
     "team:manage",
+    "billing:view",
+    "billing:manage",
   ],
   SALES: [
     "dashboard:view",

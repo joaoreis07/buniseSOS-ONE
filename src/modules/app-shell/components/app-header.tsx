@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { LogOut, Menu } from "lucide-react";
-import type { Role } from "@prisma/client";
+import type { NotificationType, Role } from "@prisma/client";
 import { logoutAction } from "@/modules/auth/actions/auth.actions";
 import { can } from "@/shared/permissions/can";
 import { APP_NAV_ITEMS } from "@/modules/app-shell/nav";
@@ -20,15 +20,7 @@ import { Avatar, AvatarFallback } from "@/shared/ui/avatar";
 
 type NotificationItem = {
   id: string;
-  type:
-    | "LOW_STOCK"
-    | "OUT_OF_STOCK"
-    | "OVERDUE_RECEIVABLE"
-    | "PAYMENT_RECEIVED"
-    | "SALE_COMPLETED"
-    | "PURCHASE_RECEIVED"
-    | "TASK_ASSIGNED"
-    | "SYSTEM";
+  type: NotificationType;
   title: string;
   message: string;
   link: string | null;

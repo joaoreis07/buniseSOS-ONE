@@ -1,8 +1,8 @@
 # Deploy — BusinessOS One
 
-Guia mínimo para colocar o One em produção. **Não** cobre Asaas, assinaturas nem o painel de assinantes.
+Guia mínimo para colocar o One em produção.
 
-BusinessOS Finance permanece isolado: banco, migrations e deploy separados.
+BusinessOS Finance permanece isolado: banco, migrations e deploy separados. A cobrança Asaas desta fase é a **assinatura do produto One**, não o financeiro interno do tenant.
 
 ## Pré-requisitos
 
@@ -26,8 +26,16 @@ Opcionais:
 
 - `STORAGE_ROOT` — diretório de arquivos por tenant (padrão `storage/tenants`)
 - `NEXT_PUBLIC_APP_NAME`
+- `ASAAS_ENV` — `sandbox` (padrão) ou `production`
+- `ASAAS_API_KEY` — chave da API Asaas (servidor apenas)
+- `ASAAS_BASE_URL` — override opcional da URL v3
+- `ASAAS_WEBHOOK_TOKEN` — token do header `asaas-access-token` (nunca a API key)
+- `BILLING_PROVIDER` — `asaas` ou `fake` (testes)
+- `BILLING_ENFORCE` — `true` para exigir assinatura ACTIVE/PAST_DUE; padrão off para não travar tenants existentes
 
-Nunca coloque senha, token ou `DATABASE_URL` em `NEXT_PUBLIC_*`.
+Webhook: `POST /api/webhooks/asaas`. Configure no painel Asaas (sandbox primeiro) com o mesmo `ASAAS_WEBHOOK_TOKEN`.
+
+Nunca coloque senha, token, `ASAAS_API_KEY` ou `DATABASE_URL` em `NEXT_PUBLIC_*`.
 
 ## Banco
 
@@ -50,7 +58,7 @@ npm run build
 npx next start -p 3001
 ```
 
-Rotas autenticadas (`/app/*`) exigem sessão. `/login` e `/api/health` são públicos.
+Rotas autenticadas (`/app/*`) exigem sessão. `/login`, `/api/health` e `POST /api/webhooks/asaas` são públicos (o webhook valida `asaas-access-token`).
 
 ## Health check
 
@@ -71,7 +79,7 @@ O que precisa ser protegido **antes** de receber clientes reais:
 
 1. **PostgreSQL** — dump periódico (`pg_dump`) do banco `businessos_one`, com retenção e teste de restore.
 2. **Arquivos de tenant** — pasta `storage/tenants` (logos). Sem esse diretório, documentos perdem a identidade visual.
-3. **Segredos** — `AUTH_SECRET` e `DATABASE_URL` no gerenciador de secrets do host, não no git.
+3. **Segredos** — `AUTH_SECRET`, `DATABASE_URL`, `ASAAS_API_KEY` e `ASAAS_WEBHOOK_TOKEN` no gerenciador de secrets do host, não no git.
 
 Restauração: restaurar o dump no PostgreSQL do One, aplicar `prisma migrate deploy` se o schema estiver atrás, e recolocar `storage/tenants` no mesmo `STORAGE_ROOT`.
 

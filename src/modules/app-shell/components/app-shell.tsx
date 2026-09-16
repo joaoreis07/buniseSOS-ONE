@@ -2,6 +2,7 @@ import { AppHeader } from "@/modules/app-shell/components/app-header";
 import { AppSidebar } from "@/modules/app-shell/components/app-sidebar";
 import type { AppSessionUser } from "@/shared/auth/session";
 import { getUserInitials } from "@/shared/auth/session";
+import type { NotificationType } from "@prisma/client";
 
 type AppShellProps = {
   user: AppSessionUser;
@@ -11,15 +12,7 @@ type AppShellProps = {
     unreadCount: number;
     items: Array<{
       id: string;
-      type:
-        | "LOW_STOCK"
-        | "OUT_OF_STOCK"
-        | "OVERDUE_RECEIVABLE"
-        | "PAYMENT_RECEIVED"
-        | "SALE_COMPLETED"
-        | "PURCHASE_RECEIVED"
-        | "TASK_ASSIGNED"
-        | "SYSTEM";
+      type: NotificationType;
       title: string;
       message: string;
       link: string | null;

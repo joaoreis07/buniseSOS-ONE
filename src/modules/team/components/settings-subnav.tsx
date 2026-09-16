@@ -11,7 +11,8 @@ type SettingsSubnavProps = {
     | "documents"
     | "preferences"
     | "team"
-    | "permissions";
+    | "permissions"
+    | "billing";
 };
 
 const ITEMS = [
@@ -50,6 +51,12 @@ const ITEMS = [
     href: "/app/settings/permissions",
     title: "Permissões",
     permission: "team:view" as const,
+  },
+  {
+    id: "billing" as const,
+    href: "/app/settings/billing",
+    title: "Assinatura",
+    permission: "billing:view" as const,
   },
 ];
 

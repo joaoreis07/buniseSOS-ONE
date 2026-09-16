@@ -41,6 +41,10 @@ function main() {
   }
   assert(!/^NEXT_PUBLIC_AUTH_/m.test(example), "AUTH secrets must not be public");
   assert(!/^NEXT_PUBLIC_DATABASE_/m.test(example), "DATABASE_URL must not be public");
+  assert(!/^NEXT_PUBLIC_ASAAS_/m.test(example), "ASAAS secrets must not be public");
+  assert(!/^NEXT_PUBLIC_BILLING_/m.test(example), "BILLING config must not be public");
+  assert(/^# ASAAS_API_KEY=/m.test(example), "ASAAS_API_KEY documented without value");
+  assert(/^# ASAAS_WEBHOOK_TOKEN=/m.test(example), "webhook token documented");
 
   assert(safeInternalPath("//evil.com") === "/app", "protocol-relative rejected");
   assert(safeInternalPath("/\\evil") === "/app", "backslash prefix rejected");

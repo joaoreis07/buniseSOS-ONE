@@ -190,12 +190,38 @@ enum NotificationType {
   PURCHASE_RECEIVED
   TASK_ASSIGNED
   SYSTEM
+  BILLING
 }
 
 enum OperationalDocumentKind {
   SALE_RECEIPT
   PAYMENT_RECEIPT
   PURCHASE_RECORD
+}
+
+enum BillingProduct {
+  ONE
+  FINANCE
+  ODONTO
+}
+
+enum PlanInterval {
+  MONTHLY
+  YEARLY
+}
+
+enum SubscriptionStatus {
+  PENDING
+  ACTIVE
+  PAST_DUE
+  CANCELLED
+}
+
+enum BillingWebhookEventStatus {
+  RECEIVED
+  PROCESSED
+  IGNORED
+  FAILED
 }
 
 model User {
@@ -270,25 +296,26 @@ model VerificationToken {
 }
 
 model Company {
-  id          String    @id @default(cuid())
-  name        String
-  tradeName   String?
-  document    String?
-  email       String?
-  phone       String?
-  whatsapp    String?
-  website     String?
-  description String?   @db.Text
-  zipCode     String?
-  street      String?
-  number      String?
-  complement  String?
-  district    String?
-  city        String?
-  state       String?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  deletedAt   DateTime?
+  id              String    @id @default(cuid())
+  name            String
+  tradeName       String?
+  document        String?
+  email           String?
+  phone           String?
+  whatsapp        String?
+  website         String?
+  description     String?   @db.Text
+  zipCode         String?
+  street          String?
+  number          String?
+  complement      String?
+  district        String?
+  city            String?
+  state           String?
+  asaasCustomerId String?   @unique
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  deletedAt       DateTime?
 
   memberships Membership[]
   settings    CompanySettings?
@@ -316,6 +343,8 @@ model Company {
   notifications          Notification[]
   documentSequences      DocumentSequence[]
   operationalDocuments   OperationalDocument[]
+  subscriptions          Subscription[]
+  billingWebhookEvents   BillingWebhookEvent[]
 
   @@index([deletedAt])
 }
@@ -1005,4 +1034,72 @@ model OperationalDocument {
   @@index([companyId, saleId])
   @@index([companyId, purchaseId])
   @@index([companyId, installmentPaymentId])
+}
+
+model Plan {
+  id          String         @id @default(cuid())
+  product     BillingProduct
+  name        String
+  slug        String         @unique
+  description String?        @db.Text
+  price       Decimal        @db.Decimal(14, 2)
+  currency    String         @default("BRL")
+  interval    PlanInterval   @default(MONTHLY)
+  active      Boolean        @default(true)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  subscriptions Subscription[]
+
+  @@index([product, active])
+}
+
+model Subscription {
+  id                  String             @id @default(cuid())
+  companyId           String
+  planId              String
+  product             BillingProduct
+  status              SubscriptionStatus @default(PENDING)
+  asaasCustomerId     String?
+  asaasSubscriptionId String?            @unique
+  startedAt           DateTime?
+  nextDueDate         DateTime?
+  lastPaymentAt       DateTime?
+  lastPaymentStatus   String?
+  invoiceUrl          String?
+  graceUntil          DateTime?
+  cancelledAt         DateTime?
+  cancelReason        String?            @db.Text
+  lastError           String?
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  plan    Plan    @relation(fields: [planId], references: [id], onDelete: Restrict)
+
+  @@unique([companyId, product])
+  @@index([companyId, status])
+  @@index([planId])
+  @@index([status])
+  @@index([asaasSubscriptionId])
+}
+
+model BillingWebhookEvent {
+  id          String                    @id @default(cuid())
+  externalId  String                    @unique
+  eventType   String
+  companyId   String?
+  status      BillingWebhookEventStatus @default(RECEIVED)
+  payloadKind String
+  receivedAt  DateTime                  @default(now())
+  processedAt DateTime?
+  error       String?
+  createdAt   DateTime                  @default(now())
+  updatedAt   DateTime                  @updatedAt
+
+  company Company? @relation(fields: [companyId], references: [id], onDelete: SetNull)
+
+  @@index([companyId, createdAt])
+  @@index([eventType, createdAt])
+  @@index([status])
 }

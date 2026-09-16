@@ -41,6 +41,7 @@ export const NOTIFICATION_TYPE_LABELS = {
   PURCHASE_RECEIVED: "Compra recebida",
   TASK_ASSIGNED: "Atividade atribuída",
   SYSTEM: "Sistema",
+  BILLING: "Assinatura",
 } as const;
 
 export const WHATSAPP_MANUAL_DISCLAIMER =

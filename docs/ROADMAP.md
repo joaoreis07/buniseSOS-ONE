@@ -24,8 +24,9 @@ Numeração oficial do produto (não reabrir fases concluídas):
 | 13 | Equipe / usuários / permissões | Concluída |
 | 14 | Configurações / documentos / personalização | Concluída |
 | 15 | Preparação para produção | Concluída |
+| 16 | Asaas / assinaturas / cobrança SaaS | Concluída |
 
-Fora desta fase (não iniciar agora): Asaas, assinaturas SaaS, painel central de assinantes Finance + Odonto + One.
+Fora desta fase (não iniciar agora): BusinessOS Admin, painel conjunto Finance + Odonto + One, portal de assinantes.
 
 ## FASE 4 — CRM (detalhe)
 
@@ -49,4 +50,4 @@ Fora desta fase (não iniciar agora): Asaas, assinaturas SaaS, painel central de
 
 ## Próximo passo imediato
 
-FASE 15 concluída. Não alterar o BusinessOS Finance. Não iniciar Asaas, assinaturas SaaS nem o painel de assinantes até autorização explícita.
+FASE 16 concluída. Não alterar o BusinessOS Finance. Não iniciar o BusinessOS Admin nem o painel conjunto de assinantes até autorização explícita.

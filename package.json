@@ -32,7 +32,8 @@
     "verify:team": "tsx scripts/verify-team.ts",
     "verify:settings": "tsx scripts/verify-settings.ts",
     "verify:documents": "tsx scripts/verify-documents.ts",
-    "verify:production": "tsx scripts/verify-production.ts"
+    "verify:production": "tsx scripts/verify-production.ts",
+    "verify:billing": "tsx scripts/verify-billing.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",
