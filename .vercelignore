@@ -1,0 +1,12 @@
+node_modules
+.next
+.next-prod
+.next-fase16
+.env
+.env.local
+.env*.local
+storage/tenants
+.agents
+.claude
+.windsurf
+.git
