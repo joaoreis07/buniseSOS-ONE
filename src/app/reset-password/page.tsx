@@ -6,6 +6,7 @@ import {
   CardTitle,
 } from "@/shared/ui/card";
 import { ResetPasswordForm } from "@/modules/auth/components/password-forms";
+import { AuthScreen } from "@/shared/brand/auth-screen";
 import { Alert, AlertDescription } from "@/shared/ui/alert";
 import Link from "next/link";
 
@@ -18,8 +19,8 @@ export default async function ResetPasswordPage({
   const token = params.token?.trim() ?? "";
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-zinc-50 px-4">
-      <Card className="w-full max-w-md">
+    <AuthScreen>
+      <Card>
         <CardHeader>
           <CardTitle>Nova senha</CardTitle>
           <CardDescription>Defina uma nova senha para sua conta</CardDescription>
@@ -39,6 +40,6 @@ export default async function ResetPasswordPage({
           )}
         </CardContent>
       </Card>
-    </main>
+    </AuthScreen>
   );
 }

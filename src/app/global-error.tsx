@@ -10,6 +10,14 @@ export default function GlobalError({
     <html lang="pt-BR">
       <body className="bg-white text-zinc-900">
         <main className="mx-auto flex min-h-screen max-w-lg flex-col items-center justify-center gap-4 px-4 text-center">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/brand/mark.jpg"
+            alt="BusinessOS One"
+            width={64}
+            height={64}
+            className="size-16 rounded-xl"
+          />
           <h1 className="text-2xl font-semibold tracking-tight">
             Algo deu errado
           </h1>

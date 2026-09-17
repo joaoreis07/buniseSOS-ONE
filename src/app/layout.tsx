@@ -15,7 +15,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "BusinessOS One",
-  description: "Sua empresa inteira em um só lugar.",
+  description: "Gestão simples. Resultados reais.",
+  applicationName: "BusinessOS One",
 };
 
 export default function RootLayout({

@@ -6,11 +6,12 @@ import {
   CardTitle,
 } from "@/shared/ui/card";
 import { ForgotPasswordForm } from "@/modules/auth/components/password-forms";
+import { AuthScreen } from "@/shared/brand/auth-screen";
 
 export default function ForgotPasswordPage() {
   return (
-    <main className="flex min-h-screen items-center justify-center bg-zinc-50 px-4">
-      <Card className="w-full max-w-md">
+    <AuthScreen>
+      <Card>
         <CardHeader>
           <CardTitle>Recuperar senha</CardTitle>
           <CardDescription>
@@ -21,6 +22,6 @@ export default function ForgotPasswordPage() {
           <ForgotPasswordForm />
         </CardContent>
       </Card>
-    </main>
+    </AuthScreen>
   );
 }

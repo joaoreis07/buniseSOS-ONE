@@ -6,6 +6,7 @@ import {
   CardTitle,
 } from "@/shared/ui/card";
 import { LoginForm } from "@/modules/auth/components/login-form";
+import { AuthScreen } from "@/shared/brand/auth-screen";
 import { safeInternalPath } from "@/shared/security/callback-url";
 
 export default async function LoginPage({
@@ -16,16 +17,16 @@ export default async function LoginPage({
   const params = await searchParams;
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-zinc-50 px-4">
-      <Card className="w-full max-w-md">
+    <AuthScreen>
+      <Card>
         <CardHeader>
           <CardTitle>Entrar</CardTitle>
-          <CardDescription>BusinessOS One</CardDescription>
+          <CardDescription>Acesse sua empresa</CardDescription>
         </CardHeader>
         <CardContent>
           <LoginForm callbackUrl={safeInternalPath(params.callbackUrl)} />
         </CardContent>
       </Card>
-    </main>
+    </AuthScreen>
   );
 }

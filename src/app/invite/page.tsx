@@ -7,6 +7,7 @@ import {
   CardTitle,
 } from "@/shared/ui/card";
 import { AcceptInviteForm } from "@/modules/auth/components/invite-forms";
+import { AuthScreen } from "@/shared/brand/auth-screen";
 import { Alert, AlertDescription } from "@/shared/ui/alert";
 import { getInvitePreview } from "@/modules/auth/services/auth.service";
 import { ROLE_LABELS } from "@/modules/team/lib/labels";
@@ -29,8 +30,8 @@ export default async function InvitePage({
   const canAccept = preview?.status === "PENDING";
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-zinc-50 px-4">
-      <Card className="w-full max-w-md">
+    <AuthScreen>
+      <Card>
         <CardHeader>
           <CardTitle>Aceitar convite</CardTitle>
           <CardDescription>
@@ -69,6 +70,6 @@ export default async function InvitePage({
           )}
         </CardContent>
       </Card>
-    </main>
+    </AuthScreen>
   );
 }

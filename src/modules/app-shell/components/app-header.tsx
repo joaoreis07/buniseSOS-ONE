@@ -7,6 +7,7 @@ import { logoutAction } from "@/modules/auth/actions/auth.actions";
 import { can } from "@/shared/permissions/can";
 import { APP_NAV_ITEMS } from "@/modules/app-shell/nav";
 import { NotificationBell } from "@/modules/communications/components/notification-bell";
+import { BrandMark } from "@/shared/brand/brand-logo";
 import { Button } from "@/shared/ui/button";
 import {
   Sheet,
@@ -60,7 +61,10 @@ export function AppHeader({
           </SheetTrigger>
           <SheetContent side="left" className="w-64 p-0">
             <SheetHeader className="border-b px-4 py-4 text-left">
-              <SheetTitle>BusinessOS One</SheetTitle>
+              <SheetTitle className="flex items-center gap-2">
+                <BrandMark size={32} className="size-8" />
+                BusinessOS One
+              </SheetTitle>
             </SheetHeader>
             <nav className="flex flex-col gap-1 p-3">
               {items.map((item) => {
@@ -79,7 +83,10 @@ export function AppHeader({
             </nav>
           </SheetContent>
         </Sheet>
-        <p className="text-sm font-medium md:hidden">BusinessOS One</p>
+        <div className="flex items-center gap-2 md:hidden">
+          <BrandMark size={28} className="size-7" />
+          <p className="text-sm font-medium">BusinessOS One</p>
+        </div>
       </div>
 
       <div className="flex items-center gap-3">

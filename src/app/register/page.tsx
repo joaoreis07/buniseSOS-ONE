@@ -6,11 +6,12 @@ import {
   CardTitle,
 } from "@/shared/ui/card";
 import { RegisterForm } from "@/modules/auth/components/register-form";
+import { AuthScreen } from "@/shared/brand/auth-screen";
 
 export default function RegisterPage() {
   return (
-    <main className="flex min-h-screen items-center justify-center bg-zinc-50 px-4">
-      <Card className="w-full max-w-md">
+    <AuthScreen>
+      <Card>
         <CardHeader>
           <CardTitle>Criar conta</CardTitle>
           <CardDescription>
@@ -21,6 +22,6 @@ export default function RegisterPage() {
           <RegisterForm />
         </CardContent>
       </Card>
-    </main>
+    </AuthScreen>
   );
 }
