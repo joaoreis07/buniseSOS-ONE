@@ -61,6 +61,91 @@ body {
   font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .landing,
+  .landing * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+.landing {
+  --landing-bg: #0b0f19;
+  --landing-card: rgba(17, 24, 39, 0.55);
+  --landing-muted: #94a3b8;
+  color: #f8fafc;
+  background-color: var(--landing-bg);
+  font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+}
+
+html:has(.landing) {
+  overflow-x: clip;
+}
+
+.landing a:focus-visible,
+.landing button:focus-visible {
+  outline: 2px solid #60a5fa;
+  outline-offset: 2px;
+}
+
+.landing-fade {
+  animation: landing-fade 0.55s ease both;
+}
+
+@keyframes landing-fade {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.landing h1,
+.landing h2,
+.landing h3,
+.landing h4 {
+  font-family: var(--font-heading), var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+}
+
+.landing-glass {
+  background: linear-gradient(
+    145deg,
+    rgba(30, 58, 138, 0.08) 0%,
+    rgba(11, 15, 25, 0.55) 100%
+  );
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.landing-card {
+  background: var(--landing-card);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(30, 41, 59, 0.7);
+}
+
+.landing-glow-text {
+  text-shadow: 0 0 20px rgba(34, 211, 238, 0.28);
+}
+
+.landing-gradient-text {
+  background-image: linear-gradient(to right, #3b82f6, #22d3ee);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+}
+
 @media print {
   @page {
     margin: 12mm;
