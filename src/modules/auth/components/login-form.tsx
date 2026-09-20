@@ -41,7 +41,7 @@ export function LoginForm({ callbackUrl }: { callbackUrl?: string }) {
       </Button>
       <p className="text-center text-sm text-muted-foreground">
         Não tem conta?{" "}
-        <Link href="/register" className="text-emerald-700 hover:underline">
+        <Link href="/register" className="font-medium text-blue-700 hover:underline">
           Criar conta
         </Link>
       </p>

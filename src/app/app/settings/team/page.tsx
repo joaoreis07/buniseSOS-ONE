@@ -20,6 +20,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/shared/ui/card";
+import { PageContainer, PageHeader } from "@/shared/components/page-layout";
 
 function queryToParams(query: Record<string, unknown>, page: number) {
   const params = new URLSearchParams();
@@ -65,16 +66,19 @@ export default async function TeamPage({
   const allowedRoles = rolesAssignableBy(user.role);
 
   return (
-    <div className="space-y-6">
+    <PageContainer>
       <SettingsSubnav role={user.role} active="team" />
 
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Equipe</h1>
-        <p className="text-muted-foreground">
+      <PageHeader
+        eyebrow="Configurações"
+        title="Equipe"
+        description={
+          <>
           Membros, convites e acessos do tenant · {result.total} registro
           {result.total === 1 ? "" : "s"}
-        </p>
-      </div>
+          </>
+        }
+      />
 
       <TeamFilters query={query} />
       <TeamTable items={result.items} />
@@ -124,6 +128,6 @@ export default async function TeamPage({
           <InvitesTable items={invites} canManage={canManage} />
         </CardContent>
       </Card>
-    </div>
+    </PageContainer>
   );
 }

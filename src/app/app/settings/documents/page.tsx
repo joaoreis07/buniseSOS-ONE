@@ -10,6 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/shared/ui/card";
+import { PageContainer, PageHeader } from "@/shared/components/page-layout";
 
 export default async function SettingsDocumentsPage() {
   const user = await requirePermission("settings:view");
@@ -21,15 +22,14 @@ export default async function SettingsDocumentsPage() {
   const canManage = hasPermission(user.role, "settings:manage");
 
   return (
-    <div className="space-y-6">
+    <PageContainer>
       <SettingsSubnav role={user.role} active="documents" />
 
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Documentos</h1>
-        <p className="text-muted-foreground">
-          Textos padrão, assinatura e regras operacionais deste tenant.
-        </p>
-      </div>
+      <PageHeader
+        eyebrow="Configurações"
+        title="Documentos"
+        description="Textos padrão, assinatura e regras operacionais da empresa."
+      />
 
       <Card>
         <CardHeader>
@@ -54,6 +54,6 @@ export default async function SettingsDocumentsPage() {
           />
         </CardContent>
       </Card>
-    </div>
+    </PageContainer>
   );
 }

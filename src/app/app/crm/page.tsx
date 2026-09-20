@@ -11,6 +11,7 @@ import { CustomersFilters } from "@/modules/crm/components/customers-filters";
 import { CustomersTable } from "@/modules/crm/components/customers-table";
 import { CrmSubnav } from "@/modules/crm/components/crm-subnav";
 import { Button } from "@/shared/ui/button";
+import { PageContainer, PageHeader } from "@/shared/components/page-layout";
 
 export default async function CrmCustomersPage({
   searchParams,
@@ -50,23 +51,26 @@ export default async function CrmCustomersPage({
   const canFinance = hasPermission(user.role, "finance:view");
 
   return (
-    <div className="space-y-6">
+    <PageContainer>
       <CrmSubnav role={user.role} active="customers" />
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Clientes</h1>
-          <p className="text-muted-foreground">
+      <PageHeader
+        eyebrow="Relacionamento"
+        title="Clientes"
+        description={
+          <>
             Relacionamento comercial · {result.total} cliente
             {result.total === 1 ? "" : "s"}
-          </p>
-        </div>
-        {canManage ? (
+          </>
+        }
+        actions={
+          canManage ? (
           <Button asChild>
             <Link href="/app/crm/new">Novo cliente</Link>
           </Button>
-        ) : null}
-      </div>
+          ) : null
+        }
+      />
 
       <CustomersFilters
         query={query}
@@ -121,6 +125,6 @@ export default async function CrmCustomersPage({
           ) : null}
         </div>
       </div>
-    </div>
+    </PageContainer>
   );
 }

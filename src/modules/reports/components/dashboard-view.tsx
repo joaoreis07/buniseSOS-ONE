@@ -15,6 +15,7 @@ import { EmptyBlock, KpiCard } from "@/modules/reports/components/kpi-card";
 import type { getDashboardForTenant } from "@/modules/reports/services/dashboard.service";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
+import { PageContainer, PageHeader } from "@/shared/components/page-layout";
 import {
   Card,
   CardContent,
@@ -40,21 +41,24 @@ export function DashboardView({
     sections.purchases;
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
-          <p className="text-muted-foreground">
+    <PageContainer>
+      <PageHeader
+        title="Dashboard"
+        eyebrow="Visão geral"
+        description={
+          <>
             {PERIOD_PRESET_LABELS[range.preset]} · {formatCivilDate(range.start)}{" "}
             até {formatCivilDate(range.end)}
-          </p>
-        </div>
-        {canViewReports ? (
+          </>
+        }
+        actions={
+          canViewReports ? (
           <Button asChild variant="outline">
             <Link href="/app/reports">Relatórios</Link>
           </Button>
-        ) : null}
-      </div>
+          ) : null
+        }
+      />
 
       <PeriodFilter action="/app" range={range} />
 
@@ -363,6 +367,6 @@ export function DashboardView({
           </CardContent>
         </Card>
       ) : null}
-    </div>
+    </PageContainer>
   );
 }

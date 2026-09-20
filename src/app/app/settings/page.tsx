@@ -14,6 +14,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/shared/ui/card";
+import { PageContainer, PageHeader } from "@/shared/components/page-layout";
 
 export default async function SettingsCompanyPage() {
   const user = await requirePermission("settings:view");
@@ -35,15 +36,14 @@ export default async function SettingsCompanyPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <PageContainer>
       <SettingsSubnav role={user.role} active="company" />
 
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Empresa</h1>
-        <p className="text-muted-foreground">
-          Dados do tenant atuais. Isolado pelo companyId da sessão.
-        </p>
-      </div>
+      <PageHeader
+        eyebrow="Configurações"
+        title="Empresa"
+        description="Dados cadastrais e informações institucionais da organização."
+      />
 
       <Card>
         <CardHeader>
@@ -69,6 +69,6 @@ export default async function SettingsCompanyPage() {
           </Button>
         </div>
       ) : null}
-    </div>
+    </PageContainer>
   );
 }

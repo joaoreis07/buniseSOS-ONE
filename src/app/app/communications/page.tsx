@@ -9,6 +9,7 @@ import { CommunicationsSubnav } from "@/modules/communications/components/commun
 import { CommunicationsFilters } from "@/modules/communications/components/communications-filters";
 import { CommunicationsTable } from "@/modules/communications/components/communications-table";
 import { Button } from "@/shared/ui/button";
+import { PageContainer, PageHeader } from "@/shared/components/page-layout";
 
 function first(value: string | string[] | undefined) {
   return typeof value === "string" ? value : undefined;
@@ -51,21 +52,20 @@ export default async function CommunicationsPage({
   );
 
   return (
-    <div className="space-y-6">
+    <PageContainer>
       <CommunicationsSubnav role={user.role} active="history" />
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Comunicações</h1>
-          <p className="text-muted-foreground">
-            Histórico de mensagens preparadas e registradas · {result.total}
-          </p>
-        </div>
-        {canSend ? (
+      <PageHeader
+        eyebrow="Relacionamento"
+        title="Comunicações"
+        description={`Histórico de mensagens preparadas e registradas · ${result.total}`}
+        actions={
+          canSend ? (
           <Button asChild>
             <Link href="/app/communications/new">Preparar WhatsApp</Link>
           </Button>
-        ) : null}
-      </div>
+          ) : null
+        }
+      />
 
       <CommunicationsFilters
         query={query}
@@ -105,6 +105,6 @@ export default async function CommunicationsPage({
           ) : null}
         </div>
       </div>
-    </div>
+    </PageContainer>
   );
 }

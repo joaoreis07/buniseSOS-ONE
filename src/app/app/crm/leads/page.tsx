@@ -10,6 +10,7 @@ import { CrmSubnav } from "@/modules/crm/components/crm-subnav";
 import { LeadsFilters } from "@/modules/crm/components/leads-filters";
 import { LeadsTable } from "@/modules/crm/components/leads-table";
 import { Button } from "@/shared/ui/button";
+import { PageContainer, PageHeader } from "@/shared/components/page-layout";
 
 function toQueryParams(
   query: Record<string, unknown>,
@@ -60,22 +61,21 @@ export default async function LeadsPage({
   const canManage = canManageLeads(user.role);
 
   return (
-    <div className="space-y-6">
+    <PageContainer>
       <CrmSubnav role={user.role} active="leads" />
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Leads</h1>
-          <p className="text-muted-foreground">
-            Interesses comerciais antes da conversão em cliente/oportunidade.
-          </p>
-        </div>
-        {canManage ? (
+      <PageHeader
+        eyebrow="CRM"
+        title="Leads"
+        description="Interesses comerciais antes da conversão em cliente ou oportunidade."
+        actions={
+          canManage ? (
           <Button asChild>
             <Link href="/app/crm/leads/new">Novo lead</Link>
           </Button>
-        ) : null}
-      </div>
+          ) : null
+        }
+      />
 
       <LeadsFilters query={query} owners={meta.owners} />
       <LeadsTable items={result.items} canManage={canManage} />
@@ -102,6 +102,6 @@ export default async function LeadsPage({
           ) : null}
         </div>
       </div>
-    </div>
+    </PageContainer>
   );
 }

@@ -8,6 +8,7 @@ import {
 import { SuppliersFilters } from "@/modules/purchases/components/suppliers-filters";
 import { SuppliersTable } from "@/modules/purchases/components/suppliers-table";
 import { Button } from "@/shared/ui/button";
+import { PageContainer, PageHeader } from "@/shared/components/page-layout";
 
 export default async function SuppliersPage({
   searchParams,
@@ -43,20 +44,19 @@ export default async function SuppliersPage({
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Fornecedores</h1>
-          <p className="text-muted-foreground">
-            Cadastro por empresa · {result.total} registro(s)
-          </p>
-        </div>
-        {canManage ? (
+    <PageContainer>
+      <PageHeader
+        eyebrow="Operação"
+        title="Fornecedores"
+        description={`Cadastro por empresa · ${result.total} registro(s)`}
+        actions={
+          canManage ? (
           <Button asChild>
             <Link href="/app/suppliers/new">Novo fornecedor</Link>
           </Button>
-        ) : null}
-      </div>
+          ) : null
+        }
+      />
       <SuppliersFilters query={query} />
       <SuppliersTable items={result.items} canManage={canManage} />
       <div className="flex items-center justify-between text-sm text-muted-foreground">
@@ -76,6 +76,6 @@ export default async function SuppliersPage({
           ) : null}
         </div>
       </div>
-    </div>
+    </PageContainer>
   );
 }

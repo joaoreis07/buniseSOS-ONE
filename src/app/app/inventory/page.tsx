@@ -8,6 +8,7 @@ import {
   InventoryTable,
 } from "@/modules/inventory/components/inventory-table";
 import { Button } from "@/shared/ui/button";
+import { PageContainer, PageHeader } from "@/shared/components/page-layout";
 
 export default async function InventoryPage({
   searchParams,
@@ -34,13 +35,12 @@ export default async function InventoryPage({
   });
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Estoque</h1>
-        <p className="text-muted-foreground">
-          Controle de produtos físicos · {result.total} item(ns) na listagem
-        </p>
-      </div>
+    <PageContainer>
+      <PageHeader
+        eyebrow="Operação"
+        title="Estoque"
+        description={`Controle de produtos físicos · ${result.total} item(ns) na listagem`}
+      />
 
       <InventorySummaryCards summary={result.summary} />
       <InventoryFilters query={query} categories={result.categories} />
@@ -85,6 +85,6 @@ export default async function InventoryPage({
           ) : null}
         </div>
       </div>
-    </div>
+    </PageContainer>
   );
 }

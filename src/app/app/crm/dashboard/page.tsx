@@ -14,6 +14,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/shared/ui/card";
+import { PageContainer, PageHeader } from "@/shared/components/page-layout";
 
 function Metric({
   label,
@@ -23,11 +24,13 @@ function Metric({
   value: string | number;
 }) {
   return (
-    <div className="rounded-md border px-3 py-3">
-      <p className="text-xs tracking-wide text-muted-foreground uppercase">
+    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+      <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
         {label}
       </p>
-      <p className="mt-1 text-2xl font-semibold tracking-tight">{value}</p>
+      <p className="mt-3 text-2xl font-semibold tracking-[-0.04em] text-slate-950">
+        {value}
+      </p>
     </div>
   );
 }
@@ -40,26 +43,23 @@ export default async function CrmDashboardPage() {
   });
 
   return (
-    <div className="space-y-6">
+    <PageContainer>
       <CrmSubnav role={user.role} active="dashboard" />
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">
-            Dashboard CRM
-          </h1>
-          <p className="text-muted-foreground">
-            Indicadores do tenant · leads, pipeline e atividades
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
+      <PageHeader
+        eyebrow="CRM"
+        title="Dashboard CRM"
+        description="Indicadores de leads, pipeline, conversões e atividades."
+        actions={
+          <>
           <Button asChild variant="outline">
             <Link href="/app/crm/pipeline">Funil</Link>
           </Button>
           <Button asChild variant="outline">
             <Link href="/app/crm/activities">Atividades</Link>
           </Button>
-        </div>
-      </div>
+          </>
+        }
+      />
 
       <Card>
         <CardHeader>
@@ -174,6 +174,6 @@ export default async function CrmDashboardPage() {
           </CardContent>
         </Card>
       </div>
-    </div>
+    </PageContainer>
   );
 }

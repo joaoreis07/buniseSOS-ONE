@@ -17,6 +17,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/shared/ui/table";
+import {
+  DataTableShell,
+  EmptyState,
+  StatCard,
+} from "@/shared/components/page-layout";
 
 type SaleRow = Sale & {
   customer: { id: string; name: string } | null;
@@ -33,17 +38,20 @@ function statusVariant(status: SaleStatus) {
 export function SalesTable({ items }: { items: SaleRow[] }) {
   if (items.length === 0) {
     return (
-      <div className="rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">
-        Nenhuma venda encontrada.{" "}
-        <Link href="/app/sales/new" className="text-emerald-700 underline">
-          Registrar a primeira
-        </Link>
-      </div>
+      <EmptyState
+        title="Nenhuma venda encontrada"
+        description="Ajuste os filtros ou registre a primeira venda da empresa."
+        action={
+          <Button asChild>
+            <Link href="/app/sales/new">Registrar venda</Link>
+          </Button>
+        }
+      />
     );
   }
 
   return (
-    <div className="rounded-lg border">
+    <DataTableShell>
       <Table>
         <TableHeader>
           <TableRow>
@@ -92,7 +100,7 @@ export function SalesTable({ items }: { items: SaleRow[] }) {
           ))}
         </TableBody>
       </Table>
-    </div>
+    </DataTableShell>
   );
 }
 
@@ -120,12 +128,7 @@ export function SalesKpis({
   return (
     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
       {cards.map((card) => (
-        <div key={card.label} className="rounded-md border px-3 py-3">
-          <p className="text-xs tracking-wide text-muted-foreground uppercase">
-            {card.label}
-          </p>
-          <p className="mt-1 text-xl font-semibold">{card.value}</p>
-        </div>
+        <StatCard key={card.label} label={card.label} value={card.value} />
       ))}
     </div>
   );

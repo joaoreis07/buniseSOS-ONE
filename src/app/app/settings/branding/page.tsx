@@ -10,6 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/shared/ui/card";
+import { PageContainer, PageHeader } from "@/shared/components/page-layout";
 
 export default async function SettingsBrandingPage() {
   const user = await requirePermission("settings:view");
@@ -21,15 +22,14 @@ export default async function SettingsBrandingPage() {
   const canManage = hasPermission(user.role, "settings:manage");
 
   return (
-    <div className="space-y-6">
+    <PageContainer>
       <SettingsSubnav role={user.role} active="branding" />
 
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Identidade visual</h1>
-        <p className="text-muted-foreground">
-          Logo e cores usadas em recibos, comprovantes e documentos operacionais.
-        </p>
-      </div>
+      <PageHeader
+        eyebrow="Configurações"
+        title="Identidade visual"
+        description="Logo e cores usadas em recibos, comprovantes e documentos operacionais."
+      />
 
       <Card>
         <CardHeader>
@@ -48,6 +48,6 @@ export default async function SettingsBrandingPage() {
           />
         </CardContent>
       </Card>
-    </div>
+    </PageContainer>
   );
 }

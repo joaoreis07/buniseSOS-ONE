@@ -1,7 +1,6 @@
-import Link from "next/link";
 import type { Role } from "@prisma/client";
 import { can } from "@/shared/permissions/can";
-import { cn } from "@/shared/utilities/cn";
+import { PageTabs } from "@/shared/components/page-layout";
 
 type CommunicationsSubnavProps = {
   role: Role;
@@ -16,21 +15,13 @@ const ITEMS = [
 
 export function CommunicationsSubnav({ role, active }: CommunicationsSubnavProps) {
   return (
-    <nav className="flex flex-wrap gap-2">
-      {ITEMS.filter((item) => can(role, item.permission)).map((item) => (
-        <Link
-          key={item.id}
-          href={item.href}
-          className={cn(
-            "rounded-md px-3 py-1.5 text-sm",
-            active === item.id
-              ? "bg-emerald-50 font-medium text-emerald-900"
-              : "text-muted-foreground hover:bg-muted hover:text-foreground",
-          )}
-        >
-          {item.title}
-        </Link>
-      ))}
-    </nav>
+    <PageTabs
+      active={active}
+      items={ITEMS.filter((item) => can(role, item.permission)).map((item) => ({
+        id: item.id,
+        href: item.href,
+        label: item.title,
+      }))}
+    />
   );
 }

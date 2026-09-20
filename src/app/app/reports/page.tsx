@@ -3,6 +3,7 @@ import { requirePermission } from "@/shared/auth/session";
 import { availableReports } from "@/modules/reports/services/reports.service";
 import { EmptyBlock } from "@/modules/reports/components/kpi-card";
 import { Button } from "@/shared/ui/button";
+import { PageContainer, PageHeader } from "@/shared/components/page-layout";
 import {
   Card,
   CardContent,
@@ -44,18 +45,17 @@ export default async function ReportsIndexPage() {
   const cards = REPORTS.filter((item) => allowed.includes(item.type));
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Relatórios</h1>
-          <p className="text-muted-foreground">
-            Consultas operacionais com filtros no servidor e exportação CSV
-          </p>
-        </div>
-        <Button asChild variant="outline">
+    <PageContainer>
+      <PageHeader
+        eyebrow="Gestão"
+        title="Relatórios"
+        description="Consultas operacionais com filtros no servidor e exportação CSV"
+        actions={
+          <Button asChild variant="outline">
           <Link href="/app">Dashboard</Link>
         </Button>
-      </div>
+        }
+      />
 
       {cards.length === 0 ? (
         <EmptyBlock>Nenhum relatório disponível para o seu perfil.</EmptyBlock>
@@ -76,6 +76,6 @@ export default async function ReportsIndexPage() {
           ))}
         </div>
       )}
-    </div>
+    </PageContainer>
   );
 }

@@ -14,11 +14,13 @@ export function KpiCard({
   change?: ChangeResult | null;
 }) {
   return (
-    <div className="rounded-md border px-3 py-3">
-      <p className="text-xs tracking-wide text-muted-foreground uppercase">
+    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+      <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
         {label}
       </p>
-      <p className="mt-1 text-2xl font-semibold tracking-tight">{value}</p>
+      <p className="mt-3 text-2xl font-semibold tracking-[-0.04em] text-slate-950">
+        {value}
+      </p>
       <div className="mt-1 flex flex-wrap items-center gap-2 text-xs">
         {change ? (
           <span
@@ -40,7 +42,7 @@ export function KpiCard({
 
 export function EmptyBlock({ children }: { children: ReactNode }) {
   return (
-    <p className="rounded-md border border-dashed px-3 py-6 text-center text-sm text-muted-foreground">
+    <p className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/50 px-4 py-8 text-center text-sm text-slate-500">
       {children}
     </p>
   );
@@ -48,7 +50,7 @@ export function EmptyBlock({ children }: { children: ReactNode }) {
 
 export function ErrorBlock({ children }: { children: ReactNode }) {
   return (
-    <p className="rounded-md border border-destructive/40 bg-destructive/5 px-3 py-4 text-sm text-destructive">
+    <p className="rounded-2xl border border-destructive/20 bg-destructive/5 px-4 py-5 text-sm text-destructive">
       {children}
     </p>
   );

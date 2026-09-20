@@ -1,26 +1,31 @@
 @import "tailwindcss";
 
 :root {
-  --background: 0 0% 100%;
-  --foreground: 240 10% 3.9%;
+  --background: 210 40% 98%;
+  --foreground: 222 47% 11%;
   --card: 0 0% 100%;
-  --card-foreground: 240 10% 3.9%;
+  --card-foreground: 222 47% 11%;
   --popover: 0 0% 100%;
-  --popover-foreground: 240 10% 3.9%;
-  --primary: 160 84% 39%;
+  --popover-foreground: 222 47% 11%;
+  --primary: 217 91% 53%;
   --primary-foreground: 0 0% 100%;
-  --secondary: 240 4.8% 95.9%;
-  --secondary-foreground: 240 5.9% 10%;
-  --muted: 240 4.8% 95.9%;
-  --muted-foreground: 240 3.8% 46.1%;
-  --accent: 240 4.8% 95.9%;
-  --accent-foreground: 240 5.9% 10%;
-  --destructive: 0 84.2% 60.2%;
+  --secondary: 214 95% 93%;
+  --secondary-foreground: 221 83% 32%;
+  --muted: 210 40% 96%;
+  --muted-foreground: 215 16% 47%;
+  --accent: 214 95% 93%;
+  --accent-foreground: 221 83% 32%;
+  --destructive: 350 78% 46%;
   --destructive-foreground: 0 0% 98%;
-  --border: 240 5.9% 90%;
-  --input: 240 5.9% 90%;
-  --ring: 160 84% 39%;
-  --radius: 0.5rem;
+  --border: 214 32% 91%;
+  --input: 214 25% 84%;
+  --ring: 217 91% 60%;
+  --radius: 0.875rem;
+  --brand-navy: #071225;
+  --brand-navy-soft: #0b1d3a;
+  --brand-blue: #2563eb;
+  --brand-blue-light: #60a5fa;
+  --brand-cyan: #22d3ee;
 }
 
 @theme inline {
@@ -59,6 +64,61 @@ body {
   background-color: hsl(var(--background));
   color: hsl(var(--foreground));
   font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: rgba(37, 99, 235, 0.18);
+}
+
+select:not([data-radix-collection-item]) {
+  border-color: hsl(var(--input));
+  background: white;
+  border-radius: 0.75rem;
+  transition:
+    border-color 150ms ease,
+    box-shadow 150ms ease;
+}
+
+select:not([data-radix-collection-item]):focus-visible {
+  border-color: hsl(var(--ring));
+  box-shadow: 0 0 0 3px hsl(var(--ring) / 0.18);
+  outline: none;
+}
+
+.app-surface h1 {
+  color: #020617;
+  font-weight: 650;
+  letter-spacing: -0.04em;
+}
+
+.app-surface h2,
+.app-surface h3 {
+  color: #0f172a;
+  letter-spacing: -0.02em;
+}
+
+.app-surface form.grid.rounded-lg.border,
+.app-surface form.grid.rounded-xl.border {
+  border-color: #e2e8f0;
+  border-radius: 1rem;
+  background: #fff;
+  box-shadow: 0 1px 2px rgb(15 23 42 / 0.04);
+}
+
+.app-surface div.rounded-lg.border,
+.app-surface div.rounded-md.border {
+  border-color: #e2e8f0;
+  border-radius: 1rem;
+  background: #fff;
+}
+
+.app-surface a.text-emerald-700 {
+  color: #1d4ed8;
+}
+
+.app-surface table {
+  min-width: 640px;
 }
 
 html {

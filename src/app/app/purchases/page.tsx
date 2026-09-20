@@ -11,6 +11,7 @@ import {
   PurchasesTable,
 } from "@/modules/purchases/components/purchases-table";
 import { Button } from "@/shared/ui/button";
+import { PageContainer, PageHeader } from "@/shared/components/page-layout";
 
 export default async function PurchasesPage({
   searchParams,
@@ -49,20 +50,19 @@ export default async function PurchasesPage({
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Compras</h1>
-          <p className="text-muted-foreground">
-            Recebimento de mercadorias · {result.total} registro(s)
-          </p>
-        </div>
-        {canCreate ? (
+    <PageContainer>
+      <PageHeader
+        eyebrow="Operação"
+        title="Compras"
+        description={`Recebimento de mercadorias · ${result.total} registro(s)`}
+        actions={
+          canCreate ? (
           <Button asChild>
             <Link href="/app/purchases/new">Nova compra</Link>
           </Button>
-        ) : null}
-      </div>
+          ) : null
+        }
+      />
       <PurchaseKpis kpis={result.kpis} />
       <PurchasesFilters query={query} suppliers={result.suppliers} />
       <PurchasesTable items={result.items} />
@@ -83,6 +83,6 @@ export default async function PurchasesPage({
           ) : null}
         </div>
       </div>
-    </div>
+    </PageContainer>
   );
 }

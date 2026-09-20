@@ -24,9 +24,9 @@ type AppShellProps = {
 
 export function AppShell({ user, companyName, children, notifications }: AppShellProps) {
   return (
-    <div className="flex min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-slate-50 text-foreground">
       <AppSidebar role={user.role} companyName={companyName} />
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="min-w-0 lg:pl-64">
         <AppHeader
           userName={user.name}
           userEmail={user.email}
@@ -34,7 +34,9 @@ export function AppShell({ user, companyName, children, notifications }: AppShel
           initials={getUserInitials(user.name, user.email)}
           notifications={notifications}
         />
-        <main className="flex-1 p-4 md:p-6 print:p-0">{children}</main>
+        <main className="app-surface min-h-[calc(100vh-5rem)] px-4 py-6 sm:px-6 lg:px-9 lg:py-8 print:p-0">
+          <div className="mx-auto w-full max-w-7xl">{children}</div>
+        </main>
       </div>
     </div>
   );

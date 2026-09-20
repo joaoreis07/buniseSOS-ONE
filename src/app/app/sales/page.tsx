@@ -8,6 +8,7 @@ import {
 import { SalesFilters } from "@/modules/sales/components/sales-filters";
 import { SalesKpis, SalesTable } from "@/modules/sales/components/sales-table";
 import { Button } from "@/shared/ui/button";
+import { PageContainer, PageHeader } from "@/shared/components/page-layout";
 
 export default async function SalesPage({
   searchParams,
@@ -37,20 +38,19 @@ export default async function SalesPage({
   const canCreate = canCreateSales(user.role);
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Vendas</h1>
-          <p className="text-muted-foreground">
-            PDV administrativo · {result.total} registro(s)
-          </p>
-        </div>
-        {canCreate ? (
+    <PageContainer>
+      <PageHeader
+        eyebrow="Operação"
+        title="Vendas"
+        description={`PDV administrativo · ${result.total} registro(s)`}
+        actions={
+          canCreate ? (
           <Button asChild>
             <Link href="/app/sales/new">Nova venda</Link>
           </Button>
-        ) : null}
-      </div>
+          ) : null
+        }
+      />
 
       <SalesKpis kpis={result.kpis} />
       <SalesFilters
@@ -99,6 +99,6 @@ export default async function SalesPage({
           ) : null}
         </div>
       </div>
-    </div>
+    </PageContainer>
   );
 }

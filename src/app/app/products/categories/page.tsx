@@ -6,6 +6,7 @@ import {
 } from "@/modules/products/services/category.service";
 import { ProductsSubnav } from "@/modules/products/components/products-subnav";
 import { CategoriesManager } from "@/modules/products/components/categories-manager";
+import { PageContainer, PageHeader } from "@/shared/components/page-layout";
 
 export default async function ProductCategoriesPage({
   searchParams,
@@ -30,19 +31,18 @@ export default async function ProductCategoriesPage({
   const canManage = canManageCategories(user.role);
 
   return (
-    <div className="space-y-6">
+    <PageContainer>
       <ProductsSubnav role={user.role} active="categories" />
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Categorias</h1>
-        <p className="text-muted-foreground">
-          Organização do catálogo · {result.total} categoria(s)
-        </p>
-      </div>
+      <PageHeader
+        eyebrow="Produtos"
+        title="Categorias"
+        description={`Organização do catálogo · ${result.total} categoria(s)`}
+      />
       <CategoriesManager
         items={result.items}
         canManage={canManage}
         queryQ={query.q}
       />
-    </div>
+    </PageContainer>
   );
 }

@@ -5,6 +5,7 @@ import {
 } from "@/modules/crm/services/pipeline.service";
 import { CrmSubnav } from "@/modules/crm/components/crm-subnav";
 import { PipelineBoard } from "@/modules/crm/components/pipeline-board";
+import { PageContainer, PageHeader } from "@/shared/components/page-layout";
 
 export default async function PipelinePage() {
   const user = await requirePermission("crm:pipeline:view");
@@ -15,15 +16,14 @@ export default async function PipelinePage() {
   const canManage = canManagePipeline(user.role);
 
   return (
-    <div className="space-y-6">
+    <PageContainer>
       <CrmSubnav role={user.role} active="pipeline" />
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Funil</h1>
-        <p className="text-muted-foreground">
-          Board de oportunidades por estágio · {board.total} no pipeline
-        </p>
-      </div>
+      <PageHeader
+        eyebrow="CRM"
+        title="Funil"
+        description={`Board de oportunidades por estágio · ${board.total} no pipeline`}
+      />
       <PipelineBoard columns={board.columns} canManage={canManage} />
-    </div>
+    </PageContainer>
   );
 }

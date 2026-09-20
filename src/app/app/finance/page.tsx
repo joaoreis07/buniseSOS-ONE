@@ -8,6 +8,7 @@ import {
 } from "@/modules/finance/components/finance-table";
 import { Button } from "@/shared/ui/button";
 import Link from "next/link";
+import { PageContainer, PageHeader } from "@/shared/components/page-layout";
 
 export default async function FinancePage({
   searchParams,
@@ -49,13 +50,12 @@ export default async function FinancePage({
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Financeiro</h1>
-        <p className="text-muted-foreground">
-          Contas a receber, parcelas e baixas · {result.total} registro(s)
-        </p>
-      </div>
+    <PageContainer>
+      <PageHeader
+        eyebrow="Gestão"
+        title="Financeiro"
+        description={`Contas a receber, parcelas e baixas · ${result.total} registro(s)`}
+      />
       <FinanceKpis kpis={result.kpis} />
       <FinanceFilters query={query} customers={result.customers} />
       <FinanceTable items={result.items} />
@@ -76,6 +76,6 @@ export default async function FinancePage({
           ) : null}
         </div>
       </div>
-    </div>
+    </PageContainer>
   );
 }

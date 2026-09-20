@@ -15,6 +15,7 @@ import {
   ACTIVITY_STATUS_LABELS,
   ACTIVITY_TYPE_LABELS,
 } from "@/modules/crm/lib/activity-labels";
+import { PageContainer, PageHeader } from "@/shared/components/page-layout";
 
 export default async function ActivitiesPage({
   searchParams,
@@ -45,21 +46,20 @@ export default async function ActivitiesPage({
   const canManage = canManageActivities(user.role);
 
   return (
-    <div className="space-y-6">
+    <PageContainer>
       <CrmSubnav role={user.role} active="activities" />
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Atividades</h1>
-          <p className="text-muted-foreground">
-            Follow-ups do CRM · {result.total} registro(s)
-          </p>
-        </div>
-        {canManage ? (
+      <PageHeader
+        eyebrow="CRM"
+        title="Atividades"
+        description={`Follow-ups do CRM · ${result.total} registro(s)`}
+        actions={
+          canManage ? (
           <Button asChild>
             <Link href="/app/crm/activities/new">Nova atividade</Link>
           </Button>
-        ) : null}
-      </div>
+          ) : null
+        }
+      />
 
       <form className="grid gap-3 rounded-lg border p-4 md:grid-cols-4">
         <div className="space-y-1 md:col-span-2">
@@ -123,6 +123,6 @@ export default async function ActivitiesPage({
       </form>
 
       <ActivitiesList items={result.items} canManage={canManage} />
-    </div>
+    </PageContainer>
   );
 }

@@ -10,6 +10,7 @@ import { CrmSubnav } from "@/modules/crm/components/crm-subnav";
 import { OpportunitiesFilters } from "@/modules/crm/components/opportunities-filters";
 import { OpportunitiesTable } from "@/modules/crm/components/opportunities-table";
 import { Button } from "@/shared/ui/button";
+import { PageContainer, PageHeader } from "@/shared/components/page-layout";
 
 function toQueryParams(query: Record<string, unknown>, page: number): string {
   const params = new URLSearchParams();
@@ -57,24 +58,21 @@ export default async function OpportunitiesPage({
   const canManage = canManageOpportunities(user.role);
 
   return (
-    <div className="space-y-6">
+    <PageContainer>
       <CrmSubnav role={user.role} active="opportunities" />
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">
-            Oportunidades
-          </h1>
-          <p className="text-muted-foreground">
-            Negócios em andamento — listagem (funil visual na FASE 4.4).
-          </p>
-        </div>
-        {canManage ? (
+      <PageHeader
+        eyebrow="CRM"
+        title="Oportunidades"
+        description="Negócios em andamento, responsáveis, valores e estágios."
+        actions={
+          canManage ? (
           <Button asChild>
             <Link href="/app/crm/opportunities/new">Nova oportunidade</Link>
           </Button>
-        ) : null}
-      </div>
+          ) : null
+        }
+      />
 
       <OpportunitiesFilters
         query={query}
@@ -110,6 +108,6 @@ export default async function OpportunitiesPage({
           ) : null}
         </div>
       </div>
-    </div>
+    </PageContainer>
   );
 }

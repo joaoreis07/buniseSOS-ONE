@@ -10,6 +10,7 @@ import { ProductsSubnav } from "@/modules/products/components/products-subnav";
 import { ProductsFilters } from "@/modules/products/components/products-filters";
 import { ProductsTable } from "@/modules/products/components/products-table";
 import { Button } from "@/shared/ui/button";
+import { PageContainer, PageHeader } from "@/shared/components/page-layout";
 
 export default async function ProductsPage({
   searchParams,
@@ -43,21 +44,20 @@ export default async function ProductsPage({
   const canManage = canManageProducts(user.role);
 
   return (
-    <div className="space-y-6">
+    <PageContainer>
       <ProductsSubnav role={user.role} active="products" />
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Produtos</h1>
-          <p className="text-muted-foreground">
-            Catálogo de produtos e serviços · {result.total} registro(s)
-          </p>
-        </div>
-        {canManage ? (
+      <PageHeader
+        eyebrow="Operação"
+        title="Produtos"
+        description={`Catálogo de produtos e serviços · ${result.total} registro(s)`}
+        actions={
+          canManage ? (
           <Button asChild>
             <Link href="/app/products/new">Novo produto</Link>
           </Button>
-        ) : null}
-      </div>
+          ) : null
+        }
+      />
 
       <ProductsFilters query={query} categories={meta.categories} />
       <ProductsTable items={result.items} canManage={canManage} />
@@ -101,6 +101,6 @@ export default async function ProductsPage({
           ) : null}
         </div>
       </div>
-    </div>
+    </PageContainer>
   );
 }
