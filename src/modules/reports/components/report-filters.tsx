@@ -182,7 +182,7 @@ export function InventoryReportFilters({ query }: { query: InventoryReportQuery 
   return (
     <form
       action="/app/reports/inventory"
-      className="flex flex-col gap-3 rounded-lg border p-4 lg:flex-row lg:flex-wrap lg:items-end"
+      className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm lg:flex-row lg:flex-wrap lg:items-end"
     >
       <div className="grid flex-1 gap-3 sm:grid-cols-2">
         <div className="space-y-1">

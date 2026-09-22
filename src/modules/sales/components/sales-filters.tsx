@@ -15,7 +15,7 @@ export function SalesFilters({
   sellers: Array<{ id: string; name: string | null; email: string }>;
 }) {
   return (
-    <form className="grid gap-3 rounded-lg border p-4 md:grid-cols-3 lg:grid-cols-6">
+    <form className="grid gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm md:grid-cols-3 lg:grid-cols-6">
       <div className="space-y-1 md:col-span-2">
         <Label htmlFor="q">Busca</Label>
         <Input

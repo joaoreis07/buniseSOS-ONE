@@ -24,7 +24,7 @@ export function CustomersFilters({
   owners,
 }: CustomersFiltersProps) {
   return (
-    <form className="grid gap-3 rounded-lg border bg-card p-4 md:grid-cols-2 lg:grid-cols-6">
+    <form className="grid gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm md:grid-cols-2 lg:grid-cols-6">
       <div className="space-y-1 lg:col-span-2">
         <Label htmlFor="q">Busca</Label>
         <Input

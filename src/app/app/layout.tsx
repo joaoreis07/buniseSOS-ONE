@@ -29,6 +29,7 @@ export default async function AppLayout({
           <AppShell
             user={user}
             companyName="Empresa"
+            pathname={pathname}
             notifications={null}
           >
             <div className="mx-auto max-w-lg space-y-4 py-16 text-center">
@@ -44,26 +45,29 @@ export default async function AppLayout({
     }
   }
 
-  const company = await prisma.company.findFirst({
-    where: { id: user.companyId, deletedAt: null },
-    select: {
-      name: true,
-      settings: { select: { displayName: true } },
-    },
-  });
-  const notifications = hasPermission(user.role, "notifications:view")
-    ? await listNotificationsForTenant({
-        companyId: user.companyId,
-        userId: user.id,
-        role: user.role,
-        query: { page: 1, pageSize: 8 },
-      })
-    : null;
+  const [company, notifications] = await Promise.all([
+    prisma.company.findFirst({
+      where: { id: user.companyId, deletedAt: null },
+      select: {
+        name: true,
+        settings: { select: { displayName: true } },
+      },
+    }),
+    hasPermission(user.role, "notifications:view")
+      ? listNotificationsForTenant({
+          companyId: user.companyId,
+          userId: user.id,
+          role: user.role,
+          query: { page: 1, pageSize: 8 },
+        })
+      : Promise.resolve(null),
+  ]);
 
   return (
     <AppShell
       user={user}
       companyName={company?.settings?.displayName?.trim() || company?.name || "Empresa"}
+      pathname={pathname}
       notifications={
         notifications
           ? { unreadCount: notifications.unreadCount, items: notifications.items }

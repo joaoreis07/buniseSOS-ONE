@@ -10,6 +10,7 @@ import { NOTIFICATION_TYPE_LABELS } from "@/modules/communications/lib/labels";
 import { formatDateTimeBR } from "@/modules/sales/lib/sale-labels";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
+import { PageContainer, PageHeader } from "@/shared/components/page-layout";
 
 function first(value: string | string[] | undefined) {
   return typeof value === "string" ? value : undefined;
@@ -38,36 +39,35 @@ export default async function NotificationsPage({
   });
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Notificações</h1>
-          <p className="text-muted-foreground">
-            {result.unreadCount} não lida{result.unreadCount === 1 ? "" : "s"}
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Button asChild variant="outline">
-            <Link href={query.unread ? "/app/notifications" : "/app/notifications?unread=1"}>
-              {query.unread ? "Ver todas" : "Somente não lidas"}
-            </Link>
-          </Button>
-          <form action={markAllNotificationsReadAction}>
-            <Button type="submit" variant="outline">
-              Marcar todas como lidas
+    <PageContainer>
+      <PageHeader
+        eyebrow="Conta"
+        title="Notificações"
+        description={`${result.unreadCount} não lida${result.unreadCount === 1 ? "" : "s"}`}
+        actions={
+          <>
+            <Button asChild variant="outline">
+              <Link href={query.unread ? "/app/notifications" : "/app/notifications?unread=1"}>
+                {query.unread ? "Ver todas" : "Somente não lidas"}
+              </Link>
             </Button>
-          </form>
-        </div>
-      </div>
+            <form action={markAllNotificationsReadAction}>
+              <Button type="submit" variant="outline">
+                Marcar todas como lidas
+              </Button>
+            </form>
+          </>
+        }
+      />
 
       {result.items.length === 0 ? (
-        <p className="rounded-lg border bg-card p-6 text-sm text-muted-foreground">
+        <p className="rounded-2xl border border-dashed border-slate-200 bg-white p-6 text-sm text-slate-500">
           Nenhuma notificação.
         </p>
       ) : (
         <ul className="space-y-2">
           {result.items.map((item) => (
-            <li key={item.id} className="rounded-lg border bg-card p-4">
+            <li key={item.id} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
               <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                 <div>
                   <p className={item.readAt ? "text-muted-foreground" : "font-medium"}>
@@ -131,6 +131,6 @@ export default async function NotificationsPage({
           ) : null}
         </div>
       </div>
-    </div>
+    </PageContainer>
   );
 }

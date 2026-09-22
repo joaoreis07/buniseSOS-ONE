@@ -15,9 +15,7 @@ export function KpiCard({
 }) {
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-      <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
-        {label}
-      </p>
+      <p className="text-sm font-medium text-slate-500">{label}</p>
       <p className="mt-3 text-2xl font-semibold tracking-[-0.04em] text-slate-950">
         {value}
       </p>
@@ -40,9 +38,18 @@ export function KpiCard({
   );
 }
 
-export function EmptyBlock({ children }: { children: ReactNode }) {
+export function EmptyBlock({
+  children,
+  compact = false,
+}: {
+  children: ReactNode;
+  compact?: boolean;
+}) {
+  if (compact) {
+    return <p className="py-1 text-sm text-slate-500">{children}</p>;
+  }
   return (
-    <p className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/50 px-4 py-8 text-center text-sm text-slate-500">
+    <p className="rounded-xl border border-dashed border-slate-200 bg-slate-50/60 px-4 py-6 text-center text-sm text-slate-500">
       {children}
     </p>
   );

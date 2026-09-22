@@ -4,13 +4,15 @@ import { EmptyBlock } from "@/modules/reports/components/kpi-card";
 export function MoneyBarList({
   items,
   empty,
+  compact = false,
 }: {
   items: Array<{ key: string; label: string; value: number; hint?: string }>;
   empty: string;
+  compact?: boolean;
 }) {
   const max = items.reduce((highest, item) => Math.max(highest, item.value), 0);
   if (items.length === 0 || max <= 0) {
-    return <EmptyBlock>{empty}</EmptyBlock>;
+    return <EmptyBlock compact={compact}>{empty}</EmptyBlock>;
   }
 
   return (

@@ -3,6 +3,7 @@ import { hasPermission } from "@/shared/permissions/rbac";
 import { SettingsSubnav } from "@/modules/team/components/settings-subnav";
 import { SubscriptionPanel } from "@/modules/billing/components/subscription-panel";
 import { getSubscriptionOverviewForTenant } from "@/modules/billing/services/billing.service";
+import { PageContainer, PageHeader } from "@/shared/components/page-layout";
 import {
   Card,
   CardContent,
@@ -57,16 +58,14 @@ export default async function BillingSettingsPage({
     : null;
 
   return (
-    <div className="space-y-6">
+    <PageContainer>
       <SettingsSubnav role={user.role} active="billing" />
 
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Minha assinatura</h1>
-        <p className="text-muted-foreground">
-          Cobrança recorrente do BusinessOS One. Isolada do financeiro interno da
-          empresa (vendas e parcelas).
-        </p>
-      </div>
+      <PageHeader
+        eyebrow="Configurações"
+        title="Minha assinatura"
+        description="Cobrança recorrente do BusinessOS One. Isolada do financeiro interno da empresa (vendas e parcelas)."
+      />
 
       <Card>
         <CardHeader>
@@ -86,6 +85,6 @@ export default async function BillingSettingsPage({
           />
         </CardContent>
       </Card>
-    </div>
+    </PageContainer>
   );
 }

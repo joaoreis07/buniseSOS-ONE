@@ -279,35 +279,69 @@ export async function financeDashboard(params: {
 }
 
 export async function inventoryDashboard(companyId: string) {
-  const rows = await prisma.$queryRaw<
-    Array<{
-      productCount: number;
-      inStock: number;
-      outOfStock: number;
-      belowMinimum: number;
-      estimatedValue: unknown;
-    }>
-  >`
-    SELECT
-      COUNT(*)::int AS "productCount",
-      COUNT(*) FILTER (
-        WHERE COALESCE(i.quantity, 0) > 0
-      )::int AS "inStock",
-      COUNT(*) FILTER (
-        WHERE COALESCE(i.quantity, 0) <= 0
-      )::int AS "outOfStock",
-      COUNT(*) FILTER (
-        WHERE COALESCE(i.quantity, 0) > 0
-          AND COALESCE(i."minimumQuantity", 0) > 0
-          AND i.quantity <= i."minimumQuantity"
-      )::int AS "belowMinimum",
-      COALESCE(SUM(COALESCE(i.quantity, 0) * p."costPrice"), 0) AS "estimatedValue"
-    FROM "Product" p
-    LEFT JOIN "Inventory" i ON i."productId" = p.id AND i."companyId" = p."companyId"
-    WHERE p."companyId" = ${companyId}
-      AND p.type = 'PRODUCT'
-      AND p."deletedAt" IS NULL
-  `;
+  const [rows, alerts] = await Promise.all([
+    prisma.$queryRaw<
+      Array<{
+        productCount: number;
+        inStock: number;
+        outOfStock: number;
+        belowMinimum: number;
+        estimatedValue: unknown;
+      }>
+    >`
+      SELECT
+        COUNT(*)::int AS "productCount",
+        COUNT(*) FILTER (
+          WHERE COALESCE(i.quantity, 0) > 0
+        )::int AS "inStock",
+        COUNT(*) FILTER (
+          WHERE COALESCE(i.quantity, 0) <= 0
+        )::int AS "outOfStock",
+        COUNT(*) FILTER (
+          WHERE COALESCE(i.quantity, 0) > 0
+            AND COALESCE(i."minimumQuantity", 0) > 0
+            AND i.quantity <= i."minimumQuantity"
+        )::int AS "belowMinimum",
+        COALESCE(SUM(COALESCE(i.quantity, 0) * p."costPrice"), 0) AS "estimatedValue"
+      FROM "Product" p
+      LEFT JOIN "Inventory" i ON i."productId" = p.id AND i."companyId" = p."companyId"
+      WHERE p."companyId" = ${companyId}
+        AND p.type = 'PRODUCT'
+        AND p."deletedAt" IS NULL
+    `,
+    prisma.$queryRaw<
+      Array<{
+        productId: string;
+        name: string;
+        sku: string;
+        quantity: number;
+        minimumQuantity: number;
+      }>
+    >`
+      SELECT p.id AS "productId",
+             p.name,
+             p.sku,
+             COALESCE(i.quantity, 0)::int AS quantity,
+             COALESCE(i."minimumQuantity", 0)::int AS "minimumQuantity"
+      FROM "Product" p
+      LEFT JOIN "Inventory" i ON i."productId" = p.id AND i."companyId" = p."companyId"
+      WHERE p."companyId" = ${companyId}
+        AND p.type = 'PRODUCT'
+        AND p."deletedAt" IS NULL
+        AND (
+          COALESCE(i.quantity, 0) <= 0
+          OR (
+            COALESCE(i."minimumQuantity", 0) > 0
+            AND COALESCE(i.quantity, 0) > 0
+            AND i.quantity <= i."minimumQuantity"
+          )
+        )
+      ORDER BY
+        CASE WHEN COALESCE(i.quantity, 0) <= 0 THEN 0 ELSE 1 END,
+        p.name ASC
+      LIMIT 8
+    `,
+  ]);
 
   const summary = rows[0] ?? {
     productCount: 0,
@@ -316,39 +350,6 @@ export async function inventoryDashboard(companyId: string) {
     belowMinimum: 0,
     estimatedValue: 0,
   };
-
-  const alerts = await prisma.$queryRaw<
-    Array<{
-      productId: string;
-      name: string;
-      sku: string;
-      quantity: number;
-      minimumQuantity: number;
-    }>
-  >`
-    SELECT p.id AS "productId",
-           p.name,
-           p.sku,
-           COALESCE(i.quantity, 0)::int AS quantity,
-           COALESCE(i."minimumQuantity", 0)::int AS "minimumQuantity"
-    FROM "Product" p
-    LEFT JOIN "Inventory" i ON i."productId" = p.id AND i."companyId" = p."companyId"
-    WHERE p."companyId" = ${companyId}
-      AND p.type = 'PRODUCT'
-      AND p."deletedAt" IS NULL
-      AND (
-        COALESCE(i.quantity, 0) <= 0
-        OR (
-          COALESCE(i."minimumQuantity", 0) > 0
-          AND COALESCE(i.quantity, 0) > 0
-          AND i.quantity <= i."minimumQuantity"
-        )
-      )
-    ORDER BY
-      CASE WHEN COALESCE(i.quantity, 0) <= 0 THEN 0 ELSE 1 END,
-      p.name ASC
-    LIMIT 8
-  `;
 
   return {
     productCount: intNumber(summary.productCount),
@@ -373,6 +374,8 @@ export async function inventoryDashboard(companyId: string) {
 export async function purchasesDashboard(params: {
   companyId: string;
   range: DateRange;
+  /** Comparison period only needs totals. Skips series, recent list and supplier count. */
+  totalsOnly?: boolean;
 }) {
   const receivedWhere = {
     companyId: params.companyId,
@@ -381,54 +384,60 @@ export async function purchasesDashboard(params: {
   };
   const bucket = purchaseBucketSql(params.range.group);
 
-  const [
-    receivedCount,
-    receivedAgg,
-    cancelledCount,
-    activeSuppliers,
-    recent,
-    seriesRows,
-  ] = await Promise.all([
-    prisma.purchase.count({ where: receivedWhere }),
-    prisma.purchase.aggregate({
-      where: receivedWhere,
-      _sum: { total: true },
-    }),
-    prisma.purchase.count({
-      where: {
-        companyId: params.companyId,
-        status: "CANCELLED",
-        cancelledAt: { gte: params.range.start, lte: params.range.end },
-      },
-    }),
-    prisma.supplier.count({
-      where: { companyId: params.companyId, status: "ACTIVE" },
-    }),
-    prisma.purchase.findMany({
-      where: receivedWhere,
-      orderBy: { receivedAt: "desc" },
-      take: 5,
-      select: {
-        id: true,
-        number: true,
-        total: true,
-        receivedAt: true,
-        supplier: { select: { id: true, name: true } },
-      },
-    }),
-    prisma.$queryRaw<SeriesRow[]>`
-      SELECT ${bucket} AS bucket,
-             COUNT(*)::int AS count,
-             COALESCE(SUM(p.total), 0) AS revenue
-      FROM "Purchase" p
-      WHERE p."companyId" = ${params.companyId}
-        AND p.status = 'RECEIVED'
-        AND p."receivedAt" >= ${params.range.start}
-        AND p."receivedAt" <= ${params.range.end}
-      GROUP BY 1
-      ORDER BY 1
-    `,
-  ]);
+  const [receivedCount, receivedAgg, cancelledCount, activeSuppliers, recent, seriesRows] =
+    params.totalsOnly
+      ? await Promise.all([
+          prisma.purchase.count({ where: receivedWhere }),
+          prisma.purchase.aggregate({
+            where: receivedWhere,
+            _sum: { total: true },
+          }),
+          Promise.resolve(0),
+          Promise.resolve(0),
+          Promise.resolve([]),
+          Promise.resolve([] as SeriesRow[]),
+        ])
+      : await Promise.all([
+          prisma.purchase.count({ where: receivedWhere }),
+          prisma.purchase.aggregate({
+            where: receivedWhere,
+            _sum: { total: true },
+          }),
+          prisma.purchase.count({
+            where: {
+              companyId: params.companyId,
+              status: "CANCELLED",
+              cancelledAt: { gte: params.range.start, lte: params.range.end },
+            },
+          }),
+          prisma.supplier.count({
+            where: { companyId: params.companyId, status: "ACTIVE" },
+          }),
+          prisma.purchase.findMany({
+            where: receivedWhere,
+            orderBy: { receivedAt: "desc" },
+            take: 5,
+            select: {
+              id: true,
+              number: true,
+              total: true,
+              receivedAt: true,
+              supplier: { select: { id: true, name: true } },
+            },
+          }),
+          prisma.$queryRaw<SeriesRow[]>`
+            SELECT ${bucket} AS bucket,
+                   COUNT(*)::int AS count,
+                   COALESCE(SUM(p.total), 0) AS revenue
+            FROM "Purchase" p
+            WHERE p."companyId" = ${params.companyId}
+              AND p.status = 'RECEIVED'
+              AND p."receivedAt" >= ${params.range.start}
+              AND p."receivedAt" <= ${params.range.end}
+            GROUP BY 1
+            ORDER BY 1
+          `,
+        ]);
 
   return {
     count: receivedCount,

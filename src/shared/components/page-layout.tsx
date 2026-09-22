@@ -70,7 +70,7 @@ export function PageTabs({
   return (
     <nav
       className={cn(
-        "flex gap-1 overflow-x-auto border-b border-slate-200 pb-3",
+        "flex gap-1 overflow-x-auto rounded-xl border border-slate-200 bg-white p-1",
         className,
       )}
       aria-label="Navegação da seção"
@@ -80,10 +80,10 @@ export function PageTabs({
           key={item.id}
           href={item.href}
           className={cn(
-            "shrink-0 rounded-xl px-3 py-2 text-sm font-medium transition",
+            "shrink-0 rounded-lg px-3 py-2 text-sm font-medium transition",
             active === item.id
-              ? "bg-blue-600 text-white shadow-sm shadow-blue-900/15"
-              : "text-slate-500 hover:bg-white hover:text-slate-900",
+              ? "bg-blue-600 text-white shadow-sm shadow-blue-900/20"
+              : "text-slate-500 hover:bg-slate-50 hover:text-slate-900",
           )}
           aria-current={active === item.id ? "page" : undefined}
         >
@@ -190,6 +190,28 @@ export function StatCard({
       </p>
       {hint ? <p className="relative mt-1 text-xs text-slate-400">{hint}</p> : null}
     </div>
+  );
+}
+
+export function MetricList({
+  items,
+}: {
+  items: Array<{ label: string; value: ReactNode }>;
+}) {
+  return (
+    <ul className="grid gap-3">
+      {items.map((item) => (
+        <li
+          key={item.label}
+          className="flex items-center justify-between gap-4 rounded-xl border border-slate-100 bg-slate-50 px-4 py-3.5 text-sm"
+        >
+          <span className="text-slate-500">{item.label}</span>
+          <strong className="text-right font-semibold tracking-[-0.02em] text-slate-950">
+            {item.value}
+          </strong>
+        </li>
+      ))}
+    </ul>
   );
 }
 

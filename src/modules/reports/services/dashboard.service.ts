@@ -117,6 +117,7 @@ export async function getDashboardForTenant(params: {
       ? purchasesDashboard({
           companyId: params.companyId,
           range: { ...range, start: previous.start, end: previous.end },
+          totalsOnly: true,
         })
       : null,
   ]);

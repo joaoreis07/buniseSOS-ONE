@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { redirect } from "next/navigation";
 import type { Role } from "@prisma/client";
 import { auth } from "@/shared/auth/auth";
@@ -17,7 +18,7 @@ export type AppSessionUser = {
   emailVerified: Date | null;
 };
 
-export async function getValidatedSessionUser(): Promise<AppSessionUser | null> {
+export const getValidatedSessionUser = cache(async function getValidatedSessionUser(): Promise<AppSessionUser | null> {
   const session = await auth();
   if (!session?.user?.id || !session.user.companyId || !session.user.role) {
     return null;
@@ -39,7 +40,7 @@ export async function getValidatedSessionUser(): Promise<AppSessionUser | null> 
     role: membership.role,
     emailVerified: session.user.emailVerified ?? null,
   };
-}
+});
 
 export async function requireSession(): Promise<AppSessionUser> {
   const user = await getValidatedSessionUser();

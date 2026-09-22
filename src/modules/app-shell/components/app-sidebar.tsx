@@ -1,7 +1,4 @@
-"use client";
-
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import type { Role } from "@prisma/client";
 import { can } from "@/shared/permissions/can";
 import { APP_NAV_GROUPS } from "@/modules/app-shell/nav";
@@ -11,9 +8,10 @@ import { cn } from "@/shared/utilities/cn";
 type AppSidebarProps = {
   role: Role;
   companyName: string;
+  pathname: string;
 };
 
-export function AppSidebar({ role, companyName }: AppSidebarProps) {
+export function AppSidebar({ role, companyName, pathname }: AppSidebarProps) {
   return (
     <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col bg-[#071225] text-white shadow-xl print:hidden lg:flex">
       <div className="border-b border-white/10 px-5 py-5">
@@ -30,23 +28,24 @@ export function AppSidebar({ role, companyName }: AppSidebarProps) {
             </span>
           </span>
         </Link>
-        <p className="mt-3 truncate rounded-lg bg-white/[0.06] px-3 py-2 text-xs text-slate-300">
+        <p className="mt-3 truncate rounded-xl bg-white/[0.06] px-3 py-2 text-xs text-slate-300">
           {companyName}
         </p>
       </div>
-      <SidebarNavigation role={role} />
-      <div className="border-t border-white/10 px-5 py-4">
-        <p className="text-[11px] leading-4 text-slate-500">
-          Gestão integrada para sua empresa
-        </p>
-      </div>
+      <SidebarNavigation role={role} pathname={pathname} />
     </aside>
   );
 }
 
-export function SidebarNavigation({ role }: { role: Role }) {
-  const pathname = usePathname();
-
+export function SidebarNavigation({
+  role,
+  pathname,
+  onNavigate,
+}: {
+  role: Role;
+  pathname: string;
+  onNavigate?: () => void;
+}) {
   return (
     <nav className="flex-1 space-y-5 overflow-y-auto px-3 py-5" aria-label="Menu principal">
       {APP_NAV_GROUPS.map((group) => {
@@ -68,6 +67,7 @@ export function SidebarNavigation({ role }: { role: Role }) {
                   <Link
                     key={item.href}
                     href={item.href}
+                    onClick={onNavigate}
                     className={cn(
                       "group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition",
                       active
@@ -90,6 +90,6 @@ export function SidebarNavigation({ role }: { role: Role }) {
           </div>
         );
       })}
-      </nav>
+    </nav>
   );
 }

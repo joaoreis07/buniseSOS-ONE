@@ -144,7 +144,7 @@ export function CategoriesManager({
 
   return (
     <div className="space-y-6">
-      <form className="flex flex-col gap-3 rounded-lg border p-4 sm:flex-row sm:items-end">
+      <form className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:flex-row sm:items-end">
         <div className="flex-1 space-y-1">
           <Label htmlFor="q">Buscar categoria</Label>
           <Input
@@ -170,11 +170,11 @@ export function CategoriesManager({
       ) : null}
 
       {items.length === 0 ? (
-        <div className="rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">
+        <div className="rounded-2xl border border-dashed border-slate-200 bg-white p-6 text-center text-sm text-slate-500">
           Nenhuma categoria encontrada.
         </div>
       ) : (
-        <div className="rounded-lg border">
+        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
           <Table>
             <TableHeader>
               <TableRow>

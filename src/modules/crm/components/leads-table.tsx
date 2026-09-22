@@ -35,7 +35,7 @@ export function LeadsTable({
 }) {
   if (items.length === 0) {
     return (
-      <div className="rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">
+      <div className="rounded-2xl border border-dashed border-slate-200 bg-white p-6 text-center text-sm text-slate-500">
         Nenhum lead encontrado.
         {canManage ? (
           <>
@@ -50,7 +50,7 @@ export function LeadsTable({
   }
 
   return (
-    <div className="rounded-lg border">
+    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
       <Table>
         <TableHeader>
           <TableRow>

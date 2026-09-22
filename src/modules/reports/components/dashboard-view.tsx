@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CircleDollarSign, ShoppingBag, Wallet, Warehouse } from "lucide-react";
 import {
   formatMoneyBRL,
   PAYMENT_METHOD_LABELS,
@@ -11,18 +12,17 @@ import { PRODUCT_TYPE_LABELS } from "@/modules/products/lib/product-labels";
 import { PERIOD_PRESET_LABELS, formatCivilDate } from "@/modules/reports/lib/period";
 import { PeriodFilter } from "@/modules/reports/components/period-filter";
 import { MoneyBarList } from "@/modules/reports/components/bar-list";
-import { EmptyBlock, KpiCard } from "@/modules/reports/components/kpi-card";
+import { EmptyBlock } from "@/modules/reports/components/kpi-card";
 import type { getDashboardForTenant } from "@/modules/reports/services/dashboard.service";
+import {
+  MetricList,
+  PageContainer,
+  PageHeader,
+  SectionCard,
+  StatCard,
+} from "@/shared/components/page-layout";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
-import { PageContainer, PageHeader } from "@/shared/components/page-layout";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/shared/ui/card";
 
 type DashboardData = Awaited<ReturnType<typeof getDashboardForTenant>>;
 
@@ -35,307 +35,327 @@ export function DashboardView({
 }) {
   const { range, sections } = data;
   const hasAny =
-    sections.sales ||
-    sections.finance ||
-    sections.inventory ||
-    sections.purchases;
+    sections.sales || sections.finance || sections.inventory || sections.purchases;
+  const criticalStock =
+    (data.inventory?.belowMinimum ?? 0) + (data.inventory?.outOfStock ?? 0);
+
+  const kpis: Array<{
+    label: string;
+    value: string | number;
+    hint?: string;
+    icon: typeof CircleDollarSign;
+    tone: "blue" | "emerald" | "amber" | "rose";
+  }> = [];
+  if (data.sales) {
+    kpis.push(
+      {
+        label: "Faturamento",
+        value: formatMoneyBRL(data.sales.revenue),
+        hint: data.sales.revenueChange?.label,
+        icon: CircleDollarSign,
+        tone: "blue",
+      },
+      {
+        label: "Vendas",
+        value: data.sales.count,
+        hint: data.sales.countChange?.label ?? "concluídas no período",
+        icon: ShoppingBag,
+        tone: "emerald",
+      },
+    );
+  }
+  if (data.finance) {
+    kpis.push({
+      label: "A receber",
+      value: formatMoneyBRL(data.finance.open),
+      hint: `${data.finance.openCount} em aberto · ${data.finance.overdueCount} vencida(s)`,
+      icon: Wallet,
+      tone: "amber",
+    });
+  }
+  if (data.inventory) {
+    kpis.push({
+      label: "Estoque crítico",
+      value: criticalStock,
+      hint: `${data.inventory.outOfStock} sem estoque`,
+      icon: Warehouse,
+      tone: criticalStock > 0 ? "rose" : "blue",
+    });
+  }
+
+  const alerts = [
+    ...(data.finance?.upcoming ?? []).map((item) => ({
+      key: item.id,
+      title: `${formatSaleNumber(item.saleNumber)} · parcela ${item.number}`,
+      meta: `${item.customerName ?? "Sem cliente"} · ${formatDateBR(item.dueDate)} · ${formatMoneyBRL(item.remainingAmount)}`,
+    })),
+    ...(data.inventory?.alerts ?? []).map((item) => ({
+      key: item.productId,
+      title: item.name,
+      meta: `${item.sku} · ${item.quantity} / mín. ${item.minimumQuantity} · ${STOCK_LEVEL_LABELS[item.stockLevel]}`,
+    })),
+  ].slice(0, 6);
 
   return (
     <PageContainer>
       <PageHeader
-        title="Dashboard"
         eyebrow="Visão geral"
-        description={
-          <>
-            {PERIOD_PRESET_LABELS[range.preset]} · {formatCivilDate(range.start)}{" "}
-            até {formatCivilDate(range.end)}
-          </>
-        }
+        title="Dashboard"
+        description={`${PERIOD_PRESET_LABELS[range.preset]} · ${formatCivilDate(range.start)} até ${formatCivilDate(range.end)}`}
         actions={
           canViewReports ? (
-          <Button asChild variant="outline">
-            <Link href="/app/reports">Relatórios</Link>
-          </Button>
+            <Button asChild variant="outline">
+              <Link href="/app/reports">Abrir relatórios</Link>
+            </Button>
           ) : null
         }
       />
 
-      <PeriodFilter action="/app" range={range} />
+      <PeriodFilter action="/app" range={range} compact />
 
       {!hasAny ? (
-        <EmptyBlock>
-          Nenhum indicador disponível para o seu perfil.
-        </EmptyBlock>
+        <EmptyBlock compact>Nenhum indicador disponível para o seu perfil.</EmptyBlock>
       ) : null}
 
-      {data.sales ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Vendas</CardTitle>
-            <CardDescription>
-              Somente vendas concluídas entram no faturamento. Parcelado continua
-              sendo venda mesmo sem recebimento.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            <KpiCard
-              label="Vendas"
-              value={data.sales.count}
-              change={data.sales.countChange}
-              hint="vs. período anterior"
+      {kpis.length > 0 ? (
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          {kpis.map((kpi) => (
+            <StatCard
+              key={kpi.label}
+              label={kpi.label}
+              value={kpi.value}
+              hint={kpi.hint}
+              icon={kpi.icon}
+              tone={kpi.tone}
             />
-            <KpiCard
-              label="Faturamento"
-              value={formatMoneyBRL(data.sales.revenue)}
-              change={data.sales.revenueChange}
-            />
-            <KpiCard
-              label="Ticket médio"
-              value={formatMoneyBRL(data.sales.ticket)}
-              change={data.sales.ticketChange}
-            />
-            <KpiCard
-              label="Canceladas"
-              value={data.sales.cancelled}
-              hint="fora do faturamento"
-            />
-          </CardContent>
-        </Card>
+          ))}
+        </div>
       ) : null}
 
-      {sections.sales ? (
-        <div className="grid gap-4 xl:grid-cols-2">
-          <Card>
-            <CardHeader>
-              <CardTitle>Faturamento no período</CardTitle>
-              <CardDescription>
-                Agrupado por{" "}
-                {range.group === "day"
-                  ? "dia"
-                  : range.group === "week"
-                    ? "semana"
-                    : "mês"}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <MoneyBarList
-                empty="Nenhuma venda no período selecionado."
-                items={data.chart.map((row) => ({
-                  key: row.key,
-                  label: row.label,
-                  value: row.revenue,
-                  hint: `${row.count} venda(s)`,
-                }))}
+      {data.sales || data.finance || data.inventory || data.purchases ? (
+        <div className="grid gap-4 lg:grid-cols-2">
+          {data.sales ? (
+            <SectionCard title="Vendas" description="Resumo operacional do período">
+              <MetricList
+                items={[
+                  { label: "Concluídas", value: data.sales.count },
+                  { label: "Ticket médio", value: formatMoneyBRL(data.sales.ticket) },
+                  {
+                    label: "Variação do ticket",
+                    value: data.sales.ticketChange?.label ?? "—",
+                  },
+                  { label: "Canceladas", value: data.sales.cancelled },
+                ]}
               />
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader>
-              <CardTitle>Forma de pagamento</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <MoneyBarList
-                empty="Nenhuma venda no período selecionado."
-                items={data.payments.map((row) => ({
-                  key: row.paymentMethod,
-                  label: PAYMENT_METHOD_LABELS[row.paymentMethod],
-                  value: row.revenue,
-                  hint: `${row.count} venda(s)`,
-                }))}
+              <p className="mt-3 text-xs text-slate-400">
+                Somente vendas concluídas entram no faturamento.
+              </p>
+            </SectionCard>
+          ) : null}
+          {data.finance || data.inventory || data.purchases ? (
+            <SectionCard title="Financeiro e operação" description="Indicadores do recorte atual">
+              <MetricList
+                items={[
+                  ...(data.finance
+                    ? [
+                        {
+                          label: "Recebido",
+                          value: formatMoneyBRL(data.finance.received),
+                        },
+                        {
+                          label: "Vencido",
+                          value: formatMoneyBRL(data.finance.overdue),
+                        },
+                      ]
+                    : []),
+                  ...(data.inventory
+                    ? [{ label: "Com saldo", value: data.inventory.inStock }]
+                    : []),
+                  ...(data.purchases
+                    ? [{ label: "Compras recebidas", value: data.purchases.count }]
+                    : []),
+                ]}
               />
-            </CardContent>
-          </Card>
+            </SectionCard>
+          ) : null}
         </div>
       ) : null}
 
       {sections.sales ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Vendas por produto</CardTitle>
-            <CardDescription>Ranking por faturamento no período</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {data.products.length === 0 ? (
-              <EmptyBlock>Nenhuma venda no período selecionado.</EmptyBlock>
+        <div className="grid gap-4 lg:grid-cols-[minmax(0,1.45fr)_minmax(16rem,0.7fr)]">
+          <SectionCard
+            title="Desempenho"
+            description={
+              range.group === "day"
+                ? "Faturamento por dia"
+                : range.group === "week"
+                  ? "Faturamento por semana"
+                  : "Faturamento por mês"
+            }
+          >
+            <MoneyBarList
+              compact
+              empty="Nenhuma venda no período selecionado."
+              items={data.chart.map((row) => ({
+                key: row.key,
+                label: row.label,
+                value: row.revenue,
+                hint: `${row.count} venda(s)`,
+              }))}
+            />
+          </SectionCard>
+          <SectionCard title="Pendências" description="Vencimentos e estoque">
+            {alerts.length === 0 ? (
+              <EmptyBlock compact>Nenhuma pendência neste recorte.</EmptyBlock>
             ) : (
-              <ul className="space-y-2 text-sm">
+              <ul className="divide-y divide-slate-100">
+                {alerts.map((item) => (
+                  <li key={item.key} className="py-2.5">
+                    <p className="text-sm font-medium text-slate-900">{item.title}</p>
+                    <p className="text-xs text-slate-500">{item.meta}</p>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </SectionCard>
+        </div>
+      ) : null}
+
+      {sections.sales ? (
+        <div className="grid gap-4 lg:grid-cols-2">
+          <SectionCard title="Pagamentos" description="Como as vendas do período foram recebidas">
+            <MoneyBarList
+              compact
+              empty="Nenhuma venda no período selecionado."
+              items={data.payments.map((row) => ({
+                key: row.paymentMethod,
+                label: PAYMENT_METHOD_LABELS[row.paymentMethod],
+                value: row.revenue,
+                hint: `${row.count} venda(s)`,
+              }))}
+            />
+          </SectionCard>
+          <SectionCard title="Produtos" description="Ranking por faturamento">
+            {data.products.length === 0 ? (
+              <EmptyBlock compact>Nenhuma venda no período selecionado.</EmptyBlock>
+            ) : (
+              <ul className="divide-y divide-slate-100">
                 {data.products.map((row, index) => (
                   <li
                     key={`${row.productId}-${row.sku}`}
-                    className="flex flex-col gap-1 rounded-md border px-3 py-2 sm:flex-row sm:items-center sm:justify-between"
+                    className="flex items-baseline justify-between gap-3 py-2.5 text-sm"
                   >
-                    <span>
-                      {index + 1}. {row.name}{" "}
-                      <span className="text-muted-foreground">
-                        · {PRODUCT_TYPE_LABELS[row.type]} · {row.sku}
+                    <span className="min-w-0 truncate">
+                      <span className="text-slate-400">{index + 1}.</span> {row.name}
+                      <span className="text-slate-400">
+                        {" "}
+                        · {PRODUCT_TYPE_LABELS[row.type]}
                       </span>
                     </span>
-                    <span className="text-muted-foreground">
+                    <span className="shrink-0 text-slate-600">
                       {row.quantity} un. · {formatMoneyBRL(row.revenue)}
                     </span>
                   </li>
                 ))}
               </ul>
             )}
-          </CardContent>
-        </Card>
+          </SectionCard>
+        </div>
       ) : null}
 
       {data.finance ? (
-        <Card>
-          <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <CardTitle>Financeiro</CardTitle>
-              <CardDescription>
-                Recebido no período ≠ faturamento de vendas
-              </CardDescription>
-            </div>
+        <SectionCard
+          title="Financeiro"
+          description="Recebido no período não é o mesmo que faturamento"
+          action={
             <Button asChild variant="outline" size="sm">
               <Link href="/app/finance">Contas a receber</Link>
             </Button>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-              <KpiCard
-                label="Recebido no período"
-                value={formatMoneyBRL(data.finance.received)}
-                hint={`${data.finance.receivedCount} pagamento(s)`}
-              />
-              <KpiCard
-                label="Em aberto"
-                value={formatMoneyBRL(data.finance.open)}
-                hint={`${data.finance.openCount} parcela(s)`}
-              />
-              <KpiCard
-                label="Vencido"
-                value={formatMoneyBRL(data.finance.overdue)}
-                hint={`${data.finance.overdueCount} parcela(s)`}
-              />
-              <KpiCard
-                label="Contas a receber"
-                value={formatMoneyBRL(data.finance.receivableRemaining)}
-                hint={`${data.finance.receivableCount} conta(s)`}
-              />
-            </div>
-            {data.finance.upcoming.length === 0 ? (
-              <EmptyBlock>Nenhum vencimento nos próximos 7 dias.</EmptyBlock>
-            ) : (
-              <ul className="space-y-2 text-sm">
-                {data.finance.upcoming.map((item) => (
-                  <li
-                    key={item.id}
-                    className="flex flex-col gap-1 rounded-md border px-3 py-2 sm:flex-row sm:items-center sm:justify-between"
-                  >
-                    <span>
-                      {formatSaleNumber(item.saleNumber)} · parcela {item.number}{" "}
-                      · {item.customerName ?? "Sem cliente"}
-                    </span>
-                    <span className="text-muted-foreground">
-                      {formatDateBR(item.dueDate)} ·{" "}
-                      {formatMoneyBRL(item.remainingAmount)}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </CardContent>
-        </Card>
+          }
+        >
+          <MetricList
+            items={[
+              {
+                label: "Recebido",
+                value: `${formatMoneyBRL(data.finance.received)} · ${data.finance.receivedCount} pagamento(s)`,
+              },
+              {
+                label: "Vencido",
+                value: `${formatMoneyBRL(data.finance.overdue)} · ${data.finance.overdueCount} parcela(s)`,
+              },
+              {
+                label: "Saldo em contas",
+                value: `${formatMoneyBRL(data.finance.receivableRemaining)} · ${data.finance.receivableCount} conta(s)`,
+              },
+            ]}
+          />
+          {data.finance.overdue > 0 ? (
+            <p className="mt-4 text-sm text-slate-600">
+              <Badge variant="destructive" className="mr-2 align-middle">
+                Atenção
+              </Badge>
+              {formatMoneyBRL(data.finance.overdue)} vencido em {data.finance.overdueCount}{" "}
+              parcela(s).
+            </p>
+          ) : null}
+        </SectionCard>
       ) : null}
 
       {data.inventory ? (
-        <Card>
-          <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <CardTitle>Estoque</CardTitle>
-              <CardDescription>
-                Snapshot atual · valor estimado pelo custo cadastrado
-              </CardDescription>
-            </div>
+        <SectionCard
+          title="Estoque"
+          description="Posição atual, valor pelo custo cadastrado"
+          action={
             <Button asChild variant="outline" size="sm">
               <Link href="/app/inventory">Abrir estoque</Link>
             </Button>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-              <KpiCard
-                label="Produtos em estoque"
-                value={data.inventory.inStock}
-              />
-              <KpiCard
-                label="Abaixo do mínimo"
-                value={data.inventory.belowMinimum}
-              />
-              <KpiCard
-                label="Sem estoque"
-                value={data.inventory.outOfStock}
-              />
-              <KpiCard
-                label="Valor estimado"
-                value={formatMoneyBRL(data.inventory.estimatedValue)}
-              />
-            </div>
-            {data.inventory.alerts.length === 0 ? (
-              <EmptyBlock>Nenhum alerta de estoque crítico.</EmptyBlock>
-            ) : (
-              <ul className="space-y-2 text-sm">
-                {data.inventory.alerts.map((item) => (
-                  <li
-                    key={item.productId}
-                    className="flex flex-col gap-2 rounded-md border px-3 py-2 sm:flex-row sm:items-center sm:justify-between"
-                  >
-                    <span>
-                      {item.name}{" "}
-                      <span className="text-muted-foreground">· {item.sku}</span>
-                    </span>
-                    <span className="flex items-center gap-2 text-muted-foreground">
-                      {item.quantity} / mín. {item.minimumQuantity}
-                      <Badge
-                        variant={
-                          item.stockLevel === "out" ? "destructive" : "secondary"
-                        }
-                      >
-                        {STOCK_LEVEL_LABELS[item.stockLevel]}
-                      </Badge>
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </CardContent>
-        </Card>
+          }
+        >
+          <MetricList
+            items={[
+              { label: "Com saldo", value: data.inventory.inStock },
+              { label: "Abaixo do mínimo", value: data.inventory.belowMinimum },
+              { label: "Sem estoque", value: data.inventory.outOfStock },
+              {
+                label: "Valor estimado",
+                value: formatMoneyBRL(data.inventory.estimatedValue),
+              },
+            ]}
+          />
+        </SectionCard>
       ) : null}
 
       {data.purchases ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Compras</CardTitle>
-            <CardDescription>
-              Somente compras recebidas entram no valor comprado
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-              <KpiCard
-                label="Compras recebidas"
-                value={data.purchases.count}
-                change={data.purchases.countChange}
-              />
-              <KpiCard
-                label="Valor comprado"
-                value={formatMoneyBRL(data.purchases.value)}
-                change={data.purchases.valueChange}
-              />
-              <KpiCard
-                label="Fornecedores ativos"
-                value={data.purchases.activeSuppliers}
-              />
-              <KpiCard
-                label="Canceladas"
-                value={data.purchases.cancelled}
-                hint="fora do valor comprado"
-              />
-            </div>
+        <SectionCard
+          title="Compras"
+          description="Somente compras recebidas entram no valor"
+          action={
+            <Button asChild variant="outline" size="sm">
+              <Link href="/app/purchases">Abrir compras</Link>
+            </Button>
+          }
+        >
+          <MetricList
+            items={[
+              {
+                label: "Recebidas",
+                value: data.purchases.countChange
+                  ? `${data.purchases.count} · ${data.purchases.countChange.label}`
+                  : data.purchases.count,
+              },
+              {
+                label: "Valor comprado",
+                value: data.purchases.valueChange
+                  ? `${formatMoneyBRL(data.purchases.value)} · ${data.purchases.valueChange.label}`
+                  : formatMoneyBRL(data.purchases.value),
+              },
+              { label: "Fornecedores ativos", value: data.purchases.activeSuppliers },
+              { label: "Canceladas", value: data.purchases.cancelled },
+            ]}
+          />
+          <div className="mt-5">
             <MoneyBarList
+              compact
               empty="Nenhuma compra recebida no período selecionado."
               items={data.purchases.series.map((row) => ({
                 key: row.key,
@@ -344,28 +364,27 @@ export function DashboardView({
                 hint: `${row.count} compra(s)`,
               }))}
             />
-            {data.purchases.recent.length === 0 ? (
-              <EmptyBlock>Nenhuma compra recente no período.</EmptyBlock>
-            ) : (
-              <ul className="space-y-2 text-sm">
-                {data.purchases.recent.map((item) => (
-                  <li
-                    key={item.id}
-                    className="flex flex-col gap-1 rounded-md border px-3 py-2 sm:flex-row sm:items-center sm:justify-between"
-                  >
-                    <span>
-                      {formatPurchaseNumber(item.number)} · {item.supplierName}
-                    </span>
-                    <span className="text-muted-foreground">
-                      {item.receivedAt ? formatDateBR(item.receivedAt) : "—"} ·{" "}
-                      {formatMoneyBRL(item.total)}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </CardContent>
-        </Card>
+          </div>
+          {data.purchases.recent.length === 0 ? (
+            <div className="mt-3">
+              <EmptyBlock compact>Nenhuma compra recente no período.</EmptyBlock>
+            </div>
+          ) : (
+            <ul className="mt-3 divide-y divide-slate-100">
+              {data.purchases.recent.map((item) => (
+                <li key={item.id} className="flex justify-between gap-3 py-2 text-sm">
+                  <span>
+                    {formatPurchaseNumber(item.number)} · {item.supplierName}
+                  </span>
+                  <span className="text-slate-500">
+                    {item.receivedAt ? formatDateBR(item.receivedAt) : "—"} ·{" "}
+                    {formatMoneyBRL(item.total)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </SectionCard>
       ) : null}
     </PageContainer>
   );

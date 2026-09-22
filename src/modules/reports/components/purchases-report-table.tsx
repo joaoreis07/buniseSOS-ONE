@@ -36,7 +36,7 @@ export function PurchasesReportTable({
   }
 
   return (
-    <div className="rounded-lg border">
+    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
       <Table>
         <TableHeader>
           <TableRow>

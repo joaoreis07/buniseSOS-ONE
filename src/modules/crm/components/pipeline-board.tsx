@@ -62,7 +62,7 @@ export function PipelineBoard({
         {columns.map((column) => (
           <section
             key={column.stage}
-            className="w-[280px] shrink-0 rounded-lg border bg-muted/30"
+            className="w-[280px] shrink-0 rounded-2xl border border-slate-200 bg-white shadow-sm"
           >
             <header className="border-b px-3 py-3">
               <div className="flex items-center justify-between gap-2">

@@ -61,7 +61,7 @@ export function PurchaseKpis({
 export function PurchasesTable({ items }: { items: PurchaseRow[] }) {
   if (items.length === 0) {
     return (
-      <div className="rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">
+      <div className="rounded-2xl border border-dashed border-slate-200 bg-white p-6 text-center text-sm text-slate-500">
         Nenhuma compra encontrada.{" "}
         <Link href="/app/purchases/new" className="text-emerald-700 underline">
           Registrar a primeira
@@ -71,7 +71,7 @@ export function PurchasesTable({ items }: { items: PurchaseRow[] }) {
   }
 
   return (
-    <div className="overflow-x-auto rounded-lg border">
+    <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
       <Table>
         <TableHeader>
           <TableRow>
