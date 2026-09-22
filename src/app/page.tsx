@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
-import { DemoShell } from "@/modules/marketing/components/demo-shell";
+import { LandingPage } from "@/modules/marketing/components/landing-page";
 
 export const metadata: Metadata = {
   title: {
     absolute: "BusinessOS One — Gestão completa para sua empresa",
   },
   description:
-    "Gerencie clientes, vendas, estoque, financeiro, compras e resultados em um só lugar.",
+    "CRM, vendas, estoque, financeiro, compras e relatórios no BusinessOS One. Plano único de R$ 197/mês.",
   alternates: {
     canonical: "/",
   },
@@ -14,10 +14,10 @@ export const metadata: Metadata = {
     url: "/",
     title: "BusinessOS One — Gestão completa para sua empresa",
     description:
-      "Gerencie clientes, vendas, estoque, financeiro, compras e resultados em um só lugar.",
+      "CRM, vendas, estoque, financeiro, compras e relatórios no BusinessOS One. Plano único de R$ 197/mês.",
   },
 };
 
 export default function Home() {
-  return <DemoShell module="dashboard" />;
+  return <LandingPage />;
 }

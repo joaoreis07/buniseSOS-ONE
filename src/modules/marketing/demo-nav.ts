@@ -2,9 +2,9 @@ import {
   FileSpreadsheet,
   LayoutDashboard,
   MessageSquare,
+  Settings,
   ShoppingCart,
   Truck,
-  UserCog,
   Users,
   Wallet,
   Warehouse,
@@ -20,37 +20,81 @@ export const DEMO_MODULES = [
   "purchases",
   "reports",
   "communications",
-  "team",
+  "settings",
 ] as const;
 
 export type DemoModuleId = (typeof DEMO_MODULES)[number];
 
-export const DEMO_NAV: Array<{
+export type DemoNavItem = {
   id: DemoModuleId;
   href: string;
   label: string;
   icon: LucideIcon;
-}> = [
-  { id: "dashboard", href: "/", label: "Dashboard", icon: LayoutDashboard },
-  { id: "crm", href: "/demo/crm", label: "CRM", icon: Users },
-  { id: "sales", href: "/demo/sales", label: "Vendas", icon: ShoppingCart },
-  { id: "inventory", href: "/demo/inventory", label: "Estoque", icon: Warehouse },
-  { id: "finance", href: "/demo/finance", label: "Financeiro", icon: Wallet },
-  { id: "purchases", href: "/demo/purchases", label: "Compras", icon: Truck },
-  { id: "reports", href: "/demo/reports", label: "Relatórios", icon: FileSpreadsheet },
+};
+
+export type DemoNavGroup = {
+  label: string;
+  items: DemoNavItem[];
+};
+
+/** Same module set as before; grouped like the real app shell. */
+export const DEMO_NAV_GROUPS: DemoNavGroup[] = [
   {
-    id: "communications",
-    href: "/demo/communications",
-    label: "Comunicações",
-    icon: MessageSquare,
+    label: "Visão geral",
+    items: [
+      { id: "dashboard", href: "/demo/dashboard", label: "Dashboard", icon: LayoutDashboard },
+    ],
   },
-  { id: "team", href: "/demo/team", label: "Equipe", icon: UserCog },
+  {
+    label: "Relacionamento",
+    items: [
+      { id: "crm", href: "/demo/crm", label: "CRM", icon: Users },
+      {
+        id: "communications",
+        href: "/demo/communications",
+        label: "Comunicações",
+        icon: MessageSquare,
+      },
+    ],
+  },
+  {
+    label: "Operação",
+    items: [
+      { id: "sales", href: "/demo/sales", label: "Vendas", icon: ShoppingCart },
+      { id: "inventory", href: "/demo/inventory", label: "Estoque", icon: Warehouse },
+      { id: "purchases", href: "/demo/purchases", label: "Compras", icon: Truck },
+    ],
+  },
+  {
+    label: "Gestão",
+    items: [
+      { id: "finance", href: "/demo/finance", label: "Financeiro", icon: Wallet },
+      { id: "reports", href: "/demo/reports", label: "Relatórios", icon: FileSpreadsheet },
+    ],
+  },
+  {
+    label: "Administração",
+    items: [
+      {
+        id: "settings",
+        href: "/demo/settings",
+        label: "Configurações",
+        icon: Settings,
+      },
+    ],
+  },
 ];
+
+export const DEMO_NAV: DemoNavItem[] = DEMO_NAV_GROUPS.flatMap((group) => group.items);
 
 export function isDemoModule(value: string): value is DemoModuleId {
   return (DEMO_MODULES as readonly string[]).includes(value);
 }
 
 export function demoHref(id: DemoModuleId): string {
-  return id === "dashboard" ? "/" : `/demo/${id}`;
+  return `/demo/${id}`;
+}
+
+export function demoModuleLabel(id: DemoModuleId): string {
+  return DEMO_NAV.find((item) => item.id === id)?.label ?? id;
 }

@@ -68,7 +68,7 @@ function CtaStart({
 function CtaDemo({ className, onClick }: { className?: string; onClick?: () => void }) {
   return (
     <Link
-      href="/"
+      href="/demo"
       onClick={onClick}
       className={cn(
         "inline-flex items-center justify-center gap-2 rounded-full border border-white/15 bg-white/5 px-7 py-3.5 text-sm font-semibold text-white transition hover:bg-white/10",
@@ -430,7 +430,7 @@ export function LandingPage() {
                       {faq.question === "Posso conhecer o sistema antes?" ? (
                         <p>
                           {faq.answer}{" "}
-                          <Link href="/" className="text-[#60A5FA] underline-offset-4 hover:underline">
+                          <Link href="/demo" className="text-[#60A5FA] underline-offset-4 hover:underline">
                             Acesse a demonstração
                           </Link>
                           .

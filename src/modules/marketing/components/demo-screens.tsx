@@ -1,13 +1,25 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import {
+  ArrowRight,
+  Boxes,
+  CircleDollarSign,
+  CreditCard,
+  MessageSquare,
+  Minus,
+  Package,
+  Plus,
+  ShieldCheck,
+  ShoppingBag,
+  Users,
+  Wallet,
+  Warehouse,
+} from "lucide-react";
 import {
   DEMO_COMMUNICATIONS,
   DEMO_CUSTOMERS,
   DEMO_KPIS,
-  DEMO_NOTICE,
   DEMO_PLAN,
   DEMO_PRODUCTS,
   DEMO_PURCHASES,
@@ -17,163 +29,347 @@ import {
   DEMO_TEAM,
 } from "@/modules/marketing/demo-data";
 import type { DemoModuleId } from "@/modules/marketing/demo-nav";
+import {
+  DemoCta,
+  DemoDetailPanel,
+  DemoNotice,
+  DemoSectionTabs,
+  DemoToolbar,
+} from "@/modules/marketing/components/demo-ui";
+import {
+  DataTableShell,
+  FilterBar,
+  PageContainer,
+  PageHeader,
+  SectionCard,
+  StatCard,
+} from "@/shared/components/page-layout";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/shared/ui/dialog";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/shared/ui/table";
 import { cn } from "@/shared/utilities/cn";
 
-function DemoCta() {
-  return (
-    <section className="mt-8 rounded-lg border bg-card p-5 text-center">
-      <p className="text-lg font-semibold">Gostou do que viu?</p>
-      <p className="mt-1 text-sm text-muted-foreground">
-        Crie sua empresa no BusinessOS One.
-      </p>
-      <div className="mt-4 flex flex-wrap items-center justify-center gap-3">
-        <Button asChild className="bg-[#3B82F6] hover:bg-[#2563EB]">
-          <Link href="/register">
-            Começar agora
-            <ArrowRight className="size-4" aria-hidden />
-          </Link>
-        </Button>
-        <Button asChild variant="outline">
-          <Link href="/sobre">Ver planos e benefícios</Link>
-        </Button>
-      </div>
-      <p className="mt-3 text-xs text-muted-foreground">
-        {DEMO_PLAN.name} · {DEMO_PLAN.price}
-      </p>
-    </section>
-  );
-}
-
-function Notice({ children }: { children?: string }) {
-  return (
-    <p className="rounded-md border border-[#3B82F6]/30 bg-[#EFF6FF] px-3 py-2 text-sm text-[#1E3A8A]">
-      {children ?? DEMO_NOTICE}
-    </p>
-  );
+function statusBadge(status: string) {
+  const normalized = status.toLowerCase();
+  if (
+    normalized.includes("conclu") ||
+    normalized.includes("ativo") ||
+    normalized.includes("pago") ||
+    normalized.includes("recebid") ||
+    normalized.includes("quitad")
+  ) {
+    return <Badge variant="success">{status}</Badge>;
+  }
+  if (
+    normalized.includes("baixo") ||
+    normalized.includes("rascunho") ||
+    normalized.includes("pend") ||
+    normalized.includes("parcial")
+  ) {
+    return <Badge variant="warning">{status}</Badge>;
+  }
+  if (
+    normalized.includes("sem estoque") ||
+    normalized.includes("vencid") ||
+    normalized.includes("inativo")
+  ) {
+    return <Badge variant="destructive">{status}</Badge>;
+  }
+  return <Badge variant="outline">{status}</Badge>;
 }
 
 function DashboardScreen() {
   return (
-    <div className="space-y-4">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
-        <p className="text-sm text-muted-foreground">Últimos 30 dias · dados de exemplo</p>
-      </div>
-      <Notice />
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        {DEMO_KPIS.map((kpi) => (
-          <div key={kpi.label} className="rounded-md border px-3 py-3">
-            <p className="text-xs tracking-wide text-muted-foreground uppercase">{kpi.label}</p>
-            <p className="mt-1 text-2xl font-semibold tracking-tight">{kpi.value}</p>
-          </div>
-        ))}
+    <PageContainer>
+      <PageHeader
+        eyebrow="Visão geral"
+        title="Dashboard"
+        description="Últimos 30 dias · dados de exemplo"
+      />
+      <DemoNotice />
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {DEMO_KPIS.map((kpi, index) => {
+          const icons = [CircleDollarSign, ShoppingBag, Wallet, Warehouse] as const;
+          const tones = ["blue", "emerald", "amber", "rose"] as const;
+          const Icon = icons[index] ?? CircleDollarSign;
+          return (
+            <StatCard
+              key={kpi.label}
+              label={kpi.label}
+              value={kpi.value}
+              hint="Dados fictícios"
+              icon={Icon}
+              tone={tones[index] ?? "blue"}
+            />
+          );
+        })}
       </div>
       <div className="grid gap-4 lg:grid-cols-2">
-        <section className="rounded-md border p-4">
-          <h2 className="mb-3 font-semibold">Vendas</h2>
-          <ul className="space-y-2 text-sm">
-            <li className="flex justify-between">
-              <span>Concluídas</span>
-              <span>147</span>
-            </li>
-            <li className="flex justify-between">
-              <span>Ticket médio</span>
-              <span>R$ 167,21</span>
-            </li>
-            <li className="flex justify-between">
-              <span>À vista</span>
-              <span>98</span>
-            </li>
+        <SectionCard title="Vendas" description="Resumo operacional do período">
+          <ul className="demo-metric-list">
+            {[
+              ["Concluídas", "147"],
+              ["Ticket médio", "R$ 167,21"],
+              ["À vista", "98"],
+            ].map(([label, value]) => (
+              <li key={label}>
+                <span>{label}</span>
+                <strong>{value}</strong>
+              </li>
+            ))}
           </ul>
-        </section>
-        <section className="rounded-md border p-4">
-          <h2 className="mb-3 font-semibold">Financeiro e estoque</h2>
-          <ul className="space-y-2 text-sm">
-            <li className="flex justify-between">
-              <span>Recebido</span>
-              <span>R$ 18.100,00</span>
-            </li>
-            <li className="flex justify-between">
-              <span>Itens em estoque</span>
-              <span>342</span>
-            </li>
-            <li className="flex justify-between">
-              <span>Compras recebidas</span>
-              <span>12</span>
-            </li>
+        </SectionCard>
+        <SectionCard title="Financeiro e estoque" description="Indicadores conectados">
+          <ul className="demo-metric-list">
+            {[
+              ["Recebido", "R$ 18.100,00"],
+              ["Itens em estoque", "342"],
+              ["Compras recebidas", "12"],
+            ].map(([label, value]) => (
+              <li key={label}>
+                <span>{label}</span>
+                <strong>{value}</strong>
+              </li>
+            ))}
           </ul>
-        </section>
+        </SectionCard>
       </div>
+      <SectionCard title="Desempenho" description="Visão clara para agir mais rápido">
+        <div className="demo-chart">
+          {[68, 42, 84, 54, 91, 63, 76].map((height, index) => (
+            <div key={index} style={{ height: `${height}%` }} aria-hidden />
+          ))}
+        </div>
+      </SectionCard>
       <DemoCta />
-    </div>
+    </PageContainer>
   );
 }
 
 function CrmScreen() {
+  const [tab, setTab] = useState("clients");
   const [selectedId, setSelectedId] = useState<string>(DEMO_CUSTOMERS[0].id);
   const customer = DEMO_CUSTOMERS.find((item) => item.id === selectedId) ?? DEMO_CUSTOMERS[0];
 
   return (
-    <div className="space-y-4">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">CRM</h1>
-        <p className="text-sm text-muted-foreground">Clientes, ficha, histórico e atividades</p>
-      </div>
-      <Notice />
-      <div className="grid gap-4 lg:grid-cols-[16rem_1fr]">
-        <ul className="space-y-2">
-          {DEMO_CUSTOMERS.map((item) => (
-            <li key={item.id}>
-              <button
-                type="button"
-                onClick={() => setSelectedId(item.id)}
-                className={cn(
-                  "w-full rounded-md border px-3 py-2 text-left text-sm",
-                  item.id === customer.id ? "border-blue-200 bg-blue-50" : "hover:bg-muted",
-                )}
-              >
-                <span className="font-medium">{item.name}</span>
-                <span className="mt-0.5 block text-xs text-muted-foreground">{item.status}</span>
-              </button>
-            </li>
-          ))}
-        </ul>
-        <div className="rounded-md border p-4">
-          <div className="flex items-start justify-between gap-3 border-b pb-4">
-            <div>
-              <p className="font-semibold">{customer.name}</p>
-              <p className="text-sm text-muted-foreground">{customer.phone}</p>
-            </div>
-            <Badge variant="secondary">{customer.status}</Badge>
+    <PageContainer>
+      <DemoSectionTabs
+        active={tab}
+        onChange={setTab}
+        items={[
+          { id: "overview", label: "Dashboard" },
+          { id: "clients", label: "Clientes" },
+        ]}
+      />
+      <PageHeader
+        eyebrow="CRM"
+        title={tab === "overview" ? "Visão geral" : "Clientes"}
+        description={
+          tab === "overview"
+            ? "Indicadores comerciais · dados de exemplo"
+            : "Ficha, histórico e atividades — dados de exemplo"
+        }
+      />
+      <DemoNotice />
+
+      {tab === "overview" ? (
+        <>
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <StatCard label="Clientes" value={DEMO_CUSTOMERS.length} icon={Users} tone="blue" />
+            <StatCard label="Ativos" value="2" icon={Users} tone="emerald" />
+            <StatCard label="A receber" value="R$ 2.340,00" icon={CircleDollarSign} tone="amber" />
+            <StatCard label="Atividades" value="4" icon={MessageSquare} tone="slate" />
           </div>
-          <div className="mt-4 grid gap-3 sm:grid-cols-3">
-            <div className="rounded-md border p-3">
-              <p className="text-xs text-muted-foreground">Vendas</p>
-              <p className="font-semibold">{customer.sales}</p>
+          <SectionCard title="Clientes recentes" description="Últimas interações comerciais">
+            <ul className="demo-metric-list">
+              {DEMO_CUSTOMERS.map((item) => (
+                <li key={item.id}>
+                  <span>{item.name}</span>
+                  <strong>{item.receivable}</strong>
+                </li>
+              ))}
+            </ul>
+          </SectionCard>
+        </>
+      ) : (
+        <div className="grid gap-4 xl:grid-cols-[18rem_1fr]">
+          <SectionCard title="Lista" description={`${DEMO_CUSTOMERS.length} clientes`}>
+            <ul className="space-y-2">
+              {DEMO_CUSTOMERS.map((item) => (
+                <li key={item.id}>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedId(item.id)}
+                    className={cn(
+                      "demo-list-item w-full",
+                      item.id === customer.id && "is-active",
+                    )}
+                  >
+                    <span className="demo-avatar">{item.name.slice(0, 2).toUpperCase()}</span>
+                    <span className="min-w-0 text-left">
+                      <span className="block truncate text-sm font-semibold text-slate-950">
+                        {item.name}
+                      </span>
+                      <span className="block text-xs text-slate-500">{item.status}</span>
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </SectionCard>
+
+          <SectionCard>
+            <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-100 pb-5">
+              <div className="flex items-center gap-3">
+                <span className="demo-avatar demo-avatar--lg bg-blue-600 text-white">
+                  {customer.name.slice(0, 2).toUpperCase()}
+                </span>
+                <div>
+                  <p className="text-lg font-semibold tracking-[-0.02em] text-slate-950">
+                    {customer.name}
+                  </p>
+                  <p className="text-sm text-slate-500">{customer.phone}</p>
+                </div>
+              </div>
+              {statusBadge(customer.status)}
             </div>
-            <div className="rounded-md border p-3">
-              <p className="text-xs text-muted-foreground">A receber</p>
-              <p className="font-semibold">{customer.receivable}</p>
+
+            <div className="mt-5 grid gap-3 sm:grid-cols-3">
+              <StatCard label="Vendas" value={customer.sales} icon={ShoppingBag} tone="blue" />
+              <StatCard
+                label="A receber"
+                value={customer.receivable}
+                icon={CircleDollarSign}
+                tone="amber"
+              />
+              <StatCard label="Atividades" value={customer.activities} icon={Users} tone="emerald" />
             </div>
-            <div className="rounded-md border p-3">
-              <p className="text-xs text-muted-foreground">Atividades</p>
-              <p className="font-semibold">{customer.activities}</p>
-            </div>
-          </div>
-          <ul className="mt-4 space-y-2 text-sm">
-            {customer.history.map((row) => (
-              <li key={row.label} className="flex justify-between rounded-md border px-3 py-2">
-                <span>{row.label}</span>
-                <span>{row.value}</span>
-              </li>
-            ))}
-          </ul>
+
+            <ul className="demo-metric-list mt-5">
+              {customer.history.map((row) => (
+                <li key={row.label}>
+                  <span>{row.label}</span>
+                  <strong>{row.value}</strong>
+                </li>
+              ))}
+            </ul>
+          </SectionCard>
         </div>
-      </div>
+      )}
       <DemoCta />
-    </div>
+    </PageContainer>
+  );
+}
+
+function NewSaleDialog({
+  open,
+  onOpenChange,
+  onSubmit,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSubmit: () => void;
+}) {
+  const [qty, setQty] = useState(1);
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-3xl gap-0 overflow-hidden p-0">
+        <DialogHeader className="border-b border-slate-100 px-6 py-5 text-left">
+          <DialogTitle>Nova venda</DialogTitle>
+          <DialogDescription>
+            Somente demonstração — nenhum dado real será gravado
+          </DialogDescription>
+        </DialogHeader>
+        <div className="grid lg:grid-cols-[1fr_17rem]">
+          <div className="space-y-4 border-b border-slate-100 p-6 lg:border-b-0 lg:border-r">
+            <label className="block text-sm font-medium text-slate-700">
+              Cliente
+              <select className="mt-1.5 w-full rounded-xl border border-input bg-white px-3 py-2.5 text-sm shadow-sm">
+                {DEMO_CUSTOMERS.map((item) => (
+                  <option key={item.id}>{item.name}</option>
+                ))}
+              </select>
+            </label>
+            <div>
+              <p className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
+                Produtos
+              </p>
+              <div className="demo-sale-line">
+                <div>
+                  <strong>Consulta / serviço</strong>
+                  <small>SKU-DEMO-001</small>
+                </div>
+                <div className="demo-sale-qty">
+                  <button type="button" onClick={() => setQty((value) => Math.max(1, value - 1))}>
+                    <Minus className="size-3.5" />
+                  </button>
+                  <span>{qty}</span>
+                  <button type="button" onClick={() => setQty((value) => value + 1)}>
+                    <Plus className="size-3.5" />
+                  </button>
+                </div>
+                <strong>R$ {(197 * qty).toLocaleString("pt-BR")}</strong>
+              </div>
+            </div>
+          </div>
+          <div className="flex flex-col gap-4 p-6">
+            <div>
+              <p className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
+                Pagamento
+              </p>
+              <div className="space-y-2">
+                {["PIX", "Dinheiro", "Cartão", "Parcelado"].map((method, index) => (
+                  <label
+                    key={method}
+                    className={cn("demo-payment-option", index === 0 && "is-active")}
+                  >
+                    <input type="radio" name="payment" defaultChecked={index === 0} />
+                    {method}
+                  </label>
+                ))}
+              </div>
+            </div>
+            <div className="mt-auto space-y-2 border-t border-slate-100 pt-4 text-sm">
+              <div className="flex justify-between text-slate-500">
+                <span>Subtotal</span>
+                <span>R$ {(197 * qty).toLocaleString("pt-BR")}</span>
+              </div>
+              <div className="flex justify-between font-semibold text-slate-950">
+                <span>Total</span>
+                <span className="text-lg text-blue-700">
+                  R$ {(197 * qty).toLocaleString("pt-BR")}
+                </span>
+              </div>
+              <Button
+                className="mt-2 w-full rounded-xl"
+                onClick={() => {
+                  onSubmit();
+                  onOpenChange(false);
+                }}
+              >
+                Finalizar venda
+                <ArrowRight className="size-4" />
+              </Button>
+            </div>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -184,115 +380,90 @@ function SalesScreen() {
   const sale = DEMO_SALES.find((item) => item.id === selectedId) ?? DEMO_SALES[0];
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Vendas</h1>
-          <p className="text-sm text-muted-foreground">Lista, detalhes, produto e pagamento</p>
-        </div>
-        <Button type="button" onClick={() => setCreating((open) => !open)}>
-          {creating ? "Fechar nova venda" : "Nova venda"}
-        </Button>
+    <PageContainer>
+      <PageHeader
+        eyebrow="Operação"
+        title="Vendas"
+        description="Lista, detalhes, produtos e pagamento — demonstração"
+        actions={
+          <Button type="button" className="rounded-xl" onClick={() => setCreating(true)}>
+            <Plus className="size-4" />
+            Nova venda
+          </Button>
+        }
+      />
+      <DemoNotice />
+      {localNote ? <DemoNotice>{localNote}</DemoNotice> : null}
+
+      <div className="grid gap-4 sm:grid-cols-3">
+        <StatCard label="Vendas no período" value="147" icon={ShoppingBag} tone="blue" hint="Dados fictícios" />
+        <StatCard label="Faturamento" value="R$ 24.580,00" icon={CircleDollarSign} tone="emerald" hint="Dados fictícios" />
+        <StatCard label="Ticket médio" value="R$ 167,21" icon={Package} tone="amber" hint="Dados fictícios" />
       </div>
-      <Notice />
-      {localNote ? <Notice>{localNote}</Notice> : null}
-      {creating ? (
-        <form
-          className="space-y-3 rounded-md border p-4"
-          onSubmit={(event) => {
-            event.preventDefault();
-            setLocalNote("Demonstração: a venda não foi gravada. Nenhum dado real foi criado.");
-            setCreating(false);
-          }}
-        >
-          <p className="font-semibold">Nova venda (somente demonstração)</p>
-          <label className="block text-sm">
-            Cliente
-            <select className="mt-1 w-full rounded-md border bg-background px-3 py-2">
-              {DEMO_CUSTOMERS.map((item) => (
-                <option key={item.id}>{item.name}</option>
+
+      <DemoToolbar placeholder="Buscar venda, cliente…" />
+
+      <div className="grid gap-4 xl:grid-cols-[1.45fr_0.85fr]">
+        <DataTableShell>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Número</TableHead>
+                <TableHead>Cliente</TableHead>
+                <TableHead>Itens</TableHead>
+                <TableHead>Pagamento</TableHead>
+                <TableHead>Total</TableHead>
+                <TableHead>Status</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {DEMO_SALES.map((item) => (
+                <TableRow
+                  key={item.id}
+                  className={cn("cursor-pointer", item.id === sale.id && "bg-blue-50/80")}
+                  onClick={() => setSelectedId(item.id)}
+                >
+                  <TableCell>
+                    <span className="font-mono text-sm font-bold text-blue-700">{item.number}</span>
+                  </TableCell>
+                  <TableCell className="font-medium">{item.customer}</TableCell>
+                  <TableCell className="text-slate-500">{item.items}</TableCell>
+                  <TableCell className="text-slate-500">{item.payment}</TableCell>
+                  <TableCell className="font-semibold tracking-[-0.02em]">{item.total}</TableCell>
+                  <TableCell>{statusBadge(item.status)}</TableCell>
+                </TableRow>
               ))}
-            </select>
-          </label>
-          <label className="block text-sm">
-            Item
-            <select className="mt-1 w-full rounded-md border bg-background px-3 py-2">
-              <option>Consulta / serviço · R$ 197,00</option>
-              <option>Produto A · R$ 945,00</option>
-            </select>
-          </label>
-          <label className="block text-sm">
-            Pagamento
-            <select className="mt-1 w-full rounded-md border bg-background px-3 py-2">
-              <option>À vista</option>
-              <option>Parcelado</option>
-            </select>
-          </label>
-          <div className="flex gap-2">
-            <Button type="submit">Registrar na demonstração</Button>
-            <Button type="button" variant="outline" onClick={() => setCreating(false)}>
-              Cancelar
-            </Button>
-          </div>
-        </form>
-      ) : null}
-      <div className="overflow-x-auto rounded-md border">
-        <table className="w-full min-w-[32rem] text-left text-sm">
-          <thead className="border-b bg-muted/40 text-xs text-muted-foreground uppercase">
-            <tr>
-              <th className="px-3 py-2 font-medium">Venda</th>
-              <th className="px-3 py-2 font-medium">Cliente</th>
-              <th className="px-3 py-2 font-medium">Total</th>
-              <th className="px-3 py-2 font-medium">Pagamento</th>
-            </tr>
-          </thead>
-          <tbody>
-            {DEMO_SALES.map((item) => (
-              <tr key={item.id} className="border-b last:border-0">
-                <td className="px-3 py-2">
-                  <button
-                    type="button"
-                    className="font-medium text-[#2563EB] hover:underline"
-                    onClick={() => setSelectedId(item.id)}
-                  >
-                    {item.number}
-                  </button>
-                </td>
-                <td className="px-3 py-2">{item.customer}</td>
-                <td className="px-3 py-2">{item.total}</td>
-                <td className="px-3 py-2">{item.payment}</td>
-              </tr>
+            </TableBody>
+          </Table>
+        </DataTableShell>
+
+        <DemoDetailPanel title={`Detalhe ${sale.number}`} description="Selecionado na lista">
+          <dl className="demo-detail-list">
+            {[
+              ["Cliente", sale.customer],
+              ["Itens", sale.items],
+              ["Pagamento", sale.payment],
+              ["Status", sale.status],
+              ["Total", sale.total],
+            ].map(([label, value]) => (
+              <div key={label}>
+                <dt>{label}</dt>
+                <dd className={label === "Total" ? "text-blue-700" : undefined}>{value}</dd>
+              </div>
             ))}
-          </tbody>
-        </table>
+          </dl>
+        </DemoDetailPanel>
       </div>
-      <div className="rounded-md border p-4">
-        <p className="font-semibold">Detalhe {sale.number}</p>
-        <dl className="mt-3 space-y-2 text-sm">
-          <div className="flex justify-between">
-            <dt>Cliente</dt>
-            <dd>{sale.customer}</dd>
-          </div>
-          <div className="flex justify-between">
-            <dt>Itens</dt>
-            <dd>{sale.items}</dd>
-          </div>
-          <div className="flex justify-between">
-            <dt>Pagamento</dt>
-            <dd>{sale.payment}</dd>
-          </div>
-          <div className="flex justify-between">
-            <dt>Status</dt>
-            <dd>{sale.status}</dd>
-          </div>
-          <div className="flex justify-between font-semibold">
-            <dt>Total</dt>
-            <dd>{sale.total}</dd>
-          </div>
-        </dl>
-      </div>
+
+      <NewSaleDialog
+        open={creating}
+        onOpenChange={setCreating}
+        onSubmit={() =>
+          setLocalNote("Demonstração: a venda não foi gravada. Nenhum dado real foi criado.")
+        }
+      />
       <DemoCta />
-    </div>
+    </PageContainer>
   );
 }
 
@@ -301,55 +472,74 @@ function InventoryScreen() {
   const product = DEMO_PRODUCTS.find((item) => item.id === selectedId) ?? DEMO_PRODUCTS[0];
 
   return (
-    <div className="space-y-4">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Estoque</h1>
-        <p className="text-sm text-muted-foreground">Quantidade, mínimo, alertas e movimentações</p>
+    <PageContainer>
+      <PageHeader
+        eyebrow="Operação"
+        title="Estoque"
+        description="Quantidade, mínimo, alertas e movimentações"
+      />
+      <DemoNotice />
+      <div className="grid gap-4 sm:grid-cols-3">
+        <StatCard label="Produtos" value={DEMO_PRODUCTS.length} icon={Package} tone="blue" />
+        <StatCard
+          label="Estoque baixo"
+          value={DEMO_PRODUCTS.filter((item) => item.level.includes("baixo")).length}
+          icon={Warehouse}
+          tone="amber"
+        />
+        <StatCard
+          label="Sem estoque"
+          value={DEMO_PRODUCTS.filter((item) => item.quantity === 0).length}
+          icon={Boxes}
+          tone="rose"
+        />
       </div>
-      <Notice />
-      <div className="overflow-x-auto rounded-md border">
-        <table className="w-full min-w-[28rem] text-left text-sm">
-          <thead className="border-b bg-muted/40 text-xs text-muted-foreground uppercase">
-            <tr>
-              <th className="px-3 py-2 font-medium">Produto</th>
-              <th className="px-3 py-2 font-medium">Qtd</th>
-              <th className="px-3 py-2 font-medium">Mínimo</th>
-              <th className="px-3 py-2 font-medium">Situação</th>
-            </tr>
-          </thead>
-          <tbody>
-            {DEMO_PRODUCTS.map((item) => (
-              <tr key={item.id} className="border-b last:border-0">
-                <td className="px-3 py-2">
-                  <button
-                    type="button"
-                    className="font-medium text-[#2563EB] hover:underline"
-                    onClick={() => setSelectedId(item.id)}
-                  >
-                    {item.name}
-                  </button>
-                </td>
-                <td className="px-3 py-2">{item.quantity}</td>
-                <td className="px-3 py-2">{item.minimum}</td>
-                <td className="px-3 py-2">{item.level}</td>
-              </tr>
+
+      <DemoToolbar placeholder="Buscar produto, SKU…" />
+
+      <div className="grid gap-4 xl:grid-cols-[1.3fr_0.9fr]">
+        <DataTableShell>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Produto</TableHead>
+                <TableHead>Qtd</TableHead>
+                <TableHead>Mínimo</TableHead>
+                <TableHead>Situação</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {DEMO_PRODUCTS.map((item) => (
+                <TableRow
+                  key={item.id}
+                  className={cn("cursor-pointer", item.id === product.id && "bg-blue-50/80")}
+                  onClick={() => setSelectedId(item.id)}
+                >
+                  <TableCell>
+                    <span className="font-semibold text-blue-700">{item.name}</span>
+                  </TableCell>
+                  <TableCell>{item.quantity}</TableCell>
+                  <TableCell>{item.minimum}</TableCell>
+                  <TableCell>{statusBadge(item.level)}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </DataTableShell>
+
+        <DemoDetailPanel title={product.name} description="Movimentações de exemplo">
+          <ul className="demo-metric-list">
+            {product.movements.map((row) => (
+              <li key={`${row.type}-${row.qty}`}>
+                <span>{row.type}</span>
+                <strong>{row.qty}</strong>
+              </li>
             ))}
-          </tbody>
-        </table>
-      </div>
-      <div className="rounded-md border p-4">
-        <p className="font-semibold">{product.name}</p>
-        <ul className="mt-3 space-y-2 text-sm">
-          {product.movements.map((row) => (
-            <li key={row.type} className="flex justify-between rounded-md border px-3 py-2">
-              <span>{row.type}</span>
-              <span>{row.qty}</span>
-            </li>
-          ))}
-        </ul>
+          </ul>
+        </DemoDetailPanel>
       </div>
       <DemoCta />
-    </div>
+    </PageContainer>
   );
 }
 
@@ -358,54 +548,60 @@ function FinanceScreen() {
   const item = DEMO_RECEIVABLES.find((row) => row.id === selectedId) ?? DEMO_RECEIVABLES[0];
 
   return (
-    <div className="space-y-4">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Contas a receber</h1>
-        <p className="text-sm text-muted-foreground">Parcelas, pagamentos e vencimentos</p>
+    <PageContainer>
+      <PageHeader
+        eyebrow="Gestão"
+        title="Financeiro"
+        description="Contas a receber, parcelas e vencimentos"
+      />
+      <DemoNotice />
+      <div className="grid gap-4 sm:grid-cols-3">
+        <StatCard label="A receber" value="R$ 4.200,00" icon={CircleDollarSign} tone="blue" />
+        <StatCard label="Recebido" value="R$ 18.100,00" icon={Wallet} tone="emerald" />
+        <StatCard label="Vencido" value="R$ 350,00" icon={CircleDollarSign} tone="rose" />
       </div>
-      <Notice />
-      <div className="grid grid-cols-3 overflow-hidden rounded-md border text-center text-sm">
-        <div className="border-r p-3">
-          <p className="text-xs text-muted-foreground">A receber</p>
-          <p className="font-semibold">R$ 4.200,00</p>
-        </div>
-        <div className="border-r p-3">
-          <p className="text-xs text-muted-foreground">Recebido</p>
-          <p className="font-semibold text-emerald-700">R$ 18.100,00</p>
-        </div>
-        <div className="p-3">
-          <p className="text-xs text-muted-foreground">Vencido</p>
-          <p className="font-semibold text-red-700">R$ 350,00</p>
-        </div>
-      </div>
-      <ul className="space-y-2 text-sm">
-        {DEMO_RECEIVABLES.map((row) => (
-          <li key={row.id}>
-            <button
-              type="button"
-              onClick={() => setSelectedId(row.id)}
-              className={cn(
-                "flex w-full justify-between rounded-md border px-3 py-2 text-left",
-                row.id === item.id ? "border-blue-200 bg-blue-50" : "hover:bg-muted",
-              )}
-            >
-              <span>{row.title}</span>
-              <span>{row.status}</span>
-            </button>
-          </li>
-        ))}
-      </ul>
-      <div className="rounded-md border p-4 text-sm">
-        <p className="font-semibold">{item.title}</p>
-        <p className="mt-2">Vencimento: {item.due}</p>
-        <p>Valor: {item.amount}</p>
-        <p>Status: {item.status}</p>
-        <p className="mt-3 text-muted-foreground">
-          Pagamento parcial e quitação existem no produto real. Nesta tela, nada é cobrado.
-        </p>
+
+      <div className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
+        <SectionCard title="Parcelas" description="Selecione para ver o detalhe">
+          <ul className="space-y-2">
+            {DEMO_RECEIVABLES.map((row) => (
+              <li key={row.id}>
+                <button
+                  type="button"
+                  onClick={() => setSelectedId(row.id)}
+                  className={cn(
+                    "demo-list-item w-full justify-between",
+                    row.id === item.id && "is-active",
+                  )}
+                >
+                  <span className="font-medium text-slate-900">{row.title}</span>
+                  {statusBadge(row.status)}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </SectionCard>
+
+        <DemoDetailPanel title={item.title} description="Detalhe da parcela (demonstração)">
+          <dl className="demo-detail-list">
+            {[
+              ["Vencimento", item.due],
+              ["Valor", item.amount],
+              ["Status", item.status],
+            ].map(([label, value]) => (
+              <div key={label}>
+                <dt>{label}</dt>
+                <dd>{value}</dd>
+              </div>
+            ))}
+          </dl>
+          <p className="mt-4 text-sm leading-6 text-slate-500">
+            Pagamento parcial e quitação existem no produto real. Nesta tela, nada é cobrado.
+          </p>
+        </DemoDetailPanel>
       </div>
       <DemoCta />
-    </div>
+    </PageContainer>
   );
 }
 
@@ -414,52 +610,63 @@ function PurchasesScreen() {
   const purchase = DEMO_PURCHASES.find((item) => item.id === selectedId) ?? DEMO_PURCHASES[0];
 
   return (
-    <div className="space-y-4">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Compras</h1>
-        <p className="text-sm text-muted-foreground">Fornecedores, custos e recebimento</p>
+    <PageContainer>
+      <PageHeader
+        eyebrow="Operação"
+        title="Compras"
+        description="Fornecedores, custos e recebimento"
+      />
+      <DemoNotice />
+      <div className="grid gap-4 sm:grid-cols-3">
+        <StatCard label="Compras" value={DEMO_PURCHASES.length} icon={Package} tone="blue" />
+        <StatCard label="Recebidas" value="1" icon={Boxes} tone="emerald" />
+        <StatCard label="Valor comprado" value="R$ 1.220,00" icon={CircleDollarSign} tone="amber" />
       </div>
-      <Notice />
-      <ul className="space-y-2 text-sm">
-        {DEMO_PURCHASES.map((item) => (
-          <li key={item.id}>
-            <button
-              type="button"
-              onClick={() => setSelectedId(item.id)}
-              className={cn(
-                "flex w-full justify-between rounded-md border px-3 py-2 text-left",
-                item.id === purchase.id ? "border-blue-200 bg-blue-50" : "hover:bg-muted",
-              )}
-            >
-              <span>
-                {item.number} · {item.supplier}
-              </span>
-              <span>{item.status}</span>
-            </button>
-          </li>
-        ))}
-      </ul>
-      <div className="rounded-md border p-4 text-sm">
-        <p className="font-semibold">
-          {purchase.number} · {purchase.supplier}
-        </p>
-        <ul className="mt-3 space-y-2">
-          <li className="flex justify-between">
-            <span>Itens</span>
-            <span>{purchase.items}</span>
-          </li>
-          <li className="flex justify-between">
-            <span>Custo</span>
-            <span>{purchase.cost}</span>
-          </li>
-          <li className="flex justify-between">
-            <span>Estoque</span>
-            <span>{purchase.stock}</span>
-          </li>
-        </ul>
+
+      <div className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
+        <SectionCard title="Pedidos" description={`${DEMO_PURCHASES.length} compras de exemplo`}>
+          <ul className="space-y-2">
+            {DEMO_PURCHASES.map((item) => (
+              <li key={item.id}>
+                <button
+                  type="button"
+                  onClick={() => setSelectedId(item.id)}
+                  className={cn(
+                    "demo-list-item w-full justify-between",
+                    item.id === purchase.id && "is-active",
+                  )}
+                >
+                  <span>
+                    <span className="block font-semibold text-slate-950">{item.number}</span>
+                    <span className="text-xs text-slate-500">{item.supplier}</span>
+                  </span>
+                  {statusBadge(item.status)}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </SectionCard>
+
+        <DemoDetailPanel
+          title={`${purchase.number} · ${purchase.supplier}`}
+          description="Detalhe da compra"
+        >
+          <ul className="demo-metric-list">
+            {[
+              ["Itens", purchase.items],
+              ["Custo", purchase.cost],
+              ["Estoque", purchase.stock],
+            ].map(([label, value]) => (
+              <li key={label}>
+                <span>{label}</span>
+                <strong>{value}</strong>
+              </li>
+            ))}
+          </ul>
+        </DemoDetailPanel>
       </div>
       <DemoCta />
-    </div>
+    </PageContainer>
   );
 }
 
@@ -477,134 +684,234 @@ function ReportsScreen() {
   );
 
   return (
-    <div className="space-y-4">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Relatórios</h1>
-        <p className="text-sm text-muted-foreground">Vendas, financeiro, estoque e compras</p>
-      </div>
-      <Notice />
-      <div className="flex flex-wrap gap-2">
-        <Button
-          type="button"
-          variant={period === "7" ? "default" : "outline"}
-          onClick={() => setPeriod("7")}
-        >
-          7 dias
-        </Button>
-        <Button
-          type="button"
-          variant={period === "30" ? "default" : "outline"}
-          onClick={() => setPeriod("30")}
-        >
-          30 dias
-        </Button>
-      </div>
-      <div className="overflow-x-auto rounded-md border">
-        <table className="w-full min-w-[28rem] text-left text-sm">
-          <thead className="border-b bg-muted/40 text-xs text-muted-foreground uppercase">
-            <tr>
-              <th className="px-3 py-2 font-medium">Indicador</th>
-              <th className="px-3 py-2 font-medium">Período</th>
-              <th className="px-3 py-2 font-medium">Valor</th>
-            </tr>
-          </thead>
-          <tbody>
+    <PageContainer>
+      <PageHeader
+        eyebrow="Gestão"
+        title="Relatórios"
+        description="Vendas, financeiro, estoque e compras"
+      />
+      <DemoNotice />
+      <FilterBar>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            type="button"
+            variant={period === "7" ? "default" : "outline"}
+            className="rounded-xl"
+            onClick={() => setPeriod("7")}
+          >
+            7 dias
+          </Button>
+          <Button
+            type="button"
+            variant={period === "30" ? "default" : "outline"}
+            className="rounded-xl"
+            onClick={() => setPeriod("30")}
+          >
+            30 dias
+          </Button>
+        </div>
+      </FilterBar>
+
+      <DataTableShell>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Indicador</TableHead>
+              <TableHead>Período</TableHead>
+              <TableHead>Valor</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {rows.map((row) => (
-              <tr key={row.indicator} className="border-b last:border-0">
-                <td className="px-3 py-2">{row.indicator}</td>
-                <td className="px-3 py-2">{row.period}</td>
-                <td className="px-3 py-2">{row.value}</td>
-              </tr>
+              <TableRow key={row.indicator}>
+                <TableCell className="font-medium">{row.indicator}</TableCell>
+                <TableCell>{row.period}</TableCell>
+                <TableCell className="font-semibold tracking-[-0.02em]">{row.value}</TableCell>
+              </TableRow>
             ))}
-          </tbody>
-        </table>
-      </div>
-      <p className="text-xs text-muted-foreground">
+          </TableBody>
+        </Table>
+      </DataTableShell>
+      <p className="text-xs text-slate-500">
         No produto real os relatórios exportam CSV. Aqui o filtro só troca o rótulo do período.
       </p>
       <DemoCta />
-    </div>
+    </PageContainer>
   );
 }
 
 function CommunicationsScreen() {
-  const [tab, setTab] = useState<"history" | "templates" | "notifications">("history");
+  const [tab, setTab] = useState<"history" | "templates">("history");
   const [note, setNote] = useState<string | null>(null);
 
   return (
-    <div className="space-y-4">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Comunicações</h1>
-        <p className="text-sm text-muted-foreground">Histórico, templates e notificações</p>
-      </div>
-      <Notice />
-      <div className="flex flex-wrap gap-2">
-        <Button type="button" variant={tab === "history" ? "default" : "outline"} onClick={() => setTab("history")}>
-          Histórico
-        </Button>
-        <Button
-          type="button"
-          variant={tab === "templates" ? "default" : "outline"}
-          onClick={() => setTab("templates")}
-        >
-          Templates
-        </Button>
-        <Button
-          type="button"
-          variant={tab === "notifications" ? "default" : "outline"}
-          onClick={() => setTab("notifications")}
-        >
-          Notificações
-        </Button>
-      </div>
-      {note ? <Notice>{note}</Notice> : null}
-      <ul className="space-y-2 text-sm">
+    <PageContainer>
+      <PageHeader
+        eyebrow="Relacionamento"
+        title="Comunicações"
+        description="Histórico, templates e WhatsApp manual"
+      />
+      <DemoNotice />
+      {note ? <DemoNotice>{note}</DemoNotice> : null}
+
+      <DemoSectionTabs
+        active={tab}
+        onChange={(value) => setTab(value as "history" | "templates")}
+        items={[
+          { id: "history", label: "Histórico" },
+          { id: "templates", label: "Templates" },
+        ]}
+      />
+
+      <div className="grid gap-3">
         {DEMO_COMMUNICATIONS.filter((item) => {
           if (tab === "templates") return item.id === "demo-comm-1";
-          if (tab === "notifications") return item.id === "demo-comm-3";
-          return true;
+          return item.id !== "demo-comm-3";
         }).map((item) => (
-          <li key={item.id} className="rounded-md border px-3 py-3">
-            <p className="font-medium">{item.title}</p>
-            <p className="text-muted-foreground">{item.detail}</p>
-          </li>
+          <SectionCard key={item.id}>
+            <div className="flex items-start gap-3">
+              <span className="grid size-10 place-items-center rounded-xl bg-blue-50 text-blue-700">
+                <MessageSquare className="size-4" aria-hidden />
+              </span>
+              <div>
+                <p className="font-semibold text-slate-950">{item.title}</p>
+                <p className="mt-1 text-sm leading-6 text-slate-500">{item.detail}</p>
+              </div>
+            </div>
+          </SectionCard>
         ))}
-      </ul>
+      </div>
+
       <Button
         type="button"
         variant="outline"
+        className="rounded-xl"
         onClick={() => setNote("Demonstração: nenhum WhatsApp foi enviado.")}
       >
         WhatsApp manual (demonstração)
       </Button>
       <DemoCta />
-    </div>
+    </PageContainer>
   );
 }
 
-function TeamScreen() {
+function SettingsScreen() {
+  const [section, setSection] = useState("empresa");
+
   return (
-    <div className="space-y-4">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Equipe</h1>
-        <p className="text-sm text-muted-foreground">Membros, funções e convites</p>
+    <PageContainer>
+      <PageHeader
+        eyebrow="Administração"
+        title="Configurações"
+        description="Empresa, equipe, permissões e assinatura"
+      />
+      <DemoNotice />
+
+      <div className="grid gap-5 lg:grid-cols-[15rem_1fr]">
+        <SectionCard className="p-3">
+          <nav className="space-y-1">
+            {[
+              { id: "empresa", label: "Empresa" },
+              { id: "equipe", label: "Equipe" },
+              { id: "permissoes", label: "Permissões" },
+              { id: "assinatura", label: "Assinatura" },
+            ].map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => setSection(item.id)}
+                className={cn(
+                  "demo-settings-link w-full",
+                  section === item.id && "is-active",
+                )}
+              >
+                {item.label}
+              </button>
+            ))}
+          </nav>
+        </SectionCard>
+
+        <SectionCard>
+          {section === "empresa" ? (
+            <div className="space-y-4">
+              <h2 className="font-semibold text-slate-950">Empresa</h2>
+              <dl className="demo-detail-list">
+                {[
+                  ["Nome", "Empresa Exemplo Ltda."],
+                  ["Documento", "00.000.000/0001-00"],
+                  ["Telefone", "(11) 3000-0000"],
+                  ["E-mail", "contato@empresaexemplo.com.br"],
+                ].map(([label, value]) => (
+                  <div key={label}>
+                    <dt>{label}</dt>
+                    <dd>{value}</dd>
+                  </div>
+                ))}
+              </dl>
+            </div>
+          ) : null}
+
+          {section === "equipe" ? (
+            <div className="space-y-3">
+              <h2 className="font-semibold text-slate-950">Equipe</h2>
+              {DEMO_TEAM.map((member) => (
+                <div key={member.id} className="demo-list-item justify-between">
+                  <div className="flex items-center gap-3">
+                    <span className="demo-avatar">{member.name.slice(0, 2).toUpperCase()}</span>
+                    <span>
+                      <span className="block font-semibold text-slate-950">{member.name}</span>
+                      <span className="text-sm text-slate-500">{member.role}</span>
+                    </span>
+                  </div>
+                  {statusBadge(member.status)}
+                </div>
+              ))}
+            </div>
+          ) : null}
+
+          {section === "permissoes" ? (
+            <div className="space-y-4">
+              <h2 className="font-semibold text-slate-950">Permissões</h2>
+              <p className="text-sm text-slate-500">
+                Matriz fixa por papel — somente visualização na demonstração.
+              </p>
+              <div className="demo-permissions">
+                {["CRM", "Vendas", "Estoque", "Financeiro", "Configurações"].map((module) => (
+                  <div key={module}>
+                    <span>{module}</span>
+                    <ShieldCheck className="size-4 text-blue-600" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
+          {section === "assinatura" ? (
+            <div className="demo-billing">
+              <div>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-blue-600">
+                  Assinatura
+                </p>
+                <h2 className="mt-1 text-2xl font-semibold tracking-[-0.03em] text-slate-950">
+                  {DEMO_PLAN.name}
+                </h2>
+                <p className="mt-2 text-3xl font-semibold tracking-[-0.04em] text-blue-700">
+                  {DEMO_PLAN.price}
+                </p>
+                <Badge variant="success" className="mt-3">
+                  Assinatura ativa
+                </Badge>
+              </div>
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+                <CreditCard className="mb-2 size-5 text-blue-600" />
+                Cobrança via Asaas. A fatura abre em ambiente externo — sem checkout interno fictício.
+              </div>
+            </div>
+          ) : null}
+        </SectionCard>
       </div>
-      <Notice />
-      <ul className="space-y-2 text-sm">
-        {DEMO_TEAM.map((member) => (
-          <li key={member.id} className="flex justify-between rounded-md border px-3 py-2">
-            <span>
-              {member.name} · {member.role}
-            </span>
-            <span>{member.status}</span>
-          </li>
-        ))}
-      </ul>
-      <p className="text-sm text-muted-foreground">
-        Permissões e convites existem no produto real, em Configurações. Esta lista é só visual.
-      </p>
       <DemoCta />
-    </div>
+    </PageContainer>
   );
 }
 
@@ -626,7 +933,7 @@ export function DemoScreen({ module }: { module: DemoModuleId }) {
       return <ReportsScreen />;
     case "communications":
       return <CommunicationsScreen />;
-    case "team":
-      return <TeamScreen />;
+    case "settings":
+      return <SettingsScreen />;
   }
 }

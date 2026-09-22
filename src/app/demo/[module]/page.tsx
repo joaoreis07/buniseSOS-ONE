@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 };
 
 export function generateStaticParams() {
-  return DEMO_MODULES.filter((id) => id !== "dashboard").map((module) => ({ module }));
+  return DEMO_MODULES.map((module) => ({ module }));
 }
 
 export default async function DemoModulePage({

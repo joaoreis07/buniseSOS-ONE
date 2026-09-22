@@ -155,25 +155,40 @@ export function StatCard({
     slate: "bg-slate-100 text-slate-600",
   };
 
+  const accent = {
+    blue: "from-blue-500/12 to-transparent",
+    emerald: "from-emerald-500/12 to-transparent",
+    amber: "from-amber-500/12 to-transparent",
+    rose: "from-rose-500/12 to-transparent",
+    slate: "from-slate-400/10 to-transparent",
+  };
+
   return (
     <div
       className={cn(
-        "rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md",
+        "relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md",
         className,
       )}
     >
-      <div className="flex items-start justify-between gap-3">
-        <p className="text-sm text-slate-500">{label}</p>
+      <div
+        className={cn(
+          "pointer-events-none absolute -bottom-10 -right-8 size-28 rounded-full bg-gradient-to-t blur-2xl",
+          accent[tone],
+        )}
+        aria-hidden
+      />
+      <div className="relative flex items-start justify-between gap-3">
+        <p className="text-sm font-medium text-slate-500">{label}</p>
         {Icon ? (
-          <span className={cn("grid size-9 shrink-0 place-items-center rounded-xl", tones[tone])}>
-            <Icon className="size-4" aria-hidden />
+          <span className={cn("grid size-10 shrink-0 place-items-center rounded-xl", tones[tone])}>
+            <Icon className="size-[18px]" aria-hidden />
           </span>
         ) : null}
       </div>
-      <p className="mt-4 text-2xl font-semibold tracking-[-0.04em] text-slate-950">
+      <p className="relative mt-4 text-[1.65rem] font-semibold tracking-[-0.04em] text-slate-950">
         {value}
       </p>
-      {hint ? <p className="mt-1 text-xs text-slate-400">{hint}</p> : null}
+      {hint ? <p className="relative mt-1 text-xs text-slate-400">{hint}</p> : null}
     </div>
   );
 }
