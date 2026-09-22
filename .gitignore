@@ -54,3 +54,4 @@ skills-lock.json
 # tenant file storage (logos) — keep the folder, ignore contents
 /storage/tenants/**
 !/storage/tenants/.gitkeep
+.env.local
