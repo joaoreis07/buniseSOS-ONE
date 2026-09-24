@@ -455,3 +455,117 @@ export async function purchasesDashboard(params: {
   };
 }
 
+export async function monthlyRevenueExpense(params: {
+  companyId: string;
+  months?: number;
+}) {
+  const months = params.months ?? 6;
+  const end = new Date();
+  const start = new Date(end.getFullYear(), end.getMonth() - (months - 1), 1);
+
+  const rows = await prisma.$queryRaw<
+    Array<{ month: string; receita: unknown; despesa: unknown }>
+  >`
+    WITH months AS (
+      SELECT generate_series(
+        date_trunc('month', ${start}::timestamp),
+        date_trunc('month', ${end}::timestamp),
+        '1 month'::interval
+      ) AS month_start
+    ),
+    sales AS (
+      SELECT date_trunc('month', s."completedAt" AT TIME ZONE 'America/Sao_Paulo') AS month_start,
+             COALESCE(SUM(s.total), 0) AS receita
+      FROM "Sale" s
+      WHERE s."companyId" = ${params.companyId}
+        AND s.status = 'COMPLETED'
+        AND s."completedAt" >= ${start}
+      GROUP BY 1
+    ),
+    purchases AS (
+      SELECT date_trunc('month', p."receivedAt" AT TIME ZONE 'America/Sao_Paulo') AS month_start,
+             COALESCE(SUM(p.total), 0) AS despesa
+      FROM "Purchase" p
+      WHERE p."companyId" = ${params.companyId}
+        AND p.status = 'RECEIVED'
+        AND p."receivedAt" >= ${start}
+      GROUP BY 1
+    )
+    SELECT to_char(m.month_start, 'Mon YY') AS month,
+           COALESCE(s.receita, 0) AS receita,
+           COALESCE(p.despesa, 0) AS despesa
+    FROM months m
+    LEFT JOIN sales s ON s.month_start = m.month_start
+    LEFT JOIN purchases p ON p.month_start = m.month_start
+    ORDER BY m.month_start
+  `;
+
+  return rows.map((row) => ({
+    month: row.month,
+    receita: moneyNumber(row.receita),
+    despesa: moneyNumber(row.despesa),
+  }));
+}
+
+export async function salesByCategory(params: {
+  companyId: string;
+  start: Date;
+  end: Date;
+  take?: number;
+}) {
+  const take = params.take ?? 5;
+  const rows = await prisma.$queryRaw<
+    Array<{ name: string; value: unknown }>
+  >`
+    SELECT COALESCE(c.name, 'Sem categoria') AS name,
+           COALESCE(SUM(si."lineTotal"), 0) AS value
+    FROM "SaleItem" si
+    INNER JOIN "Sale" s ON s.id = si."saleId"
+    LEFT JOIN "Product" p ON p.id = si."productId"
+    LEFT JOIN "ProductCategory" c ON c.id = p."categoryId"
+    WHERE s."companyId" = ${params.companyId}
+      AND si."companyId" = ${params.companyId}
+      AND s.status = 'COMPLETED'
+      AND s."completedAt" >= ${params.start}
+      AND s."completedAt" <= ${params.end}
+    GROUP BY c.name
+    ORDER BY SUM(si."lineTotal") DESC
+    LIMIT ${take}
+  `;
+  return rows.map((row) => ({
+    name: row.name,
+    value: moneyNumber(row.value),
+  }));
+}
+
+export async function activeCustomersCount(companyId: string) {
+  return prisma.customer.count({
+    where: { companyId, deletedAt: null, status: "ACTIVE" },
+  });
+}
+
+export async function pendingActivitiesForDashboard(params: {
+  companyId: string;
+  take?: number;
+}) {
+  const take = params.take ?? 5;
+  return prisma.activity.findMany({
+    where: {
+      companyId: params.companyId,
+      deletedAt: null,
+      status: "PENDING",
+    },
+    orderBy: { dueAt: "asc" },
+    take,
+    select: {
+      id: true,
+      title: true,
+      type: true,
+      dueAt: true,
+      status: true,
+      customer: { select: { name: true } },
+      lead: { select: { name: true } },
+    },
+  });
+}
+

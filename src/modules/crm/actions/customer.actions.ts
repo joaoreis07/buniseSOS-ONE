@@ -9,6 +9,7 @@ import { customerFormSchema } from "@/modules/crm/schemas/customer.schemas";
 import {
   createCustomerForTenant,
   deleteCustomerForTenant,
+  getCustomerProfileForTenant,
   updateCustomerForTenant,
 } from "@/modules/crm/services/customer.service";
 
@@ -136,6 +137,27 @@ export async function deleteCustomerAction(
     return {
       ok: false,
       error: publicErrorMessage(error, "Falha ao excluir cliente"),
+    };
+  }
+}
+
+export async function loadCustomerDrawerAction(customerId: string) {
+  try {
+    const user = await requirePermission("crm:view");
+    const profile = await getCustomerProfileForTenant({
+      companyId: user.companyId,
+      role: user.role,
+      customerId,
+    });
+    if (!profile) {
+      return { ok: false as const, error: "Cliente não encontrado", data: null };
+    }
+    return { ok: true as const, data: profile, error: undefined };
+  } catch (error) {
+    return {
+      ok: false as const,
+      error: publicErrorMessage(error, "Falha ao carregar cliente"),
+      data: null,
     };
   }
 }

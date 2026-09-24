@@ -1,8 +1,11 @@
-import { prisma } from "@/shared/db/prisma";
 import { requireSession } from "@/shared/auth/session";
 import { hasPermission } from "@/shared/permissions/rbac";
 import { AppShell } from "@/modules/app-shell/components/app-shell";
 import { listNotificationsForTenant } from "@/modules/communications/services/notification.service";
+import {
+  companyDisplayName,
+  getCompanyShellData,
+} from "@/modules/app-shell/loaders/company-shell";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { isBillingEnforced, isBillingExemptPath } from "@/modules/billing/lib/env";
@@ -16,6 +19,20 @@ export default async function AppLayout({
   const user = await requireSession();
   const headerList = await headers();
   const pathname = headerList.get("x-pathname");
+  const company = await getCompanyShellData(user.companyId);
+  const displayName = companyDisplayName(company);
+
+  if (pathname !== "/app/onboarding" && !company?.settings?.onboardingCompletedAt) {
+    redirect("/app/onboarding");
+  }
+
+  if (pathname === "/app/onboarding") {
+    return (
+      <AppShell user={user} companyName={displayName} pathname={pathname} notifications={null}>
+        {children}
+      </AppShell>
+    );
+  }
 
   if (isBillingEnforced()) {
     const allowed = await hasProductAccess(user.companyId, "ONE");
@@ -45,28 +62,19 @@ export default async function AppLayout({
     }
   }
 
-  const [company, notifications] = await Promise.all([
-    prisma.company.findFirst({
-      where: { id: user.companyId, deletedAt: null },
-      select: {
-        name: true,
-        settings: { select: { displayName: true } },
-      },
-    }),
-    hasPermission(user.role, "notifications:view")
-      ? listNotificationsForTenant({
-          companyId: user.companyId,
-          userId: user.id,
-          role: user.role,
-          query: { page: 1, pageSize: 8 },
-        })
-      : Promise.resolve(null),
-  ]);
+  const notifications = hasPermission(user.role, "notifications:view")
+    ? await listNotificationsForTenant({
+        companyId: user.companyId,
+        userId: user.id,
+        role: user.role,
+        query: { page: 1, pageSize: 8 },
+      })
+    : null;
 
   return (
     <AppShell
       user={user}
-      companyName={company?.settings?.displayName?.trim() || company?.name || "Empresa"}
+      companyName={displayName}
       pathname={pathname}
       notifications={
         notifications

@@ -5,6 +5,7 @@ import type {
   SupplierFormInput,
   SupplierListQuery,
 } from "@/modules/purchases/schemas/supplier.schemas";
+import { assertPlanLimit } from "@/modules/billing/services/entitlements.service";
 import {
   createSupplier,
   findSupplierById,
@@ -50,6 +51,7 @@ export async function createSupplierForTenant(params: {
   data: SupplierFormInput;
 }) {
   assertPermission(params.role, "suppliers:manage");
+  await assertPlanLimit({ companyId: params.companyId, feature: "suppliers" });
   const supplier = await createSupplier({
     companyId: params.companyId,
     data: params.data,

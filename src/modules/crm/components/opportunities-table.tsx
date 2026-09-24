@@ -6,15 +6,6 @@ import {
   formatMoneyBRL,
 } from "@/modules/crm/lib/opportunity-labels";
 import { Badge } from "@/shared/ui/badge";
-import { Button } from "@/shared/ui/button";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/shared/ui/table";
 
 type OpportunityRow = Opportunity & {
   owner: { id: string; name: string | null; email: string } | null;
@@ -31,20 +22,22 @@ function stageVariant(stage: OpportunityStage) {
 export function OpportunitiesTable({
   items,
   canManage,
+  summary,
 }: {
   items: OpportunityRow[];
   canManage: boolean;
+  summary?: { count: number; totalValue: number };
 }) {
   if (items.length === 0) {
     return (
-      <div className="rounded-2xl border border-dashed border-slate-200 bg-white p-6 text-center text-sm text-slate-500">
+      <div className="rounded-xl border border-dashed border-slate-200 bg-white p-6 text-center text-sm text-slate-500">
         Nenhuma oportunidade encontrada.
         {canManage ? (
           <>
             {" "}
             <Link
               href="/app/crm/opportunities/new"
-              className="text-emerald-700 underline"
+              className="text-[var(--bos-primary)] hover:underline"
             >
               Criar a primeira
             </Link>
@@ -54,55 +47,88 @@ export function OpportunitiesTable({
     );
   }
 
+  const totalAnnual =
+    summary?.totalValue ??
+    items.reduce((sum, item) => sum + Number(item.estimatedValue ?? 0), 0) * 12;
+
   return (
-    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Nome</TableHead>
-            <TableHead>Estágio</TableHead>
-            <TableHead className="hidden md:table-cell">Valor</TableHead>
-            <TableHead className="hidden sm:table-cell">Prob.</TableHead>
-            <TableHead className="hidden lg:table-cell">Previsão</TableHead>
-            <TableHead className="hidden md:table-cell">Responsável</TableHead>
-            <TableHead className="text-right">Ações</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {items.map((item) => (
-            <TableRow key={item.id}>
-              <TableCell>
-                <div className="font-medium">{item.name}</div>
-                <div className="text-xs text-muted-foreground">
-                  {item.customer?.name ?? item.lead?.name ?? "—"}
-                </div>
-              </TableCell>
-              <TableCell>
-                <Badge variant={stageVariant(item.stage)}>
-                  {OPPORTUNITY_STAGE_LABELS[item.stage]}
-                </Badge>
-              </TableCell>
-              <TableCell className="hidden md:table-cell">
-                {formatMoneyBRL(item.estimatedValue)}
-              </TableCell>
-              <TableCell className="hidden sm:table-cell">
-                {item.probability}%
-              </TableCell>
-              <TableCell className="hidden lg:table-cell">
-                {formatDateBR(item.expectedCloseDate)}
-              </TableCell>
-              <TableCell className="hidden md:table-cell">
-                {item.owner?.name ?? item.owner?.email ?? "—"}
-              </TableCell>
-              <TableCell className="text-right">
-                <Button asChild variant="ghost" size="sm">
-                  <Link href={`/app/crm/opportunities/${item.id}`}>Ver</Link>
-                </Button>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+    <div className="space-y-4">
+      {summary ? (
+        <p className="text-sm text-slate-500">
+          {summary.count} oportunidade{summary.count === 1 ? "" : "s"} · valor total{" "}
+          <span className="font-semibold text-slate-700">
+            {formatMoneyBRL(totalAnnual)}/ano
+          </span>
+        </p>
+      ) : null}
+      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-slate-100 bg-slate-50">
+              <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-400">
+                Oportunidade
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-400">
+                Estágio
+              </th>
+              <th className="hidden px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-400 md:table-cell">
+                Valor/mês
+              </th>
+              <th className="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-400 sm:table-cell">
+                Prob.
+              </th>
+              <th className="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-400 lg:table-cell">
+                Fechamento
+              </th>
+              <th className="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-400 md:table-cell">
+                Responsável
+              </th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-50">
+            {items.map((item) => (
+              <tr key={item.id} className="transition-colors hover:bg-slate-50">
+                <td className="px-5 py-3.5">
+                  <Link
+                    href={`/app/crm/opportunities/${item.id}`}
+                    className="font-semibold text-slate-800 hover:text-[var(--bos-primary)]"
+                  >
+                    {item.name}
+                  </Link>
+                  <div className="text-xs text-slate-400">
+                    {item.customer?.name ?? item.lead?.name ?? "—"}
+                  </div>
+                </td>
+                <td className="px-4 py-3.5">
+                  <Badge variant={stageVariant(item.stage)}>
+                    {OPPORTUNITY_STAGE_LABELS[item.stage]}
+                  </Badge>
+                </td>
+                <td className="hidden px-4 py-3.5 text-right text-xs font-semibold text-slate-700 md:table-cell">
+                  {formatMoneyBRL(item.estimatedValue)}
+                </td>
+                <td className="hidden px-4 py-3.5 sm:table-cell">
+                  <div className="flex items-center gap-2">
+                    <div className="h-1.5 w-16 overflow-hidden rounded-full bg-slate-100">
+                      <div
+                        className="h-full rounded-full bg-[var(--bos-primary)]"
+                        style={{ width: `${item.probability}%` }}
+                      />
+                    </div>
+                    <span className="text-xs text-slate-500">{item.probability}%</span>
+                  </div>
+                </td>
+                <td className="hidden px-4 py-3.5 text-xs text-slate-500 lg:table-cell">
+                  {formatDateBR(item.expectedCloseDate)}
+                </td>
+                <td className="hidden px-4 py-3.5 text-xs text-slate-500 md:table-cell">
+                  {item.owner?.name ?? item.owner?.email ?? "—"}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

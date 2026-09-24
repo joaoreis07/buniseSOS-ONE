@@ -3,21 +3,11 @@ import type { Customer, CustomerStatus } from "@prisma/client";
 import {
   CUSTOMER_STATUS_LABELS,
   formatDocument,
-  formatPhone,
 } from "@/modules/crm/lib/customer-labels";
 import type { CustomerListMetrics } from "@/modules/crm/repositories/customer.repository";
-import { formatDateBR } from "@/modules/finance/lib/finance-labels";
 import { formatMoneyBRL } from "@/modules/sales/lib/sale-labels";
 import { Badge } from "@/shared/ui/badge";
-import { Button } from "@/shared/ui/button";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/shared/ui/table";
+import { cn } from "@/shared/utilities/cn";
 
 type CustomerRow = Customer & {
   owner: { id: string; name: string | null; email: string } | null;
@@ -35,20 +25,22 @@ export function CustomersTable({
   canManage,
   canSales,
   canFinance,
+  onSelect,
 }: {
   items: CustomerRow[];
   canManage: boolean;
   canSales: boolean;
   canFinance: boolean;
+  onSelect?: (customer: CustomerRow) => void;
 }) {
   if (items.length === 0) {
     return (
-      <div className="rounded-2xl border border-dashed border-slate-200 bg-white p-6 text-center text-sm text-slate-500">
+      <div className="rounded-xl border border-dashed border-slate-200 bg-white p-6 text-center text-sm text-slate-500">
         Nenhum cliente encontrado.
         {canManage ? (
           <>
             {" "}
-            <Link href="/app/crm/new" className="text-emerald-700 underline">
+            <Link href="/app/crm/new" className="text-[var(--bos-primary)] hover:underline">
               Criar o primeiro
             </Link>
           </>
@@ -58,73 +50,84 @@ export function CustomersTable({
   }
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Cliente</TableHead>
-            <TableHead className="hidden md:table-cell">Contato</TableHead>
+    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="border-b border-slate-100 bg-slate-50">
+            <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-400">
+              Cliente
+            </th>
+            <th className="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-400 md:table-cell">
+              Localização
+            </th>
+            <th className="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-400 lg:table-cell">
+              Origem
+            </th>
             {canSales ? (
-              <>
-                <TableHead className="hidden lg:table-cell">Vendas</TableHead>
-                <TableHead className="hidden lg:table-cell">Total</TableHead>
-                <TableHead className="hidden xl:table-cell">Última compra</TableHead>
-              </>
+              <th className="hidden px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-400 lg:table-cell">
+                Receita
+              </th>
             ) : null}
             {canFinance ? (
-              <TableHead className="hidden md:table-cell">Em aberto</TableHead>
+              <th className="hidden px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-400 md:table-cell">
+                Em aberto
+              </th>
             ) : null}
-            <TableHead>Status</TableHead>
-            <TableHead className="text-right">Ações</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
+            <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-slate-400">
+              Status
+            </th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-slate-50">
           {items.map((customer) => (
-            <TableRow key={customer.id}>
-              <TableCell>
-                <div className="font-medium">{customer.name}</div>
-                <div className="text-xs text-muted-foreground">
-                  {formatDocument(customer.document)}
+            <tr
+              key={customer.id}
+              className={cn(
+                "cursor-pointer transition-colors hover:bg-slate-50",
+                onSelect && "cursor-pointer",
+              )}
+              onClick={() => onSelect?.(customer)}
+            >
+              <td className="px-5 py-3.5">
+                <div className="flex items-center gap-3">
+                  <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-[var(--bos-primary)]/10">
+                    <span className="text-xs font-bold text-[var(--bos-primary)]">
+                      {customer.name.charAt(0).toUpperCase()}
+                    </span>
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-sm font-semibold text-slate-800">{customer.name}</div>
+                    <div className="truncate text-xs text-slate-400">
+                      {customer.email ?? formatDocument(customer.document)}
+                    </div>
+                  </div>
                 </div>
-              </TableCell>
-              <TableCell className="hidden md:table-cell">
-                <div>{customer.email ?? "—"}</div>
-                <div className="text-xs text-muted-foreground">
-                  {formatPhone(customer.mobile ?? customer.phone)}
-                </div>
-              </TableCell>
+              </td>
+              <td className="hidden px-4 py-3.5 text-xs text-slate-500 md:table-cell">
+                {[customer.city, customer.state].filter(Boolean).join(" / ") || "—"}
+              </td>
+              <td className="hidden px-4 py-3.5 text-xs text-slate-500 lg:table-cell">
+                {customer.origin ?? "—"}
+              </td>
               {canSales ? (
-                <>
-                  <TableCell className="hidden lg:table-cell">
-                    {customer.metrics.salesCount}
-                  </TableCell>
-                  <TableCell className="hidden lg:table-cell">
-                    {formatMoneyBRL(customer.metrics.salesTotal)}
-                  </TableCell>
-                  <TableCell className="hidden xl:table-cell">
-                    {formatDateBR(customer.metrics.lastSaleAt)}
-                  </TableCell>
-                </>
+                <td className="hidden px-4 py-3.5 text-right text-xs font-semibold text-slate-700 lg:table-cell">
+                  {formatMoneyBRL(customer.metrics.salesTotal)}
+                </td>
               ) : null}
               {canFinance ? (
-                <TableCell className="hidden md:table-cell">
+                <td className="hidden px-4 py-3.5 text-right text-xs text-slate-600 md:table-cell">
                   {formatMoneyBRL(customer.metrics.openBalance)}
-                </TableCell>
+                </td>
               ) : null}
-              <TableCell>
+              <td className="px-4 py-3.5 text-center">
                 <Badge variant={statusVariant(customer.status)}>
                   {CUSTOMER_STATUS_LABELS[customer.status]}
                 </Badge>
-              </TableCell>
-              <TableCell className="text-right">
-                <Button asChild variant="ghost" size="sm">
-                  <Link href={`/app/crm/${customer.id}`}>Ver</Link>
-                </Button>
-              </TableCell>
-            </TableRow>
+              </td>
+            </tr>
           ))}
-        </TableBody>
-      </Table>
+        </tbody>
+      </table>
     </div>
   );
 }

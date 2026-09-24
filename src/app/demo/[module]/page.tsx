@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { DemoShell } from "@/modules/marketing/components/demo-shell";
+import { DemoScreen } from "@/modules/marketing/components/demo-screens";
 import { DEMO_MODULES, isDemoModule } from "@/modules/marketing/demo-nav";
 
 export const metadata: Metadata = {
@@ -22,5 +22,5 @@ export default async function DemoModulePage({
   if (!isDemoModule(module)) {
     notFound();
   }
-  return <DemoShell module={module} />;
+  return <DemoScreen module={module} />;
 }

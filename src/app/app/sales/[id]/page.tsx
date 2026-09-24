@@ -16,7 +16,6 @@ import { formatSaleNumber } from "@/modules/sales/lib/sale-totals";
 import { RECEIVABLE_STATUS_LABELS } from "@/modules/finance/lib/finance-labels";
 import { PRODUCT_TYPE_LABELS } from "@/modules/products/lib/product-labels";
 import { INVENTORY_MOVEMENT_LABELS } from "@/modules/inventory/lib/inventory-labels";
-import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
 import {
   Card,
@@ -25,6 +24,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/shared/ui/card";
+import { ModulePageHeader, PageContainer } from "@/shared/components/page-layout";
 import {
   Table,
   TableBody,
@@ -76,41 +76,33 @@ export default async function SaleDetailPage({
   });
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div className="space-y-2">
-          <div className="flex flex-wrap items-center gap-2">
-            <h1 className="text-2xl font-semibold tracking-tight">
-              {formatSaleNumber(sale.number)}
-            </h1>
-            <Badge>{SALE_STATUS_LABELS[sale.status]}</Badge>
-          </div>
-          <p className="text-muted-foreground">
-            {formatDateTimeBR(sale.completedAt ?? sale.createdAt)} ·{" "}
-            {PAYMENT_METHOD_LABELS[sale.paymentMethod]}
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Button asChild variant="outline">
-            <Link href="/app/sales">Voltar</Link>
-          </Button>
-          {canSendSaleWhatsApp && sale.customer ? (
-            <Button asChild>
-              <Link
-                href={`/app/communications/new?customerId=${sale.customer.id}&saleId=${sale.id}&intent=sale`}
-              >
-                Enviar resumo pelo WhatsApp
-              </Link>
+    <PageContainer>
+      <ModulePageHeader
+        title={formatSaleNumber(sale.number)}
+        subtitle={`${formatDateTimeBR(sale.completedAt ?? sale.createdAt)} · ${PAYMENT_METHOD_LABELS[sale.paymentMethod]} · ${SALE_STATUS_LABELS[sale.status]}`}
+        actions={
+          <>
+            <Button asChild variant="outline" size="sm">
+              <Link href="/app/sales">Voltar</Link>
             </Button>
-          ) : null}
-          {sale.completedAt ? (
-            <Button asChild variant="outline">
-              <Link href={`/app/documents/sale/${sale.id}`}>Gerar recibo</Link>
-            </Button>
-          ) : null}
-          {canCancel ? <CancelSaleButton saleId={sale.id} /> : null}
-        </div>
-      </div>
+            {canSendSaleWhatsApp && sale.customer ? (
+              <Button asChild size="sm">
+                <Link
+                  href={`/app/communications/new?customerId=${sale.customer.id}&saleId=${sale.id}&intent=sale`}
+                >
+                  Enviar resumo pelo WhatsApp
+                </Link>
+              </Button>
+            ) : null}
+            {sale.completedAt ? (
+              <Button asChild variant="outline" size="sm">
+                <Link href={`/app/documents/sale/${sale.id}`}>Gerar recibo</Link>
+              </Button>
+            ) : null}
+            {canCancel ? <CancelSaleButton saleId={sale.id} /> : null}
+          </>
+        }
+      />
 
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
@@ -281,6 +273,6 @@ export default async function SaleDetailPage({
           )}
         </CardContent>
       </Card>
-    </div>
+    </PageContainer>
   );
 }

@@ -1,6 +1,7 @@
 import type { Prisma, Role } from "@prisma/client";
 import { assertPermission, hasPermission } from "@/shared/permissions/rbac";
 import { writeAuditLog } from "@/shared/audit/audit";
+import { assertPlanLimit } from "@/modules/billing/services/entitlements.service";
 import { prisma } from "@/shared/db/prisma";
 import { notDeletedFilter } from "@/shared/tenant/tenant";
 import { applyInventoryMovement } from "@/modules/inventory/repositories/inventory.repository";
@@ -138,6 +139,7 @@ export async function createPurchaseForTenant(params: {
   } else if (!canCreatePurchases(params.role)) {
     throw new Error("Você não tem permissão para registrar compras");
   }
+  await assertPlanLimit({ companyId: params.companyId, feature: "purchases_month" });
 
   const purchase = await prisma.$transaction(async (tx) => {
     await assertSupplierForPurchase(tx, {

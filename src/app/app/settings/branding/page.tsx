@@ -3,14 +3,7 @@ import { hasPermission } from "@/shared/permissions/rbac";
 import { getCompanyProfileForTenant } from "@/modules/settings/services/settings.service";
 import { BrandingForm } from "@/modules/settings/components/branding-form";
 import { SettingsSubnav } from "@/modules/team/components/settings-subnav";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/shared/ui/card";
-import { PageContainer, PageHeader } from "@/shared/components/page-layout";
+import { PageContainer, SectionCard } from "@/shared/components/page-layout";
 
 export default async function SettingsBrandingPage() {
   const user = await requirePermission("settings:view");
@@ -25,20 +18,11 @@ export default async function SettingsBrandingPage() {
     <PageContainer>
       <SettingsSubnav role={user.role} active="branding" />
 
-      <PageHeader
-        eyebrow="Configurações"
-        title="Identidade visual"
-        description="Logo e cores usadas em recibos, comprovantes e documentos operacionais."
-      />
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Marca da empresa</CardTitle>
-          <CardDescription>
-            A logo fica isolada por tenant e só é servida para a sessão autenticada.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+      <div className="max-w-2xl">
+        <SectionCard
+          title="Marca da empresa"
+          description="Logo e cores usadas em recibos, comprovantes e documentos operacionais."
+        >
           <BrandingForm
             displayName={settings.displayName}
             primaryColor={settings.primaryColor}
@@ -46,8 +30,8 @@ export default async function SettingsBrandingPage() {
             hasLogo={Boolean(settings.logoPath)}
             canManage={canManage}
           />
-        </CardContent>
-      </Card>
+        </SectionCard>
+      </div>
     </PageContainer>
   );
 }

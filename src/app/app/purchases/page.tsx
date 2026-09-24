@@ -1,17 +1,34 @@
 import Link from "next/link";
+import { Plus } from "lucide-react";
 import { requirePermission } from "@/shared/auth/session";
 import { purchaseListQuerySchema } from "@/modules/purchases/schemas/purchase.schemas";
 import {
   canCreatePurchases,
   listPurchasesForTenant,
 } from "@/modules/purchases/services/purchase.service";
+import { getCompanyUsageSnapshot } from "@/modules/billing/services/entitlements.service";
 import { PurchasesFilters } from "@/modules/purchases/components/purchases-filters";
 import {
   PurchaseKpis,
   PurchasesTable,
 } from "@/modules/purchases/components/purchases-table";
+import { formatMoneyBRL } from "@/modules/sales/lib/sale-labels";
 import { Button } from "@/shared/ui/button";
-import { PageContainer, PageHeader } from "@/shared/components/page-layout";
+import {
+  ModulePageHeader,
+  PageContainer,
+  PaginationBar,
+} from "@/shared/components/page-layout";
+
+function toQueryParams(query: Record<string, unknown>, page: number): string {
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(query)) {
+    if (value == null || value === "" || key === "page") continue;
+    params.set(key, String(value));
+  }
+  params.set("page", String(page));
+  return params.toString();
+}
 
 export default async function PurchasesPage({
   searchParams,
@@ -31,58 +48,74 @@ export default async function PurchasesPage({
   const query = parsed.success
     ? parsed.data
     : purchaseListQuerySchema.parse({ page: 1 });
-  const result = await listPurchasesForTenant({
-    companyId: user.companyId,
-    role: user.role,
-    query,
-  });
+
+  const [result, usage] = await Promise.all([
+    listPurchasesForTenant({
+      companyId: user.companyId,
+      role: user.role,
+      query,
+    }),
+    getCompanyUsageSnapshot(user.companyId),
+  ]);
+  const purchaseUsage = usage.find((u) => u.feature === "purchases_month");
   const canCreate = canCreatePurchases(user.role);
 
-  function pageHref(page: number) {
-    return `/app/purchases?${new URLSearchParams({
-      ...Object.fromEntries(
-        Object.entries(query)
-          .filter(([, value]) => value != null && value !== "")
-          .map(([key, value]) => [key, String(value)]),
-      ),
-      page: String(page),
-    }).toString()}`;
-  }
+  const usageLine = purchaseUsage?.limit
+    ? `${purchaseUsage.used} / ${purchaseUsage.limit} compras/mês (plano Free)`
+    : null;
+
+  const subtitle = (
+    <>
+      Total no período:{" "}
+      <strong className="text-slate-700">
+        {formatMoneyBRL(result.kpis.monthValue)}
+      </strong>
+      {usageLine ? (
+        <>
+          {" "}
+          · {usageLine}
+        </>
+      ) : null}
+    </>
+  );
 
   return (
     <PageContainer>
-      <PageHeader
-        eyebrow="Operação"
+      <ModulePageHeader
         title="Compras"
-        description={`Recebimento de mercadorias · ${result.total} registro(s)`}
+        subtitle={subtitle}
         actions={
           canCreate ? (
-          <Button asChild>
-            <Link href="/app/purchases/new">Nova compra</Link>
-          </Button>
+            <Button asChild size="sm">
+              <Link href="/app/purchases/new">
+                <Plus className="size-3.5" aria-hidden />
+                Nova compra
+              </Link>
+            </Button>
           ) : null
         }
       />
+
       <PurchaseKpis kpis={result.kpis} />
       <PurchasesFilters query={query} suppliers={result.suppliers} />
       <PurchasesTable items={result.items} />
-      <div className="flex items-center justify-between text-sm text-muted-foreground">
-        <span>
-          Página {result.page} de {result.pageCount}
-        </span>
-        <div className="flex gap-2">
-          {result.page > 1 ? (
-            <Button asChild variant="outline" size="sm">
-              <Link href={pageHref(result.page - 1)}>Anterior</Link>
-            </Button>
-          ) : null}
-          {result.page < result.pageCount ? (
-            <Button asChild variant="outline" size="sm">
-              <Link href={pageHref(result.page + 1)}>Próxima</Link>
-            </Button>
-          ) : null}
-        </div>
-      </div>
+
+      <PaginationBar
+        page={result.page}
+        pageCount={result.pageCount}
+        total={result.total}
+        totalLabel="compra(s)"
+        prevHref={
+          result.page > 1
+            ? `/app/purchases?${toQueryParams(query, result.page - 1)}`
+            : undefined
+        }
+        nextHref={
+          result.page < result.pageCount
+            ? `/app/purchases?${toQueryParams(query, result.page + 1)}`
+            : undefined
+        }
+      />
     </PageContainer>
   );
 }

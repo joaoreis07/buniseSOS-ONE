@@ -5,6 +5,7 @@ import { prisma } from "@/shared/db/prisma";
 import { notDeletedFilter } from "@/shared/tenant/tenant";
 import { writeAuditLog } from "@/shared/audit/audit";
 import type { RegisterInput } from "@/modules/auth/schemas/auth.schemas";
+import { ensureFreeSubscription } from "@/modules/billing/services/free-plan.service";
 
 const BCRYPT_ROUNDS = 12;
 
@@ -119,6 +120,8 @@ export async function registerTenant(input: RegisterInput) {
 
     return { user, company };
   });
+
+  await ensureFreeSubscription(result.company.id);
 
   return result;
 }

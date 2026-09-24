@@ -5,6 +5,7 @@ import type {
   OpportunityFormInput,
   OpportunityListQuery,
 } from "@/modules/crm/schemas/opportunity.schemas";
+import { assertPlanLimit } from "@/modules/billing/services/entitlements.service";
 import {
   assertCustomerInTenant,
   assertLeadInTenant,
@@ -90,6 +91,7 @@ export async function createOpportunityForTenant(params: {
   data: OpportunityFormInput;
 }) {
   assertPermission(params.role, "crm:opportunities:manage");
+  await assertPlanLimit({ companyId: params.companyId, feature: "opportunities" });
   await assertRelationsInTenant(params.companyId, params.data);
 
   const opportunity = await createOpportunity({

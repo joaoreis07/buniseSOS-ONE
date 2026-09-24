@@ -4,6 +4,7 @@ import { getSaleFormMeta } from "@/modules/sales/services/sale.service";
 import { getOperationalDefaults } from "@/modules/settings/services/settings.service";
 import { NewSaleForm } from "@/modules/sales/components/new-sale-form";
 import { Button } from "@/shared/ui/button";
+import { ModulePageHeader, PageContainer } from "@/shared/components/page-layout";
 
 export default async function NewSalePage({
   searchParams,
@@ -18,18 +19,16 @@ export default async function NewSalePage({
   const defaults = await getOperationalDefaults(user.companyId);
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Nova venda</h1>
-          <p className="text-muted-foreground">
-            Totais e estoque são validados no servidor
-          </p>
-        </div>
-        <Button asChild variant="outline">
-          <Link href="/app/sales">Voltar</Link>
-        </Button>
-      </div>
+    <PageContainer>
+      <ModulePageHeader
+        title="Nova venda"
+        subtitle="Totais e estoque são validados no servidor"
+        actions={
+          <Button asChild variant="outline" size="sm">
+            <Link href="/app/sales">Voltar</Link>
+          </Button>
+        }
+      />
       <NewSaleForm
         products={meta.products}
         customers={meta.customers}
@@ -38,6 +37,6 @@ export default async function NewSalePage({
         defaultInstallmentCount={defaults.defaultInstallmentCount}
         allowSaleWithoutCustomer={defaults.allowSaleWithoutCustomer}
       />
-    </div>
+    </PageContainer>
   );
 }

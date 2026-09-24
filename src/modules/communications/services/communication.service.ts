@@ -1,4 +1,5 @@
 import type { CommunicationOrigin, CommunicationType, Role } from "@prisma/client";
+import { assertPlanLimit } from "@/modules/billing/services/entitlements.service";
 import { assertPermission, hasPermission } from "@/shared/permissions/rbac";
 import { writeAuditLog } from "@/shared/audit/audit";
 import { prisma } from "@/shared/db/prisma";
@@ -481,6 +482,7 @@ export async function prepareWhatsAppForTenant(params: {
   data: PrepareCommunicationInput;
 }) {
   assertPermission(params.role, "communications:send");
+  await assertPlanLimit({ companyId: params.companyId, feature: "communications_month" });
   assertTemplatePublishable(params.data.body);
 
   const activity = await loadActivity(params.companyId, params.data.activityId);

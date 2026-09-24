@@ -1,31 +1,29 @@
 @import "tailwindcss";
+@import "../shared/design/tokens.css";
 
 :root {
-  --background: 210 40% 98%;
-  --foreground: 222 47% 11%;
+  --background: 216 33% 97%;
+  --foreground: 213 54% 12%;
   --card: 0 0% 100%;
-  --card-foreground: 222 47% 11%;
+  --card-foreground: 213 54% 12%;
   --popover: 0 0% 100%;
-  --popover-foreground: 222 47% 11%;
-  --primary: 217 91% 53%;
+  --popover-foreground: 213 54% 12%;
+  --primary: 220 100% 45%;
   --primary-foreground: 0 0% 100%;
-  --secondary: 214 95% 93%;
-  --secondary-foreground: 221 83% 32%;
+  --secondary: 214 32% 95%;
+  --secondary-foreground: 215 16% 35%;
   --muted: 210 40% 96%;
   --muted-foreground: 215 16% 47%;
-  --accent: 214 95% 93%;
-  --accent-foreground: 221 83% 32%;
-  --destructive: 350 78% 46%;
+  --accent: 214 100% 96%;
+  --accent-foreground: 220 100% 37%;
+  --destructive: 0 84% 60%;
   --destructive-foreground: 0 0% 98%;
   --border: 214 32% 91%;
-  --input: 214 25% 84%;
-  --ring: 217 91% 60%;
-  --radius: 0.875rem;
-  --brand-navy: #071225;
-  --brand-navy-soft: #0b1d3a;
-  --brand-blue: #2563eb;
-  --brand-blue-light: #60a5fa;
-  --brand-cyan: #22d3ee;
+  --input: 214 32% 91%;
+  --ring: 220 100% 45%;
+  --radius: 0.5rem;
+  --brand-navy: var(--bos-navy);
+  --brand-blue: var(--bos-primary);
 }
 
 @theme inline {
@@ -52,8 +50,8 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-plus-jakarta), "Plus Jakarta Sans", system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains-mono), "JetBrains Mono", monospace;
 }
 
 * {

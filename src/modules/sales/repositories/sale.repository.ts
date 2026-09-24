@@ -146,6 +146,11 @@ export async function getSalesKpis(companyId: string) {
   const todayRevenue = Number(todayAgg._sum.total ?? 0);
   const monthRevenue = Number(monthAgg._sum.total ?? 0);
 
+  const draftAgg = await prisma.sale.aggregate({
+    where: { companyId, status: "DRAFT" },
+    _sum: { total: true },
+  });
+
   return {
     todayCount,
     todayRevenue,
@@ -153,6 +158,7 @@ export async function getSalesKpis(companyId: string) {
     monthRevenue,
     todayTicket: todayCount > 0 ? todayRevenue / todayCount : 0,
     monthTicket: monthCount > 0 ? monthRevenue / monthCount : 0,
+    pendingAmount: Number(draftAgg._sum.total ?? 0),
   };
 }
 

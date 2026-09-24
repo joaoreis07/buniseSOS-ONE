@@ -10,7 +10,7 @@ import { CrmSubnav } from "@/modules/crm/components/crm-subnav";
 import { LeadsFilters } from "@/modules/crm/components/leads-filters";
 import { LeadsTable } from "@/modules/crm/components/leads-table";
 import { Button } from "@/shared/ui/button";
-import { PageContainer, PageHeader } from "@/shared/components/page-layout";
+import { PageContainer, PaginationBar } from "@/shared/components/page-layout";
 
 function toQueryParams(
   query: Record<string, unknown>,
@@ -64,44 +64,35 @@ export default async function LeadsPage({
     <PageContainer>
       <CrmSubnav role={user.role} active="leads" />
 
-      <PageHeader
-        eyebrow="CRM"
-        title="Leads"
-        description="Interesses comerciais antes da conversão em cliente ou oportunidade."
+      <LeadsFilters
+        query={query}
+        owners={meta.owners}
         actions={
           canManage ? (
-          <Button asChild>
-            <Link href="/app/crm/leads/new">Novo lead</Link>
-          </Button>
+            <Button asChild size="sm">
+              <Link href="/app/crm/leads/new">Novo lead</Link>
+            </Button>
           ) : null
         }
       />
-
-      <LeadsFilters query={query} owners={meta.owners} />
       <LeadsTable items={result.items} canManage={canManage} />
 
-      <div className="flex items-center justify-between text-sm text-muted-foreground">
-        <span>
-          {result.total} lead{result.total === 1 ? "" : "s"} · página{" "}
-          {result.page} de {result.pageCount}
-        </span>
-        <div className="flex gap-2">
-          {result.page > 1 ? (
-            <Button asChild variant="outline" size="sm">
-              <Link href={`/app/crm/leads?${toQueryParams(query, result.page - 1)}`}>
-                Anterior
-              </Link>
-            </Button>
-          ) : null}
-          {result.page < result.pageCount ? (
-            <Button asChild variant="outline" size="sm">
-              <Link href={`/app/crm/leads?${toQueryParams(query, result.page + 1)}`}>
-                Próxima
-              </Link>
-            </Button>
-          ) : null}
-        </div>
-      </div>
+      <PaginationBar
+        page={result.page}
+        pageCount={result.pageCount}
+        total={result.total}
+        totalLabel="lead(s)"
+        prevHref={
+          result.page > 1
+            ? `/app/crm/leads?${toQueryParams(query, result.page - 1)}`
+            : undefined
+        }
+        nextHref={
+          result.page < result.pageCount
+            ? `/app/crm/leads?${toQueryParams(query, result.page + 1)}`
+            : undefined
+        }
+      />
     </PageContainer>
   );
 }

@@ -5,11 +5,16 @@ import {
   canSendCommunications,
   listCommunicationsForTenant,
 } from "@/modules/communications/services/communication.service";
+import { getCompanyUsageSnapshot } from "@/modules/billing/services/entitlements.service";
 import { CommunicationsSubnav } from "@/modules/communications/components/communications-subnav";
 import { CommunicationsFilters } from "@/modules/communications/components/communications-filters";
 import { CommunicationsTable } from "@/modules/communications/components/communications-table";
 import { Button } from "@/shared/ui/button";
-import { PageContainer, PageHeader } from "@/shared/components/page-layout";
+import {
+  ModulePageHeader,
+  PageContainer,
+  PaginationBar,
+} from "@/shared/components/page-layout";
 
 function first(value: string | string[] | undefined) {
   return typeof value === "string" ? value : undefined;
@@ -39,30 +44,38 @@ export default async function CommunicationsPage({
     ? parsed.data
     : communicationListQuerySchema.parse({ page: 1, pageSize: 20 });
 
-  const result = await listCommunicationsForTenant({
-    companyId: user.companyId,
-    role: user.role,
-    query,
-  });
+  const [result, usage] = await Promise.all([
+    listCommunicationsForTenant({
+      companyId: user.companyId,
+      role: user.role,
+      query,
+    }),
+    getCompanyUsageSnapshot(user.companyId),
+  ]);
   const canSend = canSendCommunications(user.role);
+  const commUsage = usage.find((u) => u.feature === "communications_month");
   const queryParams = Object.fromEntries(
     Object.entries(query)
       .filter(([, value]) => value != null && value !== "")
       .map(([key, value]) => [key, String(value)]),
   );
 
+  const usageSubtitle =
+    commUsage?.limit != null
+      ? `${commUsage.used} / ${commUsage.limit} comunicações este mês (plano Free)`
+      : `${result.total} comunicação(ões) registradas`;
+
   return (
     <PageContainer>
       <CommunicationsSubnav role={user.role} active="history" />
-      <PageHeader
-        eyebrow="Relacionamento"
+      <ModulePageHeader
         title="Comunicações"
-        description={`Histórico de mensagens preparadas e registradas · ${result.total}`}
+        subtitle={usageSubtitle}
         actions={
           canSend ? (
-          <Button asChild>
-            <Link href="/app/communications/new">Preparar WhatsApp</Link>
-          </Button>
+            <Button asChild size="sm" className="h-8">
+              <Link href="/app/communications/new">Nova comunicação</Link>
+            </Button>
           ) : null
         }
       />
@@ -74,37 +87,28 @@ export default async function CommunicationsPage({
       />
       <CommunicationsTable items={result.items} />
 
-      <div className="flex items-center justify-between text-sm text-muted-foreground">
-        <span>
-          Página {result.page} de {result.pageCount}
-        </span>
-        <div className="flex gap-2">
-          {result.page > 1 ? (
-            <Button asChild variant="outline" size="sm">
-              <Link
-                href={`/app/communications?${new URLSearchParams({
-                  ...queryParams,
-                  page: String(result.page - 1),
-                }).toString()}`}
-              >
-                Anterior
-              </Link>
-            </Button>
-          ) : null}
-          {result.page < result.pageCount ? (
-            <Button asChild variant="outline" size="sm">
-              <Link
-                href={`/app/communications?${new URLSearchParams({
-                  ...queryParams,
-                  page: String(result.page + 1),
-                }).toString()}`}
-              >
-                Próxima
-              </Link>
-            </Button>
-          ) : null}
-        </div>
-      </div>
+      <PaginationBar
+        page={result.page}
+        pageCount={result.pageCount}
+        total={result.total}
+        totalLabel="comunicação(ões)"
+        prevHref={
+          result.page > 1
+            ? `/app/communications?${new URLSearchParams({
+                ...queryParams,
+                page: String(result.page - 1),
+              }).toString()}`
+            : undefined
+        }
+        nextHref={
+          result.page < result.pageCount
+            ? `/app/communications?${new URLSearchParams({
+                ...queryParams,
+                page: String(result.page + 1),
+              }).toString()}`
+            : undefined
+        }
+      />
     </PageContainer>
   );
 }

@@ -3,14 +3,8 @@ import { hasPermission } from "@/shared/permissions/rbac";
 import { SettingsSubnav } from "@/modules/team/components/settings-subnav";
 import { SubscriptionPanel } from "@/modules/billing/components/subscription-panel";
 import { getSubscriptionOverviewForTenant } from "@/modules/billing/services/billing.service";
-import { PageContainer, PageHeader } from "@/shared/components/page-layout";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/shared/ui/card";
+import { getCompanyUsageSnapshot, isProCompany } from "@/modules/billing/services/entitlements.service";
+import { PageContainer } from "@/shared/components/page-layout";
 
 export default async function BillingSettingsPage({
   searchParams,
@@ -19,10 +13,14 @@ export default async function BillingSettingsPage({
 }) {
   const user = await requirePermission("billing:view");
   const params = searchParams ? await searchParams : undefined;
-  const overview = await getSubscriptionOverviewForTenant({
-    companyId: user.companyId,
-    role: user.role,
-  });
+  const [overview, usage, isPro] = await Promise.all([
+    getSubscriptionOverviewForTenant({
+      companyId: user.companyId,
+      role: user.role,
+    }),
+    getCompanyUsageSnapshot(user.companyId),
+    isProCompany(user.companyId),
+  ]);
 
   const plans = overview.plans.map((plan) => ({
     id: plan.id,
@@ -60,31 +58,16 @@ export default async function BillingSettingsPage({
   return (
     <PageContainer>
       <SettingsSubnav role={user.role} active="billing" />
-
-      <PageHeader
-        eyebrow="Configurações"
-        title="Minha assinatura"
-        description="Cobrança recorrente do BusinessOS One. Isolada do financeiro interno da empresa (vendas e parcelas)."
+      <SubscriptionPanel
+        role={user.role}
+        canManage={hasPermission(user.role, "billing:manage")}
+        canCancel={hasPermission(user.role, "billing:cancel")}
+        subscription={subscription}
+        plans={plans}
+        usage={usage}
+        isPro={isPro}
+        blocked={params?.blocked === "1"}
       />
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Assinatura da empresa</CardTitle>
-          <CardDescription>
-            O preço vem do plano no servidor. A cobrança é feita pelo Asaas.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <SubscriptionPanel
-            role={user.role}
-            canManage={hasPermission(user.role, "billing:manage")}
-            canCancel={hasPermission(user.role, "billing:cancel")}
-            subscription={subscription}
-            plans={plans}
-            blocked={params?.blocked === "1"}
-          />
-        </CardContent>
-      </Card>
     </PageContainer>
   );
 }

@@ -1,9 +1,12 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
+import { Search } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
 
 type CustomersFiltersProps = {
+  actions?: ReactNode;
   query: {
     q?: string | null;
     status?: string | null;
@@ -22,18 +25,27 @@ export function CustomersFilters({
   query,
   origins,
   owners,
+  actions,
 }: CustomersFiltersProps) {
   return (
-    <form className="grid gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm md:grid-cols-2 lg:grid-cols-6">
-      <div className="space-y-1 lg:col-span-2">
-        <Label htmlFor="q">Busca</Label>
-        <Input
-          id="q"
-          name="q"
-          placeholder="Nome, documento, e-mail, telefone"
-          defaultValue={query.q ?? ""}
-        />
+    <form className="space-y-4">
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="relative">
+          <Search
+            className="absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-slate-400"
+            aria-hidden
+          />
+          <Input
+            id="q"
+            name="q"
+            placeholder="Buscar clientes…"
+            defaultValue={query.q ?? ""}
+            className="h-9 w-full pl-9 sm:w-64"
+          />
+        </div>
+        <div className="flex items-center gap-2">{actions}</div>
       </div>
+      <div className="grid gap-3 rounded-xl border border-slate-200 bg-white p-4 md:grid-cols-2 lg:grid-cols-6">
       <div className="space-y-1">
         <Label htmlFor="status">Status</Label>
         <select
@@ -125,10 +137,13 @@ export function CustomersFilters({
         </select>
       </div>
       <div className="flex items-end gap-2 lg:col-span-6">
-        <Button type="submit">Filtrar</Button>
-        <Button asChild type="button" variant="outline">
+        <Button type="submit" size="sm">
+          Filtrar
+        </Button>
+        <Button asChild type="button" variant="outline" size="sm">
           <Link href="/app/crm">Limpar</Link>
         </Button>
+      </div>
       </div>
     </form>
   );

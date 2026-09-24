@@ -97,7 +97,7 @@ export async function registerAction(
     await signIn("credentials", {
       email: parsed.data.email,
       password: parsed.data.password,
-      redirectTo: "/app",
+      redirectTo: "/app/onboarding",
     });
     return { ok: true };
   } catch (error) {

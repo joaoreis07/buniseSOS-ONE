@@ -3,14 +3,7 @@ import { hasPermission } from "@/shared/permissions/rbac";
 import { getCompanyProfileForTenant } from "@/modules/settings/services/settings.service";
 import { DocumentSettingsForm } from "@/modules/settings/components/document-settings-form";
 import { SettingsSubnav } from "@/modules/team/components/settings-subnav";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/shared/ui/card";
-import { PageContainer, PageHeader } from "@/shared/components/page-layout";
+import { PageContainer, SectionCard } from "@/shared/components/page-layout";
 
 export default async function SettingsDocumentsPage() {
   const user = await requirePermission("settings:view");
@@ -25,21 +18,11 @@ export default async function SettingsDocumentsPage() {
     <PageContainer>
       <SettingsSubnav role={user.role} active="documents" />
 
-      <PageHeader
-        eyebrow="Configurações"
-        title="Documentos"
-        description="Textos padrão, assinatura e regras operacionais da empresa."
-      />
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Personalização simples</CardTitle>
-          <CardDescription>
-            Sem editor visual. Estes textos aparecem em recibos, comprovantes e
-            comunicações quando configurados.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+      <div className="max-w-2xl">
+        <SectionCard
+          title="Personalização simples"
+          description="Textos padrão, assinatura e regras operacionais da empresa."
+        >
           <DocumentSettingsForm
             canManage={canManage}
             documentTitle={settings.documentTitle}
@@ -52,8 +35,8 @@ export default async function SettingsDocumentsPage() {
             allowSaleWithoutCustomer={settings.allowSaleWithoutCustomer}
             defaultInstallmentCount={settings.defaultInstallmentCount}
           />
-        </CardContent>
-      </Card>
+        </SectionCard>
+      </div>
     </PageContainer>
   );
 }

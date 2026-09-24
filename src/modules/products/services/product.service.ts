@@ -1,6 +1,7 @@
 import type { Role } from "@prisma/client";
 import { assertPermission, hasPermission } from "@/shared/permissions/rbac";
 import { writeAuditLog } from "@/shared/audit/audit";
+import { assertPlanLimit } from "@/modules/billing/services/entitlements.service";
 import type {
   ProductFormInput,
   ProductListQuery,
@@ -91,6 +92,7 @@ export async function createProductForTenant(params: {
   data: ProductFormInput;
 }) {
   assertPermission(params.role, "products:manage");
+  await assertPlanLimit({ companyId: params.companyId, feature: "products" });
   await assertProductConstraints(params.companyId, params.data);
   const product = await createProduct({
     companyId: params.companyId,

@@ -3,14 +3,7 @@ import { hasPermission } from "@/shared/permissions/rbac";
 import { getCompanyProfileForTenant } from "@/modules/settings/services/settings.service";
 import { PreferencesForm } from "@/modules/settings/components/preferences-form";
 import { SettingsSubnav } from "@/modules/team/components/settings-subnav";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/shared/ui/card";
-import { PageContainer, PageHeader } from "@/shared/components/page-layout";
+import { PageContainer, SectionCard } from "@/shared/components/page-layout";
 
 export default async function SettingsPreferencesPage() {
   const user = await requirePermission("settings:view");
@@ -25,20 +18,11 @@ export default async function SettingsPreferencesPage() {
     <PageContainer>
       <SettingsSubnav role={user.role} active="preferences" />
 
-      <PageHeader
-        eyebrow="Configurações"
-        title="Preferências"
-        description="Localidade, moeda, datas e aparência da experiência."
-      />
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Localidade</CardTitle>
-          <CardDescription>
-            Valores realmente usados pelo One hoje. Sem construtor de temas.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+      <div className="max-w-2xl">
+        <SectionCard
+          title="Configurações gerais"
+          description="Localidade, moeda, datas e aparência da experiência."
+        >
           <PreferencesForm
             language={settings.language}
             currency={settings.currency}
@@ -47,8 +31,8 @@ export default async function SettingsPreferencesPage() {
             theme={settings.theme}
             canManage={canManage}
           />
-        </CardContent>
-      </Card>
+        </SectionCard>
+      </div>
     </PageContainer>
   );
 }

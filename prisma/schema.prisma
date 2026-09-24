@@ -387,6 +387,7 @@ model CompanySettings {
   defaultReceiptNotes      String?  @db.Text
   allowSaleWithoutCustomer Boolean  @default(true)
   defaultInstallmentCount  Int      @default(1)
+  onboardingCompletedAt    DateTime?
   createdAt                DateTime @default(now())
   updatedAt                DateTime @updatedAt
 

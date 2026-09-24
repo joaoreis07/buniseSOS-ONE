@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { PaymentMethod, Sale, SaleStatus } from "@prisma/client";
+import { CircleDollarSign, ShoppingCart, TrendingUp } from "lucide-react";
 import {
   PAYMENT_METHOD_LABELS,
   SALE_STATUS_LABELS,
@@ -9,20 +10,7 @@ import {
 import { formatSaleNumber } from "@/modules/sales/lib/sale-totals";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/shared/ui/table";
-import {
-  DataTableShell,
-  EmptyState,
-  StatCard,
-} from "@/shared/components/page-layout";
-
+import { EmptyState, StatCard } from "@/shared/components/page-layout";
 type SaleRow = Sale & {
   customer: { id: string; name: string } | null;
   seller: { id: string; name: string | null; email: string } | null;
@@ -51,56 +39,80 @@ export function SalesTable({ items }: { items: SaleRow[] }) {
   }
 
   return (
-    <DataTableShell>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Nº</TableHead>
-            <TableHead className="hidden sm:table-cell">Data</TableHead>
-            <TableHead>Cliente</TableHead>
-            <TableHead className="hidden md:table-cell">Vendedor</TableHead>
-            <TableHead className="hidden lg:table-cell">Itens</TableHead>
-            <TableHead>Total</TableHead>
-            <TableHead className="hidden md:table-cell">Pagamento</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead className="text-right">Ações</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
+    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="border-b border-slate-100 bg-slate-50">
+            <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-400">
+              Nº Venda
+            </th>
+            <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-400">
+              Cliente
+            </th>
+            <th className="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-400 md:table-cell">
+              Data
+            </th>
+            <th className="hidden px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-slate-400 lg:table-cell">
+              Itens
+            </th>
+            <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-400">
+              Total
+            </th>
+            <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-slate-400">
+              Status
+            </th>
+            <th className="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-400 lg:table-cell">
+              Pagamento
+            </th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-slate-50">
           {items.map((sale) => (
-            <TableRow key={sale.id}>
-              <TableCell className="font-mono text-xs">
-                {formatSaleNumber(sale.number)}
-              </TableCell>
-              <TableCell className="hidden sm:table-cell text-xs">
+            <tr
+              key={sale.id}
+              className="cursor-pointer transition-colors hover:bg-slate-50"
+            >
+              <td className="px-5 py-3.5">
+                <Link
+                  href={`/app/sales/${sale.id}`}
+                  className="font-mono text-xs font-semibold text-[var(--bos-primary)]"
+                >
+                  {formatSaleNumber(sale.number)}
+                </Link>
+              </td>
+              <td className="px-4 py-3.5">
+                <Link
+                  href={`/app/sales/${sale.id}`}
+                  className="font-medium text-slate-800"
+                >
+                  {sale.customer?.name ?? "Sem cliente"}
+                </Link>
+                <div className="text-xs text-slate-400 lg:hidden">
+                  {PAYMENT_METHOD_LABELS[sale.paymentMethod as PaymentMethod]}
+                </div>
+              </td>
+              <td className="hidden px-4 py-3.5 text-xs text-slate-400 md:table-cell">
                 {formatDateTimeBR(sale.completedAt ?? sale.createdAt)}
-              </TableCell>
-              <TableCell>{sale.customer?.name ?? "Sem cliente"}</TableCell>
-              <TableCell className="hidden md:table-cell">
-                {sale.seller?.name ?? sale.seller?.email ?? "—"}
-              </TableCell>
-              <TableCell className="hidden lg:table-cell">
+              </td>
+              <td className="hidden px-4 py-3.5 text-center text-xs text-slate-500 lg:table-cell">
                 {sale._count.items}
-              </TableCell>
-              <TableCell>{formatMoneyBRL(sale.total)}</TableCell>
-              <TableCell className="hidden md:table-cell">
-                {PAYMENT_METHOD_LABELS[sale.paymentMethod as PaymentMethod]}
-              </TableCell>
-              <TableCell>
+              </td>
+              <td className="px-4 py-3.5 text-right text-sm font-bold text-slate-800">
+                {formatMoneyBRL(sale.total)}
+              </td>
+              <td className="px-4 py-3.5 text-center">
                 <Badge variant={statusVariant(sale.status)}>
                   {SALE_STATUS_LABELS[sale.status]}
                 </Badge>
-              </TableCell>
-              <TableCell className="text-right">
-                <Button asChild size="sm" variant="outline">
-                  <Link href={`/app/sales/${sale.id}`}>Ver</Link>
-                </Button>
-              </TableCell>
-            </TableRow>
+              </td>
+              <td className="hidden px-4 py-3.5 text-xs text-slate-500 lg:table-cell">
+                {PAYMENT_METHOD_LABELS[sale.paymentMethod as PaymentMethod]}
+              </td>
+            </tr>
           ))}
-        </TableBody>
-      </Table>
-    </DataTableShell>
+        </tbody>
+      </table>
+    </div>
   );
 }
 
@@ -114,22 +126,51 @@ export function SalesKpis({
     monthRevenue: number;
     todayTicket: number;
     monthTicket: number;
+    pendingAmount?: number;
   };
 }) {
-  const cards = [
-    { label: "Vendas hoje", value: kpis.todayCount },
-    { label: "Faturamento hoje", value: formatMoneyBRL(kpis.todayRevenue) },
-    { label: "Vendas no mês", value: kpis.monthCount },
-    { label: "Faturamento no mês", value: formatMoneyBRL(kpis.monthRevenue) },
-    { label: "Ticket médio hoje", value: formatMoneyBRL(kpis.todayTicket) },
-    { label: "Ticket médio no mês", value: formatMoneyBRL(kpis.monthTicket) },
-  ];
+  const pending = kpis.pendingAmount ?? 0;
 
   return (
-    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-      {cards.map((card) => (
-        <StatCard key={card.label} label={card.label} value={card.value} />
-      ))}
+    <div className="space-y-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <StatCard
+          label="Total vendas"
+          value={kpis.monthCount}
+          icon={ShoppingCart}
+          tone="blue"
+        />
+        <StatCard
+          label="Total recebido"
+          value={formatMoneyBRL(kpis.monthRevenue)}
+          icon={TrendingUp}
+          tone="green"
+        />
+        <StatCard
+          label="Aguardando pagamento"
+          value={formatMoneyBRL(pending)}
+          icon={CircleDollarSign}
+          tone="amber"
+        />
+      </div>
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <StatCard label="Vendas hoje" value={kpis.todayCount} tone="slate" />
+        <StatCard
+          label="Faturamento hoje"
+          value={formatMoneyBRL(kpis.todayRevenue)}
+          tone="slate"
+        />
+        <StatCard
+          label="Ticket médio hoje"
+          value={formatMoneyBRL(kpis.todayTicket)}
+          tone="slate"
+        />
+        <StatCard
+          label="Ticket médio no mês"
+          value={formatMoneyBRL(kpis.monthTicket)}
+          tone="slate"
+        />
+      </div>
     </div>
   );
 }

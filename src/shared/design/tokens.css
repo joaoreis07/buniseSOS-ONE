@@ -1,0 +1,20 @@
+/**
+ * BusinessOS One — design tokens (Figma aprovado)
+ * Usados por Demo e App. Não duplicar valores em componentes.
+ */
+:root {
+  --bos-primary: #0055e5;
+  --bos-primary-hover: #0044bb;
+  --bos-navy: #0d1b2e;
+  --bos-background: #f5f7fa;
+  --bos-foreground: #0d1b2e;
+  --bos-border: #e2e8f0;
+  --bos-muted: #64748b;
+  --bos-success: #10b981;
+  --bos-warning: #f59e0b;
+  --bos-danger: #ef4444;
+  --bos-sidebar-width: 232px;
+  --bos-topbar-height: 56px;
+  --bos-radius: 8px;
+  --bos-radius-card: 12px;
+}

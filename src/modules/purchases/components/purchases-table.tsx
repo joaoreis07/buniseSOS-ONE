@@ -1,15 +1,7 @@
 import Link from "next/link";
 import type { Purchase, PurchaseStatus } from "@prisma/client";
 import { Badge } from "@/shared/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/shared/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/shared/ui/table";
+import { StatCard } from "@/shared/components/page-layout";
 import { formatDateTimeBR, formatMoneyBRL } from "@/modules/sales/lib/sale-labels";
 import {
   formatPurchaseNumber,
@@ -39,20 +31,20 @@ export function PurchaseKpis({
   };
 }) {
   const cards = [
-    ["Compras no mês", String(kpis.monthCount)],
-    ["Valor recebido", formatMoneyBRL(kpis.monthValue)],
-    ["Recebidas", String(kpis.receivedCount)],
-    ["Canceladas", String(kpis.cancelledCount)],
-  ] as const;
+    { label: "Compras no mês", value: String(kpis.monthCount), tone: "blue" as const },
+    { label: "Valor recebido", value: formatMoneyBRL(kpis.monthValue), tone: "emerald" as const },
+    { label: "Recebidas", value: String(kpis.receivedCount), tone: "slate" as const },
+    { label: "Canceladas", value: String(kpis.cancelledCount), tone: "rose" as const },
+  ];
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-      {cards.map(([title, value]) => (
-        <Card key={title}>
-          <CardHeader>
-            <CardTitle className="text-sm font-medium">{title}</CardTitle>
-          </CardHeader>
-          <CardContent className="text-2xl font-semibold">{value}</CardContent>
-        </Card>
+    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      {cards.map((card) => (
+        <StatCard
+          key={card.label}
+          label={card.label}
+          value={card.value}
+          tone={card.tone}
+        />
       ))}
     </div>
   );
@@ -61,9 +53,9 @@ export function PurchaseKpis({
 export function PurchasesTable({ items }: { items: PurchaseRow[] }) {
   if (items.length === 0) {
     return (
-      <div className="rounded-2xl border border-dashed border-slate-200 bg-white p-6 text-center text-sm text-slate-500">
+      <div className="rounded-xl border border-dashed border-slate-200 bg-white p-6 text-center text-sm text-slate-500">
         Nenhuma compra encontrada.{" "}
-        <Link href="/app/purchases/new" className="text-emerald-700 underline">
+        <Link href="/app/purchases/new" className="text-[var(--bos-primary)] hover:underline">
           Registrar a primeira
         </Link>
       </div>
@@ -71,54 +63,82 @@ export function PurchasesTable({ items }: { items: PurchaseRow[] }) {
   }
 
   return (
-    <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Nº</TableHead>
-            <TableHead className="hidden sm:table-cell">Data</TableHead>
-            <TableHead>Fornecedor</TableHead>
-            <TableHead className="hidden md:table-cell">Responsável</TableHead>
-            <TableHead className="hidden lg:table-cell">Itens</TableHead>
-            <TableHead>Total</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead className="text-right">Ações</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
+    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="border-b border-slate-100 bg-slate-50">
+            <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-400">
+              Nº Compra
+            </th>
+            <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-400">
+              Fornecedor
+            </th>
+            <th className="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-400 md:table-cell">
+              Data
+            </th>
+            <th className="hidden px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-slate-400 lg:table-cell">
+              Itens
+            </th>
+            <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-400">
+              Total
+            </th>
+            <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-slate-400">
+              Status
+            </th>
+            <th className="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-400 lg:table-cell">
+              Responsável
+            </th>
+            <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-400">
+              Ações
+            </th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-slate-50">
           {items.map((purchase) => (
-            <TableRow key={purchase.id}>
-              <TableCell className="font-mono text-xs">
-                {formatPurchaseNumber(purchase.number)}
-              </TableCell>
-              <TableCell className="hidden sm:table-cell text-xs">
-                {formatDateTimeBR(purchase.purchasedAt)}
-              </TableCell>
-              <TableCell>{purchase.supplier?.name ?? "—"}</TableCell>
-              <TableCell className="hidden md:table-cell">
-                {purchase.createdBy?.name ?? purchase.createdBy?.email ?? "—"}
-              </TableCell>
-              <TableCell className="hidden lg:table-cell">
+            <tr
+              key={purchase.id}
+              className="transition-colors hover:bg-slate-50"
+            >
+              <td className="px-5 py-3.5">
+                <Link
+                  href={`/app/purchases/${purchase.id}`}
+                  className="font-mono text-xs font-semibold text-[var(--bos-primary)] hover:underline"
+                >
+                  {formatPurchaseNumber(purchase.number)}
+                </Link>
+              </td>
+              <td className="px-4 py-3.5 font-medium text-slate-800">
+                {purchase.supplier?.name ?? "—"}
+              </td>
+              <td className="hidden px-4 py-3.5 text-xs text-slate-400 md:table-cell">
+                {formatDateTimeBR(purchase.purchasedAt).split(",")[0]}
+              </td>
+              <td className="hidden px-4 py-3.5 text-center text-xs text-slate-500 lg:table-cell">
                 {purchase._count.items}
-              </TableCell>
-              <TableCell>{formatMoneyBRL(purchase.total)}</TableCell>
-              <TableCell>
+              </td>
+              <td className="px-4 py-3.5 text-right text-sm font-bold text-slate-800">
+                {formatMoneyBRL(purchase.total)}
+              </td>
+              <td className="px-4 py-3.5 text-center">
                 <Badge variant={statusVariant(purchase.status)}>
                   {PURCHASE_STATUS_LABELS[purchase.status]}
                 </Badge>
-              </TableCell>
-              <TableCell className="text-right">
+              </td>
+              <td className="hidden px-4 py-3.5 text-xs text-slate-500 lg:table-cell">
+                {purchase.createdBy?.name ?? purchase.createdBy?.email ?? "—"}
+              </td>
+              <td className="px-4 py-3.5 text-right">
                 <Link
                   href={`/app/purchases/${purchase.id}`}
-                  className="text-sm text-emerald-700 underline"
+                  className="text-sm text-[var(--bos-primary)] hover:underline"
                 >
                   Ver
                 </Link>
-              </TableCell>
-            </TableRow>
+              </td>
+            </tr>
           ))}
-        </TableBody>
-      </Table>
+        </tbody>
+      </table>
     </div>
   );
 }

@@ -13,14 +13,7 @@ import { TeamTable } from "@/modules/team/components/team-table";
 import { InviteMemberForm } from "@/modules/team/components/invite-member-form";
 import { InvitesTable } from "@/modules/team/components/invites-table";
 import { Button } from "@/shared/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/shared/ui/card";
-import { PageContainer, PageHeader } from "@/shared/components/page-layout";
+import { PageContainer, PaginationBar, SectionCard } from "@/shared/components/page-layout";
 
 function queryToParams(query: Record<string, unknown>, page: number) {
   const params = new URLSearchParams();
@@ -69,65 +62,62 @@ export default async function TeamPage({
     <PageContainer>
       <SettingsSubnav role={user.role} active="team" />
 
-      <PageHeader
-        eyebrow="Configurações"
-        title="Equipe"
-        description={
-          <>
-          Membros, convites e acessos do tenant · {result.total} registro
-          {result.total === 1 ? "" : "s"}
-          </>
-        }
-      />
+      <div className="max-w-4xl space-y-6">
+        <SectionCard
+          title="Membros da equipe"
+          description={`${result.total} registro${result.total === 1 ? "" : "s"} · filtros e paginação abaixo`}
+        >
+          <TeamFilters query={query} />
+          <div className="mt-4">
+            <TeamTable items={result.items} />
+          </div>
+          <div className="mt-4">
+            <PaginationBar
+              page={result.page}
+              pageCount={result.pageCount}
+              total={result.total}
+              totalLabel="membros"
+              prevHref={
+                result.page > 1
+                  ? `/app/settings/team?${queryToParams(query, result.page - 1)}`
+                  : undefined
+              }
+              nextHref={
+                result.page < result.pageCount
+                  ? `/app/settings/team?${queryToParams(query, result.page + 1)}`
+                  : undefined
+              }
+            />
+          </div>
+        </SectionCard>
 
-      <TeamFilters query={query} />
-      <TeamTable items={result.items} />
+        {canManage ? (
+          <SectionCard
+            title="Convidar membro"
+            description="O token é armazenado em hash e vale por 7 dias"
+          >
+            <InviteMemberForm allowedRoles={allowedRoles} />
+          </SectionCard>
+        ) : null}
 
-      <div className="flex items-center justify-between text-sm text-muted-foreground">
-        <span>
-          Página {result.page} de {result.pageCount}
-        </span>
-        <div className="flex gap-2">
-          {result.page > 1 ? (
-            <Button asChild variant="outline" size="sm">
-              <Link href={`/app/settings/team?${queryToParams(query, result.page - 1)}`}>
-                Anterior
-              </Link>
-            </Button>
-          ) : null}
-          {result.page < result.pageCount ? (
-            <Button asChild variant="outline" size="sm">
-              <Link href={`/app/settings/team?${queryToParams(query, result.page + 1)}`}>
-                Próxima
-              </Link>
-            </Button>
-          ) : null}
+        <SectionCard
+          title="Convites"
+          description="Pendentes, aceitos, expirados e cancelados"
+        >
+          <InvitesTable items={invites} canManage={canManage} />
+        </SectionCard>
+
+        <div className="rounded-xl border border-amber-200 bg-amber-50 p-5">
+          <h3 className="text-sm font-semibold text-amber-800">Plano Free — limite de usuários</h3>
+          <p className="mt-1 text-xs text-amber-600">
+            Para adicionar mais membros à equipe, faça upgrade para o plano PRO e tenha usuários
+            ilimitados.
+          </p>
+          <Button asChild variant="link" className="mt-2 h-auto p-0 text-xs font-semibold text-[var(--bos-primary)]">
+            <Link href="/app/settings/billing">Ver plano PRO →</Link>
+          </Button>
         </div>
       </div>
-
-      {canManage ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Convidar membro</CardTitle>
-            <CardDescription>
-              O token é armazenado em hash e vale por 7 dias
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <InviteMemberForm allowedRoles={allowedRoles} />
-          </CardContent>
-        </Card>
-      ) : null}
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Convites</CardTitle>
-          <CardDescription>Pendentes, aceitos, expirados e cancelados</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <InvitesTable items={invites} canManage={canManage} />
-        </CardContent>
-      </Card>
     </PageContainer>
   );
 }

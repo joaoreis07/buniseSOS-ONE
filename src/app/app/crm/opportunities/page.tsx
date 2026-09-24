@@ -10,7 +10,7 @@ import { CrmSubnav } from "@/modules/crm/components/crm-subnav";
 import { OpportunitiesFilters } from "@/modules/crm/components/opportunities-filters";
 import { OpportunitiesTable } from "@/modules/crm/components/opportunities-table";
 import { Button } from "@/shared/ui/button";
-import { PageContainer, PageHeader } from "@/shared/components/page-layout";
+import { PageContainer, PaginationBar } from "@/shared/components/page-layout";
 
 function toQueryParams(query: Record<string, unknown>, page: number): string {
   const params = new URLSearchParams();
@@ -61,53 +61,47 @@ export default async function OpportunitiesPage({
     <PageContainer>
       <CrmSubnav role={user.role} active="opportunities" />
 
-      <PageHeader
-        eyebrow="CRM"
-        title="Oportunidades"
-        description="Negócios em andamento, responsáveis, valores e estágios."
-        actions={
-          canManage ? (
-          <Button asChild>
-            <Link href="/app/crm/opportunities/new">Nova oportunidade</Link>
-          </Button>
-          ) : null
-        }
-      />
-
       <OpportunitiesFilters
         query={query}
         owners={meta.owners}
         leads={meta.leads}
         customers={meta.customers}
+        actions={
+          canManage ? (
+            <Button asChild size="sm">
+              <Link href="/app/crm/opportunities/new">Nova oportunidade</Link>
+            </Button>
+          ) : null
+        }
       />
-      <OpportunitiesTable items={result.items} canManage={canManage} />
+      <OpportunitiesTable
+        items={result.items}
+        canManage={canManage}
+        summary={{
+          count: result.total,
+          totalValue: result.items.reduce(
+            (sum, item) => sum + Number(item.estimatedValue ?? 0),
+            0,
+          ),
+        }}
+      />
 
-      <div className="flex items-center justify-between text-sm text-muted-foreground">
-        <span>
-          {result.total} oportunidade{result.total === 1 ? "" : "s"} · página{" "}
-          {result.page} de {result.pageCount}
-        </span>
-        <div className="flex gap-2">
-          {result.page > 1 ? (
-            <Button asChild variant="outline" size="sm">
-              <Link
-                href={`/app/crm/opportunities?${toQueryParams(query, result.page - 1)}`}
-              >
-                Anterior
-              </Link>
-            </Button>
-          ) : null}
-          {result.page < result.pageCount ? (
-            <Button asChild variant="outline" size="sm">
-              <Link
-                href={`/app/crm/opportunities?${toQueryParams(query, result.page + 1)}`}
-              >
-                Próxima
-              </Link>
-            </Button>
-          ) : null}
-        </div>
-      </div>
+      <PaginationBar
+        page={result.page}
+        pageCount={result.pageCount}
+        total={result.total}
+        totalLabel="oportunidade(s)"
+        prevHref={
+          result.page > 1
+            ? `/app/crm/opportunities?${toQueryParams(query, result.page - 1)}`
+            : undefined
+        }
+        nextHref={
+          result.page < result.pageCount
+            ? `/app/crm/opportunities?${toQueryParams(query, result.page + 1)}`
+            : undefined
+        }
+      />
     </PageContainer>
   );
 }

@@ -1,11 +1,15 @@
 import { dashboardQuerySchema } from "@/modules/reports/schemas/reports.schemas";
 import { firstSearchParam } from "@/modules/reports/lib/params";
 import { getDashboardForTenant } from "@/modules/reports/services/dashboard.service";
-import { canViewReports } from "@/modules/reports/services/reports.service";
+import { getCompanyUsageSnapshot } from "@/modules/billing/services/entitlements.service";
 import { DashboardView } from "@/modules/reports/components/dashboard-view";
 import { ErrorBlock } from "@/modules/reports/components/kpi-card";
 import { requirePermission } from "@/shared/auth/session";
 import { publicErrorMessage } from "@/shared/errors/public-error";
+import {
+  companyDisplayName,
+  getCompanyShellData,
+} from "@/modules/app-shell/loaders/company-shell";
 
 export default async function AppDashboardPage({
   searchParams,
@@ -24,13 +28,21 @@ export default async function AppDashboardPage({
     : dashboardQuerySchema.parse({ preset: "last_30" });
 
   try {
-    const data = await getDashboardForTenant({
-      companyId: user.companyId,
-      role: user.role,
-      query,
-    });
+    const [data, usage, company] = await Promise.all([
+      getDashboardForTenant({
+        companyId: user.companyId,
+        role: user.role,
+        query,
+      }),
+      getCompanyUsageSnapshot(user.companyId),
+      getCompanyShellData(user.companyId),
+    ]);
     return (
-      <DashboardView data={data} canViewReports={canViewReports(user.role)} />
+      <DashboardView
+        data={data}
+        usage={usage}
+        companyName={companyDisplayName(company)}
+      />
     );
   } catch (error) {
     const message =

@@ -7,11 +7,12 @@ import {
   getCustomerFormMeta,
   listCustomersForTenant,
 } from "@/modules/crm/services/customer.service";
+import { getCompanyUsageSnapshot } from "@/modules/billing/services/entitlements.service";
 import { CustomersFilters } from "@/modules/crm/components/customers-filters";
-import { CustomersTable } from "@/modules/crm/components/customers-table";
+import { CustomersListClient } from "@/modules/crm/components/customers-list-client";
 import { CrmSubnav } from "@/modules/crm/components/crm-subnav";
 import { Button } from "@/shared/ui/button";
-import { PageContainer, PageHeader } from "@/shared/components/page-layout";
+import { PageContainer, UsageMeter } from "@/shared/components/page-layout";
 
 export default async function CrmCustomersPage({
   searchParams,
@@ -37,14 +38,16 @@ export default async function CrmCustomersPage({
     ? parsed.data
     : customerListQuerySchema.parse({ page: 1, pageSize: 20 });
 
-  const [result, meta] = await Promise.all([
+  const [result, meta, usage] = await Promise.all([
     listCustomersForTenant({
       companyId: user.companyId,
       role: user.role,
       query,
     }),
     getCustomerFormMeta(user.companyId),
+    getCompanyUsageSnapshot(user.companyId),
   ]);
+  const customerUsage = usage.find((u) => u.feature === "customers");
 
   const canManage = canManageCustomers(user.role);
   const canSales = hasPermission(user.role, "sales:view");
@@ -54,31 +57,47 @@ export default async function CrmCustomersPage({
     <PageContainer>
       <CrmSubnav role={user.role} active="customers" />
 
-      <PageHeader
-        eyebrow="Relacionamento"
-        title="Clientes"
-        description={
-          <>
-            Relacionamento comercial · {result.total} cliente
-            {result.total === 1 ? "" : "s"}
-          </>
-        }
-        actions={
-          canManage ? (
-          <Button asChild>
-            <Link href="/app/crm/new">Novo cliente</Link>
-          </Button>
-          ) : null
-        }
-      />
-
       <CustomersFilters
         query={query}
         origins={meta.origins}
         owners={meta.owners}
+        actions={
+          canManage ? (
+            <Button asChild size="sm">
+              <Link href="/app/crm/new">Novo cliente</Link>
+            </Button>
+          ) : null
+        }
       />
 
-      <CustomersTable
+      {customerUsage?.limit ? (
+        <div className="mb-4 flex items-center gap-2 text-xs text-slate-500">
+          <div className="max-w-32 flex-1">
+            <UsageMeter
+              label=""
+              used={customerUsage.used}
+              limit={customerUsage.limit}
+              status={customerUsage.status}
+            />
+          </div>
+          <span
+            className={
+              customerUsage.status !== "ok" ? "font-semibold text-amber-600" : ""
+            }
+          >
+            {customerUsage.used} / {customerUsage.limit} clientes
+          </span>
+          <span className="text-slate-300">·</span>
+          <Link
+            href="/app/settings/billing"
+            className="text-[var(--bos-primary)] hover:underline"
+          >
+            Fazer upgrade →
+          </Link>
+        </div>
+      ) : null}
+
+      <CustomersListClient
         items={result.items}
         canManage={canManage}
         canSales={canSales}

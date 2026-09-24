@@ -3,6 +3,10 @@ import { assertPermission, hasPermission } from "@/shared/permissions/rbac";
 import { writeAuditLog } from "@/shared/audit/audit";
 import { prisma } from "@/shared/db/prisma";
 import { notDeletedFilter } from "@/shared/tenant/tenant";
+import {
+  assertPlanLimit,
+  checkPlanLimit,
+} from "@/modules/billing/services/entitlements.service";
 import { applyInventoryMovement } from "@/modules/inventory/repositories/inventory.repository";
 import type {
   CompleteSaleInput,
@@ -138,9 +142,23 @@ export async function completeSaleForTenant(params: {
   if (!canCreateSales(params.role)) {
     throw new Error("Você não tem permissão para registrar vendas");
   }
+  await assertPlanLimit({ companyId: params.companyId, feature: "sales_month" });
 
   const paymentMode = params.data.paymentMode ?? "CASH";
   const installmentsCount = params.data.installmentsCount ?? 1;
+
+  if (paymentMode !== "CASH") {
+    const installmentLimit = await checkPlanLimit({
+      companyId: params.companyId,
+      feature: "open_installments",
+      increment: installmentsCount,
+    });
+    if (!installmentLimit.allowed) {
+      throw new Error(
+        "Limite de parcelas abertas do plano Free atingido. Faça upgrade para PRO.",
+      );
+    }
+  }
   const period = params.data.period ?? "MONTHLY";
 
   if (params.data.customerId) {

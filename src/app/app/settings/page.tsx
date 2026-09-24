@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { requirePermission } from "@/shared/auth/session";
 import { hasPermission } from "@/shared/permissions/rbac";
 import { getCompanyProfileForTenant } from "@/modules/settings/services/settings.service";
@@ -5,16 +6,8 @@ import { CompanyProfileForm } from "@/modules/settings/components/company-profil
 import { SettingsSubnav } from "@/modules/team/components/settings-subnav";
 import { formatDateTimeBR } from "@/modules/team/lib/labels";
 import { getCompanySettingsOverview } from "@/modules/team/services/team.service";
-import Link from "next/link";
 import { Button } from "@/shared/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/shared/ui/card";
-import { PageContainer, PageHeader } from "@/shared/components/page-layout";
+import { PageContainer, SectionCard } from "@/shared/components/page-layout";
 
 export default async function SettingsCompanyPage() {
   const user = await requirePermission("settings:view");
@@ -39,36 +32,26 @@ export default async function SettingsCompanyPage() {
     <PageContainer>
       <SettingsSubnav role={user.role} active="company" />
 
-      <PageHeader
-        eyebrow="Configurações"
-        title="Empresa"
-        description="Dados cadastrais e informações institucionais da organização."
-      />
-
-      <Card>
-        <CardHeader>
-          <CardTitle>{company.name}</CardTitle>
-          <CardDescription>
-            Criada em {formatDateTimeBR(company.createdAt)} · {overview.activeMembers}{" "}
-            membros · {overview.pendingInvites} convites
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p className="mb-4 font-mono text-xs text-muted-foreground">{company.id}</p>
+      <div className="max-w-2xl space-y-6">
+        <SectionCard
+          title="Informações da empresa"
+          description={`Criada em ${formatDateTimeBR(company.createdAt)} · ${overview.activeMembers} membros · ${overview.pendingInvites} convites`}
+        >
+          <p className="mb-4 font-mono text-xs text-slate-400">{company.id}</p>
           <CompanyProfileForm company={company} canManage={canManage} />
-        </CardContent>
-      </Card>
+        </SectionCard>
 
-      {canViewTeam ? (
-        <div className="flex flex-wrap gap-2">
-          <Button asChild>
-            <Link href="/app/settings/team">Administrar equipe</Link>
-          </Button>
-          <Button asChild variant="outline">
-            <Link href="/app/settings/permissions">Ver permissões</Link>
-          </Button>
-        </div>
-      ) : null}
+        {canViewTeam ? (
+          <div className="flex flex-wrap gap-2">
+            <Button asChild className="rounded-xl">
+              <Link href="/app/settings/team">Administrar equipe</Link>
+            </Button>
+            <Button asChild variant="outline" className="rounded-xl">
+              <Link href="/app/settings/permissions">Ver permissões</Link>
+            </Button>
+          </div>
+        ) : null}
+      </div>
     </PageContainer>
   );
 }

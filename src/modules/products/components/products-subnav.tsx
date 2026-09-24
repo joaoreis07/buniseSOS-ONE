@@ -7,18 +7,21 @@ type ProductsTab = "products" | "categories";
 export function ProductsSubnav({
   role,
   active,
+  variant = "app",
 }: {
-  role: Role;
+  role?: Role;
   active: ProductsTab;
+  variant?: "app" | "demo";
 }) {
+  const base = variant === "demo" ? "/demo/products" : "/app/products";
   const items = [
-    hasPermission(role, "products:view")
-      ? { key: "products" as const, href: "/app/products", label: "Produtos" }
+    variant === "demo" || (role && hasPermission(role, "products:view"))
+      ? { key: "products" as const, href: base, label: "Produtos" }
       : null,
-    hasPermission(role, "categories:view")
+    variant === "demo" || (role && hasPermission(role, "categories:view"))
       ? {
           key: "categories" as const,
-          href: "/app/products/categories",
+          href: `${base}/categories`,
           label: "Categorias",
         }
       : null,

@@ -10,7 +10,14 @@ import { NOTIFICATION_TYPE_LABELS } from "@/modules/communications/lib/labels";
 import { formatDateTimeBR } from "@/modules/sales/lib/sale-labels";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
-import { PageContainer, PageHeader } from "@/shared/components/page-layout";
+import {
+  EmptyState,
+  ModulePageHeader,
+  PageContainer,
+  PaginationBar,
+} from "@/shared/components/page-layout";
+import { Bell } from "lucide-react";
+import { cn } from "@/shared/utilities/cn";
 
 function first(value: string | string[] | undefined) {
   return typeof value === "string" ? value : undefined;
@@ -38,21 +45,22 @@ export default async function NotificationsPage({
     query,
   });
 
+  const queryBase = query.unread ? "?unread=1" : "";
+
   return (
     <PageContainer>
-      <PageHeader
-        eyebrow="Conta"
+      <ModulePageHeader
         title="Notificações"
-        description={`${result.unreadCount} não lida${result.unreadCount === 1 ? "" : "s"}`}
+        subtitle={`${result.unreadCount} não lida${result.unreadCount === 1 ? "" : "s"}`}
         actions={
           <>
-            <Button asChild variant="outline">
+            <Button asChild variant="outline" className="rounded-xl">
               <Link href={query.unread ? "/app/notifications" : "/app/notifications?unread=1"}>
                 {query.unread ? "Ver todas" : "Somente não lidas"}
               </Link>
             </Button>
             <form action={markAllNotificationsReadAction}>
-              <Button type="submit" variant="outline">
+              <Button type="submit" variant="outline" className="rounded-xl">
                 Marcar todas como lidas
               </Button>
             </form>
@@ -61,34 +69,51 @@ export default async function NotificationsPage({
       />
 
       {result.items.length === 0 ? (
-        <p className="rounded-2xl border border-dashed border-slate-200 bg-white p-6 text-sm text-slate-500">
-          Nenhuma notificação.
-        </p>
+        <EmptyState
+          icon={Bell}
+          title="Nenhuma notificação"
+          description="Quando houver alertas ou avisos, eles aparecerão aqui."
+        />
       ) : (
-        <ul className="space-y-2">
+        <ul className="divide-y divide-slate-50 overflow-hidden rounded-xl border border-slate-200 bg-white">
           {result.items.map((item) => (
-            <li key={item.id} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                <div>
-                  <p className={item.readAt ? "text-muted-foreground" : "font-medium"}>
+            <li
+              key={item.id}
+              className={cn(
+                "px-5 py-4 transition-colors hover:bg-slate-50/50",
+                !item.readAt && "bg-blue-50/30",
+              )}
+            >
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div className="min-w-0">
+                  <p
+                    className={cn(
+                      "text-sm",
+                      item.readAt ? "text-slate-500" : "font-semibold text-slate-800",
+                    )}
+                  >
                     {item.title}
                   </p>
-                  <p className="text-sm text-muted-foreground">{item.message}</p>
-                  <p className="mt-1 text-xs text-muted-foreground">
+                  <p className="mt-0.5 text-sm text-slate-500">{item.message}</p>
+                  <p className="mt-1 text-xs text-slate-400">
                     {NOTIFICATION_TYPE_LABELS[item.type]} · {formatDateTimeBR(item.createdAt)}
                   </p>
                 </div>
-                <div className="flex flex-wrap items-center gap-2">
-                  {!item.readAt ? <Badge>Não lida</Badge> : null}
+                <div className="flex shrink-0 flex-wrap items-center gap-2">
+                  {!item.readAt ? (
+                    <Badge className="rounded-md bg-[var(--bos-primary)]/10 text-[var(--bos-primary)]">
+                      Não lida
+                    </Badge>
+                  ) : null}
                   {item.link ? (
-                    <Button asChild size="sm" variant="outline">
+                    <Button asChild size="sm" variant="outline" className="rounded-lg">
                       <Link href={item.link}>Abrir</Link>
                     </Button>
                   ) : null}
                   {!item.readAt ? (
                     <form action={markNotificationReadAction}>
                       <input type="hidden" name="notificationId" value={item.id} />
-                      <Button type="submit" size="sm" variant="ghost">
+                      <Button type="submit" size="sm" variant="ghost" className="text-xs">
                         Marcar lida
                       </Button>
                     </form>
@@ -100,37 +125,24 @@ export default async function NotificationsPage({
         </ul>
       )}
 
-      <div className="flex justify-between text-sm text-muted-foreground">
-        <span>
-          Página {result.page} de {result.pageCount}
-        </span>
-        <div className="flex gap-2">
-          {result.page > 1 ? (
-            <Button asChild variant="outline" size="sm">
-              <Link
-                href={`/app/notifications?${new URLSearchParams({
-                  ...(query.unread ? { unread: "1" } : {}),
-                  page: String(result.page - 1),
-                }).toString()}`}
-              >
-                Anterior
-              </Link>
-            </Button>
-          ) : null}
-          {result.page < result.pageCount ? (
-            <Button asChild variant="outline" size="sm">
-              <Link
-                href={`/app/notifications?${new URLSearchParams({
-                  ...(query.unread ? { unread: "1" } : {}),
-                  page: String(result.page + 1),
-                }).toString()}`}
-              >
-                Próxima
-              </Link>
-            </Button>
-          ) : null}
-        </div>
-      </div>
+      {result.items.length > 0 ? (
+        <PaginationBar
+          page={result.page}
+          pageCount={result.pageCount}
+          total={result.total}
+          totalLabel="notificações"
+          prevHref={
+            result.page > 1
+              ? `/app/notifications${queryBase}${queryBase ? "&" : "?"}page=${result.page - 1}`
+              : undefined
+          }
+          nextHref={
+            result.page < result.pageCount
+              ? `/app/notifications${queryBase}${queryBase ? "&" : "?"}page=${result.page + 1}`
+              : undefined
+          }
+        />
+      ) : null}
     </PageContainer>
   );
 }

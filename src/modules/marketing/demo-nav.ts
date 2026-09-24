@@ -1,7 +1,9 @@
 import {
+  Factory,
   FileSpreadsheet,
   LayoutDashboard,
   MessageSquare,
+  Package,
   Settings,
   ShoppingCart,
   Truck,
@@ -15,9 +17,11 @@ export const DEMO_MODULES = [
   "dashboard",
   "crm",
   "sales",
+  "products",
   "inventory",
   "finance",
   "purchases",
+  "suppliers",
   "reports",
   "communications",
   "settings",
@@ -61,8 +65,10 @@ export const DEMO_NAV_GROUPS: DemoNavGroup[] = [
     label: "Operação",
     items: [
       { id: "sales", href: "/demo/sales", label: "Vendas", icon: ShoppingCart },
+      { id: "products", href: "/demo/products", label: "Produtos", icon: Package },
       { id: "inventory", href: "/demo/inventory", label: "Estoque", icon: Warehouse },
       { id: "purchases", href: "/demo/purchases", label: "Compras", icon: Truck },
+      { id: "suppliers", href: "/demo/suppliers", label: "Fornecedores", icon: Factory },
     ],
   },
   {

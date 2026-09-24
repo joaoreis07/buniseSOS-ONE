@@ -1,14 +1,8 @@
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/shared/ui/card";
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 import { ResetPasswordForm } from "@/modules/auth/components/password-forms";
 import { AuthScreen } from "@/shared/brand/auth-screen";
 import { Alert, AlertDescription } from "@/shared/ui/alert";
-import Link from "next/link";
 
 export default async function ResetPasswordPage({
   searchParams,
@@ -19,27 +13,30 @@ export default async function ResetPasswordPage({
   const token = params.token?.trim() ?? "";
 
   return (
-    <AuthScreen>
-      <Card>
-        <CardHeader>
-          <CardTitle>Nova senha</CardTitle>
-          <CardDescription>Defina uma nova senha para sua conta</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {token ? (
-            <ResetPasswordForm token={token} />
-          ) : (
-            <Alert variant="destructive">
-              <AlertDescription>
-                Token ausente.{" "}
-                <Link href="/forgot-password" className="underline">
-                  Solicitar novamente
-                </Link>
-              </AlertDescription>
-            </Alert>
-          )}
-        </CardContent>
-      </Card>
+    <AuthScreen variant="login">
+      <Link
+        href="/login"
+        className="mb-8 inline-flex items-center gap-1.5 text-xs text-slate-400 transition-colors hover:text-slate-600"
+      >
+        <ArrowLeft size={13} aria-hidden />
+        Voltar ao login
+      </Link>
+
+      <h1 className="mb-1 text-2xl font-extrabold text-[var(--bos-navy)]">Nova senha</h1>
+      <p className="mb-8 text-sm text-slate-500">Defina uma nova senha para sua conta</p>
+
+      {token ? (
+        <ResetPasswordForm token={token} />
+      ) : (
+        <Alert variant="destructive" className="rounded-xl">
+          <AlertDescription>
+            Token ausente.{" "}
+            <Link href="/forgot-password" className="underline">
+              Solicitar novamente
+            </Link>
+          </AlertDescription>
+        </Alert>
+      )}
     </AuthScreen>
   );
 }

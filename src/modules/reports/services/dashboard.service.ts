@@ -9,10 +9,14 @@ import {
   type DateRange,
 } from "@/modules/reports/lib/period";
 import {
+  activeCustomersCount,
   aggregateCompletedSales,
   financeDashboard,
   inventoryDashboard,
+  monthlyRevenueExpense,
+  pendingActivitiesForDashboard,
   purchasesDashboard,
+  salesByCategory,
   salesByPaymentMethod,
   salesByProduct,
   salesChart,
@@ -72,6 +76,10 @@ export async function getDashboardForTenant(params: {
     inventory,
     purchasesCurrent,
     purchasesPrevious,
+    revenueExpense,
+    categoryBreakdown,
+    activeCustomers,
+    pendingActivities,
   ] = await Promise.all([
     sections.sales
       ? aggregateCompletedSales({
@@ -120,6 +128,22 @@ export async function getDashboardForTenant(params: {
           totalsOnly: true,
         })
       : null,
+    sections.sales || sections.purchases
+      ? monthlyRevenueExpense({ companyId: params.companyId })
+      : [],
+    sections.sales
+      ? salesByCategory({
+          companyId: params.companyId,
+          start: range.start,
+          end: range.end,
+        })
+      : [],
+    hasPermission(params.role, "crm:view")
+      ? activeCustomersCount(params.companyId)
+      : null,
+    hasPermission(params.role, "crm:activities:view")
+      ? pendingActivitiesForDashboard({ companyId: params.companyId })
+      : [],
   ]);
 
   return {
@@ -172,5 +196,9 @@ export async function getDashboardForTenant(params: {
           ),
         }
       : null,
+    revenueExpense,
+    categoryBreakdown,
+    activeCustomers,
+    pendingActivities,
   };
 }

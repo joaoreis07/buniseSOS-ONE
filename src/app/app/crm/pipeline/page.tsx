@@ -5,7 +5,8 @@ import {
 } from "@/modules/crm/services/pipeline.service";
 import { CrmSubnav } from "@/modules/crm/components/crm-subnav";
 import { PipelineBoard } from "@/modules/crm/components/pipeline-board";
-import { PageContainer, PageHeader } from "@/shared/components/page-layout";
+import { hasPermission } from "@/shared/permissions/rbac";
+import { PageContainer } from "@/shared/components/page-layout";
 
 export default async function PipelinePage() {
   const user = await requirePermission("crm:pipeline:view");
@@ -18,12 +19,11 @@ export default async function PipelinePage() {
   return (
     <PageContainer>
       <CrmSubnav role={user.role} active="pipeline" />
-      <PageHeader
-        eyebrow="CRM"
-        title="Funil"
-        description={`Board de oportunidades por estágio · ${board.total} no pipeline`}
+      <PipelineBoard
+        columns={board.columns}
+        canManage={canManage}
+        canCreate={hasPermission(user.role, "crm:opportunities:manage")}
       />
-      <PipelineBoard columns={board.columns} canManage={canManage} />
     </PageContainer>
   );
 }

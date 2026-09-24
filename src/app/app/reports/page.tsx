@@ -1,41 +1,49 @@
 import Link from "next/link";
+import { DollarSign, Package, TrendingUp, Truck } from "lucide-react";
 import { requirePermission } from "@/shared/auth/session";
 import { availableReports } from "@/modules/reports/services/reports.service";
 import { EmptyBlock } from "@/modules/reports/components/kpi-card";
-import { Button } from "@/shared/ui/button";
-import { PageContainer, PageHeader } from "@/shared/components/page-layout";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/shared/ui/card";
+  ModulePageHeader,
+  PageContainer,
+} from "@/shared/components/page-layout";
 
 const REPORTS = [
   {
     type: "sales" as const,
     href: "/app/reports/sales",
-    title: "Vendas",
-    description: "Vendas, itens, descontos e totais por período.",
+    tag: "Vendas",
+    title: "Relatório de Vendas",
+    description: "Receita, ticket médio, produtos vendidos e tendências.",
+    icon: TrendingUp,
+    color: "bg-blue-50 text-blue-600",
   },
   {
     type: "finance" as const,
     href: "/app/reports/finance",
-    title: "Financeiro",
+    tag: "Financeiro",
+    title: "Relatório Financeiro",
     description: "Contas a receber, saldo e vencidos.",
+    icon: DollarSign,
+    color: "bg-emerald-50 text-emerald-600",
   },
   {
     type: "inventory" as const,
     href: "/app/reports/inventory",
-    title: "Estoque",
-    description: "Saldos, mínimos e status dos produtos físicos.",
+    tag: "Estoque",
+    title: "Relatório de Estoque",
+    description: "Saldo por produto, giro, movimentações e alertas.",
+    icon: Package,
+    color: "bg-amber-50 text-amber-600",
   },
   {
     type: "purchases" as const,
     href: "/app/reports/purchases",
-    title: "Compras",
-    description: "Compras recebidas, fornecedores e custos.",
+    tag: "Compras",
+    title: "Relatório de Compras",
+    description: "Compras por fornecedor, período e categorias.",
+    icon: Truck,
+    color: "bg-violet-50 text-violet-600",
   },
 ];
 
@@ -46,34 +54,40 @@ export default async function ReportsIndexPage() {
 
   return (
     <PageContainer>
-      <PageHeader
-        eyebrow="Gestão"
+      <ModulePageHeader
         title="Relatórios"
-        description="Consultas operacionais com filtros no servidor e exportação CSV"
-        actions={
-          <Button asChild variant="outline">
-          <Link href="/app">Dashboard</Link>
-        </Button>
-        }
+        subtitle="Central de análises e exportações"
       />
 
       {cards.length === 0 ? (
         <EmptyBlock>Nenhum relatório disponível para o seu perfil.</EmptyBlock>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2">
-          {cards.map((report) => (
-            <Card key={report.type}>
-              <CardHeader>
-                <CardTitle>{report.title}</CardTitle>
-                <CardDescription>{report.description}</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button asChild>
-                  <Link href={report.href}>Abrir relatório</Link>
-                </Button>
-              </CardContent>
-            </Card>
-          ))}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {cards.map((report) => {
+            const Icon = report.icon;
+            return (
+              <Link
+                key={report.type}
+                href={report.href}
+                className="group rounded-xl border border-slate-200 bg-white p-5 text-left transition-all hover:border-slate-300 hover:shadow-sm"
+              >
+                <div
+                  className={`mb-3 flex size-10 items-center justify-center rounded-xl ${report.color}`}
+                >
+                  <Icon className="size-[18px]" aria-hidden />
+                </div>
+                <div className="mb-1 text-xs font-semibold text-slate-300">
+                  {report.tag}
+                </div>
+                <h3 className="mb-1 text-sm font-bold text-slate-800 group-hover:text-slate-900">
+                  {report.title}
+                </h3>
+                <p className="text-xs leading-relaxed text-slate-400">
+                  {report.description}
+                </p>
+              </Link>
+            );
+          })}
         </div>
       )}
     </PageContainer>

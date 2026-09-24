@@ -13,6 +13,7 @@ import type {
   PurchasesReportQuery,
   SalesReportQuery,
 } from "@/modules/reports/schemas/reports.schemas";
+import { FilterBar } from "@/shared/components/page-layout";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
@@ -44,7 +45,7 @@ function SelectField({
         id={id}
         name={name}
         defaultValue={value ?? ""}
-        className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm"
+        className="flex h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm"
       >
         <option value="">Todos</option>
         {options.map((option) => (
@@ -180,9 +181,10 @@ export function FinanceReportFilters({
 
 export function InventoryReportFilters({ query }: { query: InventoryReportQuery }) {
   return (
+    <FilterBar>
     <form
       action="/app/reports/inventory"
-      className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm lg:flex-row lg:flex-wrap lg:items-end"
+      className="flex flex-col gap-3 lg:flex-row lg:flex-wrap lg:items-end"
     >
       <div className="grid flex-1 gap-3 sm:grid-cols-2">
         <div className="space-y-1">
@@ -213,6 +215,7 @@ export function InventoryReportFilters({ query }: { query: InventoryReportQuery 
         </Button>
       </div>
     </form>
+    </FilterBar>
   );
 }
 

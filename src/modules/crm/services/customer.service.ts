@@ -2,6 +2,7 @@ import type { Role } from "@prisma/client";
 import { assertPermission, hasPermission } from "@/shared/permissions/rbac";
 import { writeAuditLog } from "@/shared/audit/audit";
 import type { CustomerFormInput, CustomerListQuery } from "@/modules/crm/schemas/customer.schemas";
+import { assertPlanLimit } from "@/modules/billing/services/entitlements.service";
 import {
   createCustomer,
   findCustomerById,
@@ -53,6 +54,7 @@ export async function createCustomerForTenant(params: {
   data: CustomerFormInput;
 }) {
   assertPermission(params.role, "crm:manage");
+  await assertPlanLimit({ companyId: params.companyId, feature: "customers" });
 
   if (params.data.ownerId) {
     const owners = await listCompanyOwners(params.companyId);

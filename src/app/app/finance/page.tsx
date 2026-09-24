@@ -6,9 +6,11 @@ import {
   FinanceKpis,
   FinanceTable,
 } from "@/modules/finance/components/finance-table";
-import { Button } from "@/shared/ui/button";
-import Link from "next/link";
-import { PageContainer, PageHeader } from "@/shared/components/page-layout";
+import {
+  ModulePageHeader,
+  PageContainer,
+  PaginationBar,
+} from "@/shared/components/page-layout";
 
 export default async function FinancePage({
   searchParams,
@@ -51,31 +53,21 @@ export default async function FinancePage({
 
   return (
     <PageContainer>
-      <PageHeader
-        eyebrow="Gestão"
+      <ModulePageHeader
         title="Financeiro"
-        description={`Contas a receber, parcelas e baixas · ${result.total} registro(s)`}
+        subtitle={`Contas a receber · ${result.total} registro(s)`}
       />
       <FinanceKpis kpis={result.kpis} />
       <FinanceFilters query={query} customers={result.customers} />
       <FinanceTable items={result.items} />
-      <div className="flex items-center justify-between text-sm text-muted-foreground">
-        <span>
-          Página {result.page} de {result.pageCount}
-        </span>
-        <div className="flex gap-2">
-          {result.page > 1 ? (
-            <Button asChild variant="outline" size="sm">
-              <Link href={pageHref(result.page - 1)}>Anterior</Link>
-            </Button>
-          ) : null}
-          {result.page < result.pageCount ? (
-            <Button asChild variant="outline" size="sm">
-              <Link href={pageHref(result.page + 1)}>Próxima</Link>
-            </Button>
-          ) : null}
-        </div>
-      </div>
+      <PaginationBar
+        page={result.page}
+        pageCount={result.pageCount}
+        total={result.total}
+        totalLabel="registro(s)"
+        prevHref={result.page > 1 ? pageHref(result.page - 1) : undefined}
+        nextHref={result.page < result.pageCount ? pageHref(result.page + 1) : undefined}
+      />
     </PageContainer>
   );
 }

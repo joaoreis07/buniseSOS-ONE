@@ -6,14 +6,14 @@ import {
 } from "@/modules/purchases/lib/purchase-labels";
 import { EmptyBlock } from "@/modules/reports/components/kpi-card";
 import { Badge } from "@/shared/ui/badge";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/shared/ui/table";
+import { DataTableShell } from "@/shared/components/page-layout";
+import { cn } from "@/shared/utilities/cn";
+
+function statusVariant(status: keyof typeof PURCHASE_STATUS_LABELS) {
+  if (status === "RECEIVED") return "success" as const;
+  if (status === "CANCELLED") return "destructive" as const;
+  return "warning" as const;
+}
 
 export function PurchasesReportTable({
   items,
@@ -36,50 +36,72 @@ export function PurchasesReportTable({
   }
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Compra</TableHead>
-            <TableHead>Fornecedor</TableHead>
-            <TableHead>Produto</TableHead>
-            <TableHead>Qtd.</TableHead>
-            <TableHead>Custo</TableHead>
-            <TableHead>Total</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
+    <DataTableShell>
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="border-b border-slate-100 bg-slate-50">
+            <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-400">
+              Compra
+            </th>
+            <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-400">
+              Fornecedor
+            </th>
+            <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-400">
+              Produto
+            </th>
+            <th className="hidden px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-400 sm:table-cell">
+              Qtd.
+            </th>
+            <th className="hidden px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-400 md:table-cell">
+              Custo
+            </th>
+            <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-400">
+              Total
+            </th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-slate-50">
           {items.map((row, index) => (
-            <TableRow key={`${row.purchaseId}-${row.productSku}-${index}`}>
-              <TableCell>
+            <tr
+              key={`${row.purchaseId}-${row.productSku}-${index}`}
+              className={cn(
+                "transition-colors hover:bg-slate-50",
+                row.status === "CANCELLED" && "bg-red-50/20",
+              )}
+            >
+              <td className="px-5 py-3.5">
                 <Link
                   href={`/app/purchases/${row.purchaseId}`}
-                  className="font-medium underline-offset-4 hover:underline"
+                  className="font-mono text-xs font-semibold text-[var(--bos-primary)] hover:underline"
                 >
                   {formatPurchaseNumber(row.number)}
                 </Link>
                 <div className="mt-1">
-                  <Badge
-                    variant={row.status === "CANCELLED" ? "destructive" : "secondary"}
-                  >
+                  <Badge variant={statusVariant(row.status)}>
                     {PURCHASE_STATUS_LABELS[row.status]}
                   </Badge>
                 </div>
-              </TableCell>
-              <TableCell>{row.supplierName}</TableCell>
-              <TableCell>
-                {row.productName}
-                <div className="text-xs text-muted-foreground">{row.productSku}</div>
-              </TableCell>
-              <TableCell>{row.quantity}</TableCell>
-              <TableCell>{formatMoneyBRL(row.unitCost)}</TableCell>
-              <TableCell className="font-medium">
+              </td>
+              <td className="px-4 py-3.5 text-sm font-medium text-slate-800">
+                {row.supplierName}
+              </td>
+              <td className="px-4 py-3.5">
+                <div className="text-sm text-slate-800">{row.productName}</div>
+                <div className="text-xs text-slate-400">{row.productSku}</div>
+              </td>
+              <td className="hidden px-4 py-3.5 text-right text-sm text-slate-600 sm:table-cell">
+                {row.quantity}
+              </td>
+              <td className="hidden px-4 py-3.5 text-right text-sm text-slate-600 md:table-cell">
+                {formatMoneyBRL(row.unitCost)}
+              </td>
+              <td className="px-4 py-3.5 text-right text-sm font-bold text-slate-800">
                 {formatMoneyBRL(row.lineTotal)}
-              </TableCell>
-            </TableRow>
+              </td>
+            </tr>
           ))}
-        </TableBody>
-      </Table>
-    </div>
+        </tbody>
+      </table>
+    </DataTableShell>
   );
 }

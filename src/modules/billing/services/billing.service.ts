@@ -18,6 +18,7 @@ import {
   assertViewBilling,
 } from "@/modules/billing/services/access.service";
 import { notifyBillingEvent } from "@/modules/communications/services/notification.service";
+import { isFreePlanSlug } from "@/modules/billing/lib/plans";
 import {
   findActivePlansByProduct,
   findCompanyForBilling,
@@ -153,6 +154,9 @@ export async function createSubscriptionForTenant(params: {
   const plan = await findPlanById(params.planId);
   if (!plan || !plan.active || plan.product !== product) {
     throw new BillingError("Plano indisponível");
+  }
+  if (isFreePlanSlug(plan.slug)) {
+    throw new BillingError("O plano Free não requer cobrança. Faça upgrade para PRO.");
   }
   decimalToAsaasValue(plan.price);
 

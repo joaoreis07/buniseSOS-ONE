@@ -1,14 +1,7 @@
 import type { Role } from "@prisma/client";
+import { CheckCircle2, XCircle } from "lucide-react";
 import { PERMISSIONS, type Permission } from "@/shared/permissions/rbac";
 import { PERMISSION_LABELS, ROLE_LABELS, permissionModule } from "@/modules/team/lib/labels";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/shared/ui/table";
 
 const ROLES: Role[] = ["ADMIN", "MANAGER", "SALES", "FINANCE", "INVENTORY"];
 
@@ -23,6 +16,14 @@ function groupPermissions() {
   return [...groups.entries()];
 }
 
+function Check({ val }: { val: boolean }) {
+  return val ? (
+    <CheckCircle2 size={16} className="text-emerald-500" aria-label="Permitido" />
+  ) : (
+    <XCircle size={16} className="text-slate-200" aria-label="Negado" />
+  );
+}
+
 export function PermissionsMatrix({
   matrix,
 }: {
@@ -34,43 +35,44 @@ export function PermissionsMatrix({
   ) as Record<Role, Set<Permission>>;
 
   return (
-    <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Permissão</TableHead>
-            {ROLES.map((role) => (
-              <TableHead key={role} className="text-center">
-                {ROLE_LABELS[role]}
-              </TableHead>
-            ))}
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {groups.flatMap(([moduleName, permissions]) => [
-            <TableRow key={`module-${moduleName}`} className="bg-muted/40">
-              <TableCell colSpan={ROLES.length + 1} className="font-medium">
-                {moduleName}
-              </TableCell>
-            </TableRow>,
-            ...permissions.map((permission) => (
-              <TableRow key={permission}>
-                <TableCell>
-                  {PERMISSION_LABELS[permission] ?? permission}
-                  <span className="mt-0.5 block text-xs text-muted-foreground">
-                    {permission}
-                  </span>
-                </TableCell>
-                {ROLES.map((role) => (
-                  <TableCell key={role} className="text-center">
-                    {granted[role].has(permission) ? "✓" : "—"}
-                  </TableCell>
-                ))}
-              </TableRow>
-            )),
-          ])}
-        </TableBody>
-      </Table>
+    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+      <div className="border-b border-slate-100 bg-slate-50 px-5 py-4">
+        <div className="grid grid-cols-[1fr_repeat(5,minmax(0,5rem))] gap-4">
+          <div className="text-xs font-semibold tracking-wider text-slate-400 uppercase">
+            Permissão
+          </div>
+          {ROLES.map((role) => (
+            <div key={role} className="text-center text-xs font-bold text-slate-600">
+              {ROLE_LABELS[role]}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {groups.map(([moduleName, permissions]) => (
+        <div key={moduleName}>
+          <div className="border-b border-slate-100 bg-slate-50/50 px-5 py-2">
+            <span className="text-xs font-bold tracking-wider text-slate-400 uppercase">
+              {moduleName}
+            </span>
+          </div>
+          {permissions.map((permission) => (
+            <div
+              key={permission}
+              className="grid grid-cols-[1fr_repeat(5,minmax(0,5rem))] gap-4 border-b border-slate-50 px-5 py-3 hover:bg-slate-50/50"
+            >
+              <div className="min-w-0 text-sm text-slate-600">
+                {PERMISSION_LABELS[permission] ?? permission}
+              </div>
+              {ROLES.map((role) => (
+                <div key={role} className="flex justify-center">
+                  <Check val={granted[role].has(permission)} />
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+      ))}
     </div>
   );
 }

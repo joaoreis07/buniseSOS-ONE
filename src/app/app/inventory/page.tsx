@@ -1,14 +1,27 @@
-import Link from "next/link";
 import { requirePermission } from "@/shared/auth/session";
 import { inventoryListQuerySchema } from "@/modules/inventory/schemas/inventory.schemas";
 import { listInventoryForTenant } from "@/modules/inventory/services/inventory.service";
 import { InventoryFilters } from "@/modules/inventory/components/inventory-filters";
 import {
+  InventoryHeaderSubtitle,
   InventorySummaryCards,
   InventoryTable,
 } from "@/modules/inventory/components/inventory-table";
-import { Button } from "@/shared/ui/button";
-import { PageContainer, PageHeader } from "@/shared/components/page-layout";
+import {
+  ModulePageHeader,
+  PageContainer,
+  PaginationBar,
+} from "@/shared/components/page-layout";
+
+function toQueryParams(query: Record<string, unknown>, page: number): string {
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(query)) {
+    if (value == null || value === "" || key === "page") continue;
+    params.set(key, String(value));
+  }
+  params.set("page", String(page));
+  return params.toString();
+}
 
 export default async function InventoryPage({
   searchParams,
@@ -36,55 +49,31 @@ export default async function InventoryPage({
 
   return (
     <PageContainer>
-      <PageHeader
-        eyebrow="Operação"
+      <ModulePageHeader
         title="Estoque"
-        description={`Controle de produtos físicos · ${result.total} item(ns) na listagem`}
+        subtitle={<InventoryHeaderSubtitle summary={result.summary} />}
       />
 
       <InventorySummaryCards summary={result.summary} />
       <InventoryFilters query={query} categories={result.categories} />
       <InventoryTable items={result.items} />
 
-      <div className="flex items-center justify-between text-sm text-muted-foreground">
-        <span>
-          Página {result.page} de {result.pageCount}
-        </span>
-        <div className="flex gap-2">
-          {result.page > 1 ? (
-            <Button asChild variant="outline" size="sm">
-              <Link
-                href={`/app/inventory?${new URLSearchParams({
-                  ...Object.fromEntries(
-                    Object.entries(query)
-                      .filter(([, v]) => v != null && v !== "")
-                      .map(([k, v]) => [k, String(v)]),
-                  ),
-                  page: String(result.page - 1),
-                }).toString()}`}
-              >
-                Anterior
-              </Link>
-            </Button>
-          ) : null}
-          {result.page < result.pageCount ? (
-            <Button asChild variant="outline" size="sm">
-              <Link
-                href={`/app/inventory?${new URLSearchParams({
-                  ...Object.fromEntries(
-                    Object.entries(query)
-                      .filter(([, v]) => v != null && v !== "")
-                      .map(([k, v]) => [k, String(v)]),
-                  ),
-                  page: String(result.page + 1),
-                }).toString()}`}
-              >
-                Próxima
-              </Link>
-            </Button>
-          ) : null}
-        </div>
-      </div>
+      <PaginationBar
+        page={result.page}
+        pageCount={result.pageCount}
+        total={result.total}
+        totalLabel="item(ns)"
+        prevHref={
+          result.page > 1
+            ? `/app/inventory?${toQueryParams(query, result.page - 1)}`
+            : undefined
+        }
+        nextHref={
+          result.page < result.pageCount
+            ? `/app/inventory?${toQueryParams(query, result.page + 1)}`
+            : undefined
+        }
+      />
     </PageContainer>
   );
 }

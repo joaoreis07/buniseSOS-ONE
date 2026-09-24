@@ -12,7 +12,11 @@ import {
 } from "@/modules/communications/lib/labels";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/shared/ui/card";
+import {
+  EmptyState,
+  ModulePageHeader,
+  PageContainer,
+} from "@/shared/components/page-layout";
 
 export default async function CommunicationTemplatesPage() {
   const user = await requirePermission("communications:view");
@@ -23,64 +27,73 @@ export default async function CommunicationTemplatesPage() {
   const canManage = canManageTemplates(user.role);
 
   return (
-    <div className="space-y-6">
+    <PageContainer>
       <CommunicationsSubnav role={user.role} active="templates" />
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Templates</h1>
-          <p className="text-muted-foreground">
-            Mensagens reutilizáveis com variáveis determinísticas
-          </p>
-        </div>
-        {canManage ? (
-          <Button asChild>
-            <Link href="/app/communications/templates/new">Novo template</Link>
-          </Button>
-        ) : null}
-      </div>
+      <ModulePageHeader
+        title="Templates"
+        subtitle="Mensagens reutilizáveis com variáveis determinísticas"
+        actions={
+          canManage ? (
+            <Button asChild size="sm" className="h-8">
+              <Link href="/app/communications/templates/new">Novo template</Link>
+            </Button>
+          ) : null
+        }
+      />
 
       {templates.length === 0 ? (
-        <p className="rounded-lg border bg-card p-6 text-sm text-muted-foreground">
-          Nenhum template cadastrado.
-        </p>
+        <EmptyState
+          title="Nenhum template cadastrado"
+          description="Crie templates para agilizar comunicações recorrentes."
+          action={
+            canManage ? (
+              <Button asChild>
+                <Link href="/app/communications/templates/new">Criar template</Link>
+              </Button>
+            ) : undefined
+          }
+        />
       ) : (
         <div className="grid gap-4 md:grid-cols-2">
           {templates.map((template) => (
-            <Card key={template.id}>
-              <CardHeader className="flex flex-row items-start justify-between gap-2">
+            <article
+              key={template.id}
+              className="rounded-xl border border-slate-200 bg-white p-5 transition-colors hover:border-slate-300"
+            >
+              <div className="mb-3 flex items-start justify-between gap-2">
                 <div>
-                  <CardTitle className="text-base">
+                  <h2 className="text-base font-bold text-slate-800">
                     <Link
                       href={`/app/communications/templates/${template.id}`}
-                      className="hover:underline"
+                      className="hover:text-[var(--bos-primary)] hover:underline"
                     >
                       {template.name}
                     </Link>
-                  </CardTitle>
-                  <p className="text-sm text-muted-foreground">
+                  </h2>
+                  <p className="text-sm text-slate-400">
                     {COMMUNICATION_CHANNEL_LABELS[template.channel]} ·{" "}
                     {COMMUNICATION_TYPE_LABELS[template.type]}
                   </p>
                 </div>
-                <Badge variant={template.active ? "default" : "secondary"}>
+                <Badge variant={template.active ? "success" : "secondary"}>
                   {template.active ? "Ativo" : "Inativo"}
                 </Badge>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <p className="line-clamp-4 whitespace-pre-wrap text-sm">
-                  {template.body}
-                </p>
-                {canManage ? (
+              </div>
+              <p className="line-clamp-4 whitespace-pre-wrap text-sm text-slate-600">
+                {template.body}
+              </p>
+              {canManage ? (
+                <div className="mt-4">
                   <ToggleTemplateButton
                     templateId={template.id}
                     active={template.active}
                   />
-                ) : null}
-              </CardContent>
-            </Card>
+                </div>
+              ) : null}
+            </article>
           ))}
         </div>
       )}
-    </div>
+    </PageContainer>
   );
 }

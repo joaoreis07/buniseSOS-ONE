@@ -7,6 +7,7 @@ import {
   rolesAssignableBy,
 } from "@/shared/permissions/rbac";
 import { writeAuditLog } from "@/shared/audit/audit";
+import { assertPlanLimit } from "@/modules/billing/services/entitlements.service";
 import {
   bumpUserSessionVersion,
   createInvite,
@@ -133,6 +134,7 @@ export async function inviteMemberForTenant(params: {
 }) {
   assertPermission(params.role, "team:manage");
   assertAssignableRole(params.role, params.inviteRole);
+  await assertPlanLimit({ companyId: params.companyId, feature: "users" });
   return createInvite({
     companyId: params.companyId,
     invitedById: params.userId,

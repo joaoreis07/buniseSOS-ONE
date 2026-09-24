@@ -2,6 +2,7 @@ import type { Role } from "@prisma/client";
 import { assertPermission, hasPermission } from "@/shared/permissions/rbac";
 import { writeAuditLog } from "@/shared/audit/audit";
 import type { LeadFormInput, LeadListQuery } from "@/modules/crm/schemas/lead.schemas";
+import { assertPlanLimit } from "@/modules/billing/services/entitlements.service";
 import {
   createLead,
   findLeadById,
@@ -59,6 +60,7 @@ export async function createLeadForTenant(params: {
   data: LeadFormInput;
 }) {
   assertPermission(params.role, "crm:leads:manage");
+  await assertPlanLimit({ companyId: params.companyId, feature: "leads" });
   await assertOwnerInTenant(params.companyId, params.data.ownerId);
 
   const lead = await createLead({

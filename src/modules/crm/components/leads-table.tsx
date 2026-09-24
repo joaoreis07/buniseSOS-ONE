@@ -5,25 +5,37 @@ import {
   LEAD_STATUS_LABELS,
   formatMoneyBRL,
 } from "@/modules/crm/lib/lead-labels";
-import { Badge } from "@/shared/ui/badge";
-import { Button } from "@/shared/ui/button";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/shared/ui/table";
+import { formatDateBR } from "@/modules/finance/lib/finance-labels";
+import { cn } from "@/shared/utilities/cn";
 
 type LeadRow = Lead & {
   owner: { id: string; name: string | null; email: string } | null;
 };
 
-function statusVariant(status: LeadStatus) {
-  if (status === "QUALIFIED" || status === "CONVERTED") return "default" as const;
-  if (status === "LOST" || status === "UNQUALIFIED") return "destructive" as const;
-  return "secondary" as const;
+const STAGE_COLORS: Record<string, string> = {
+  NEW: "bg-slate-100 text-slate-600",
+  CONTACTED: "bg-sky-50 text-sky-700",
+  QUALIFIED: "bg-blue-50 text-blue-700",
+  UNQUALIFIED: "bg-red-50 text-red-700",
+  CONVERTED: "bg-emerald-50 text-emerald-700",
+  LOST: "bg-red-50 text-red-700",
+};
+
+const SOURCE_COLORS: Record<string, string> = {
+  LINKEDIN: "bg-blue-50 text-blue-700",
+  INDICATION: "bg-emerald-50 text-emerald-700",
+  WEBSITE: "bg-slate-100 text-slate-600",
+  INSTAGRAM: "bg-rose-50 text-rose-700",
+  GOOGLE: "bg-amber-50 text-amber-700",
+};
+
+function sourceColor(origin: string | null) {
+  if (!origin) return "bg-slate-100 text-slate-600";
+  const key = origin.toUpperCase().replace(/\s+/g, "_");
+  for (const [pattern, cls] of Object.entries(SOURCE_COLORS)) {
+    if (key.includes(pattern)) return cls;
+  }
+  return "bg-slate-100 text-slate-600";
 }
 
 export function LeadsTable({
@@ -35,12 +47,12 @@ export function LeadsTable({
 }) {
   if (items.length === 0) {
     return (
-      <div className="rounded-2xl border border-dashed border-slate-200 bg-white p-6 text-center text-sm text-slate-500">
+      <div className="rounded-xl border border-dashed border-slate-200 bg-white p-6 text-center text-sm text-slate-500">
         Nenhum lead encontrado.
         {canManage ? (
           <>
             {" "}
-            <Link href="/app/crm/leads/new" className="text-emerald-700 underline">
+            <Link href="/app/crm/leads/new" className="text-[var(--bos-primary)] hover:underline">
               Criar o primeiro
             </Link>
           </>
@@ -50,63 +62,77 @@ export function LeadsTable({
   }
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Nome</TableHead>
-            <TableHead className="hidden md:table-cell">Contato</TableHead>
-            <TableHead className="hidden lg:table-cell">Origem</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead className="hidden sm:table-cell">Responsável</TableHead>
-            <TableHead className="hidden md:table-cell">Valor</TableHead>
-            <TableHead className="hidden lg:table-cell">Criado em</TableHead>
-            <TableHead className="text-right">Ações</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
+    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="border-b border-slate-100 bg-slate-50">
+            <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-400">
+              Lead
+            </th>
+            <th className="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-400 md:table-cell">
+              Origem
+            </th>
+            <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-400">
+              Estágio
+            </th>
+            <th className="hidden px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-400 sm:table-cell">
+              Valor est.
+            </th>
+            <th className="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-400 lg:table-cell">
+              Responsável
+            </th>
+            <th className="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-400 lg:table-cell">
+              Data
+            </th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-slate-50">
           {items.map((lead) => (
-            <TableRow key={lead.id}>
-              <TableCell>
-                <div className="font-medium">{lead.name}</div>
+            <tr key={lead.id} className="transition-colors hover:bg-slate-50">
+              <td className="px-5 py-3.5">
+                <Link
+                  href={`/app/crm/leads/${lead.id}`}
+                  className="block font-semibold text-slate-800 hover:text-[var(--bos-primary)]"
+                >
+                  {lead.name}
+                </Link>
                 {lead.companyName ? (
-                  <div className="text-xs text-muted-foreground">
-                    {lead.companyName}
-                  </div>
+                  <div className="text-xs text-slate-400">{lead.companyName}</div>
                 ) : null}
-              </TableCell>
-              <TableCell className="hidden md:table-cell">
-                <div>{lead.email ?? "—"}</div>
-                <div className="text-xs text-muted-foreground">
-                  {lead.whatsapp ?? lead.phone ?? "—"}
-                </div>
-              </TableCell>
-              <TableCell className="hidden lg:table-cell">
-                {LEAD_ORIGIN_LABELS[lead.origin]}
-              </TableCell>
-              <TableCell>
-                <Badge variant={statusVariant(lead.status)}>
-                  {LEAD_STATUS_LABELS[lead.status]}
-                </Badge>
-              </TableCell>
-              <TableCell className="hidden sm:table-cell">
-                {lead.owner?.name ?? lead.owner?.email ?? "—"}
-              </TableCell>
-              <TableCell className="hidden md:table-cell">
+              </td>
+              <td className="hidden px-4 py-3.5 md:table-cell">
+                <span
+                  className={cn(
+                    "rounded-md px-2 py-0.5 text-xs font-medium",
+                    sourceColor(lead.origin),
+                  )}
+                >
+                  {lead.origin ? LEAD_ORIGIN_LABELS[lead.origin] ?? lead.origin : "—"}
+                </span>
+              </td>
+              <td className="px-4 py-3.5">
+                <span
+                  className={cn(
+                    "rounded-md px-2 py-0.5 text-xs font-medium",
+                    STAGE_COLORS[lead.status] ?? "bg-slate-100 text-slate-600",
+                  )}
+                >
+                  {LEAD_STATUS_LABELS[lead.status as LeadStatus]}
+                </span>
+              </td>
+              <td className="hidden px-4 py-3.5 text-right text-xs font-semibold text-slate-700 sm:table-cell">
                 {formatMoneyBRL(lead.estimatedValue)}
-              </TableCell>
-              <TableCell className="hidden lg:table-cell">
-                {lead.createdAt.toLocaleDateString("pt-BR")}
-              </TableCell>
-              <TableCell className="text-right">
-                <Button asChild variant="ghost" size="sm">
-                  <Link href={`/app/crm/leads/${lead.id}`}>Ver</Link>
-                </Button>
-              </TableCell>
-            </TableRow>
+              </td>
+              <td className="hidden px-4 py-3.5 text-xs text-slate-500 lg:table-cell">
+                {lead.owner?.name ?? lead.owner?.email ?? "—"}
+              </td>
+              <td className="hidden px-4 py-3.5 text-xs text-slate-500 lg:table-cell">
+                {formatDateBR(lead.createdAt)}
+              </td>
+            </tr>
           ))}
-        </TableBody>
-      </Table>
+        </tbody>
+      </table>
     </div>
   );
 }

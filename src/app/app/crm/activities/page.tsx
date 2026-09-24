@@ -8,14 +8,9 @@ import {
 } from "@/modules/crm/services/activity.service";
 import { CrmSubnav } from "@/modules/crm/components/crm-subnav";
 import { ActivitiesList } from "@/modules/crm/components/activities-list";
+import { ActivitiesFilters } from "@/modules/crm/components/activities-filters";
 import { Button } from "@/shared/ui/button";
-import { Input } from "@/shared/ui/input";
-import { Label } from "@/shared/ui/label";
-import {
-  ACTIVITY_STATUS_LABELS,
-  ACTIVITY_TYPE_LABELS,
-} from "@/modules/crm/lib/activity-labels";
-import { PageContainer, PageHeader } from "@/shared/components/page-layout";
+import { PageContainer } from "@/shared/components/page-layout";
 
 export default async function ActivitiesPage({
   searchParams,
@@ -48,79 +43,18 @@ export default async function ActivitiesPage({
   return (
     <PageContainer>
       <CrmSubnav role={user.role} active="activities" />
-      <PageHeader
-        eyebrow="CRM"
-        title="Atividades"
-        description={`Follow-ups do CRM · ${result.total} registro(s)`}
+
+      <ActivitiesFilters
+        query={query}
+        owners={meta.owners}
         actions={
           canManage ? (
-          <Button asChild>
-            <Link href="/app/crm/activities/new">Nova atividade</Link>
-          </Button>
+            <Button asChild size="sm">
+              <Link href="/app/crm/activities/new">Nova atividade</Link>
+            </Button>
           ) : null
         }
       />
-
-      <form className="grid gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm md:grid-cols-4">
-        <div className="space-y-1 md:col-span-2">
-          <Label htmlFor="q">Busca</Label>
-          <Input id="q" name="q" defaultValue={query.q ?? ""} />
-        </div>
-        <div className="space-y-1">
-          <Label htmlFor="status">Status</Label>
-          <select
-            id="status"
-            name="status"
-            defaultValue={query.status ?? ""}
-            className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm"
-          >
-            <option value="">Todos</option>
-            {Object.entries(ACTIVITY_STATUS_LABELS).map(([value, label]) => (
-              <option key={value} value={value}>
-                {label}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="space-y-1">
-          <Label htmlFor="type">Tipo</Label>
-          <select
-            id="type"
-            name="type"
-            defaultValue={query.type ?? ""}
-            className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm"
-          >
-            <option value="">Todos</option>
-            {Object.entries(ACTIVITY_TYPE_LABELS).map(([value, label]) => (
-              <option key={value} value={value}>
-                {label}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="space-y-1 md:col-span-2">
-          <Label htmlFor="ownerId">Responsável</Label>
-          <select
-            id="ownerId"
-            name="ownerId"
-            defaultValue={query.ownerId ?? ""}
-            className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm"
-          >
-            <option value="">Todos</option>
-            {meta.owners.map((owner) => (
-              <option key={owner.id} value={owner.id}>
-                {owner.name ?? owner.email}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="flex items-end gap-2 md:col-span-2">
-          <Button type="submit">Filtrar</Button>
-          <Button asChild variant="outline">
-            <Link href="/app/crm/activities">Limpar</Link>
-          </Button>
-        </div>
-      </form>
 
       <ActivitiesList items={result.items} canManage={canManage} />
     </PageContainer>

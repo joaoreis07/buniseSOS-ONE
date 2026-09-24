@@ -27,6 +27,8 @@ export async function getCrmDashboard(params: {
     activitiesOverdue,
     allOpenAndClosed,
     owners,
+    activeCustomers,
+    recentActivities,
   ] = await Promise.all([
     prisma.lead.count({ where: { companyId, ...notDeletedFilter } }),
     prisma.lead.count({
@@ -88,6 +90,22 @@ export async function getCrmDashboard(params: {
     prisma.membership.findMany({
       where: { companyId, ...notDeletedFilter },
       include: { user: { select: { id: true, name: true, email: true } } },
+    }),
+    prisma.customer.count({
+      where: { companyId, ...notDeletedFilter, status: "ACTIVE" },
+    }),
+    prisma.activity.findMany({
+      where: { companyId, ...notDeletedFilter },
+      orderBy: { createdAt: "desc" },
+      take: 6,
+      select: {
+        id: true,
+        title: true,
+        type: true,
+        status: true,
+        customer: { select: { name: true } },
+        lead: { select: { name: true } },
+      },
     }),
   ]);
 
@@ -151,5 +169,7 @@ export async function getCrmDashboard(params: {
     },
     opportunitiesByStage,
     byOwner,
+    activeCustomers,
+    recentActivities,
   };
 }

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Plus } from "lucide-react";
 import { requirePermission } from "@/shared/auth/session";
 import { productListQuerySchema } from "@/modules/products/schemas/product.schemas";
 import {
@@ -6,11 +7,26 @@ import {
   getProductFormMeta,
   listProductsForTenant,
 } from "@/modules/products/services/product.service";
+import { getCompanyUsageSnapshot } from "@/modules/billing/services/entitlements.service";
 import { ProductsSubnav } from "@/modules/products/components/products-subnav";
 import { ProductsFilters } from "@/modules/products/components/products-filters";
 import { ProductsTable } from "@/modules/products/components/products-table";
 import { Button } from "@/shared/ui/button";
-import { PageContainer, PageHeader } from "@/shared/components/page-layout";
+import {
+  ModulePageHeader,
+  PageContainer,
+  PaginationBar,
+} from "@/shared/components/page-layout";
+
+function toQueryParams(query: Record<string, unknown>, page: number): string {
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(query)) {
+    if (value == null || value === "" || key === "page") continue;
+    params.set(key, String(value));
+  }
+  params.set("page", String(page));
+  return params.toString();
+}
 
 export default async function ProductsPage({
   searchParams,
@@ -33,28 +49,37 @@ export default async function ProductsPage({
     ? parsed.data
     : productListQuerySchema.parse({ page: 1, pageSize: 20 });
 
-  const [result, meta] = await Promise.all([
+  const [result, meta, usage] = await Promise.all([
     listProductsForTenant({
       companyId: user.companyId,
       role: user.role,
       query,
     }),
     getProductFormMeta(user.companyId),
+    getCompanyUsageSnapshot(user.companyId),
   ]);
+  const productUsage = usage.find((u) => u.feature === "products");
   const canManage = canManageProducts(user.role);
+
+  const usageSubtitle = productUsage?.limit
+    ? `${productUsage.used} / ${productUsage.limit} produtos (plano Free)`
+    : `${result.total} registro(s)`;
 
   return (
     <PageContainer>
       <ProductsSubnav role={user.role} active="products" />
-      <PageHeader
-        eyebrow="Operação"
-        title="Produtos"
-        description={`Catálogo de produtos e serviços · ${result.total} registro(s)`}
+
+      <ModulePageHeader
+        title="Produtos e Serviços"
+        subtitle={usageSubtitle}
         actions={
           canManage ? (
-          <Button asChild>
-            <Link href="/app/products/new">Novo produto</Link>
-          </Button>
+            <Button asChild size="sm">
+              <Link href="/app/products/new">
+                <Plus className="size-3.5" aria-hidden />
+                Novo produto
+              </Link>
+            </Button>
           ) : null
         }
       />
@@ -62,45 +87,22 @@ export default async function ProductsPage({
       <ProductsFilters query={query} categories={meta.categories} />
       <ProductsTable items={result.items} canManage={canManage} />
 
-      <div className="flex items-center justify-between text-sm text-muted-foreground">
-        <span>
-          Página {result.page} de {result.pageCount}
-        </span>
-        <div className="flex gap-2">
-          {result.page > 1 ? (
-            <Button asChild variant="outline" size="sm">
-              <Link
-                href={`/app/products?${new URLSearchParams({
-                  ...Object.fromEntries(
-                    Object.entries(query)
-                      .filter(([, v]) => v != null && v !== "")
-                      .map(([k, v]) => [k, String(v)]),
-                  ),
-                  page: String(result.page - 1),
-                }).toString()}`}
-              >
-                Anterior
-              </Link>
-            </Button>
-          ) : null}
-          {result.page < result.pageCount ? (
-            <Button asChild variant="outline" size="sm">
-              <Link
-                href={`/app/products?${new URLSearchParams({
-                  ...Object.fromEntries(
-                    Object.entries(query)
-                      .filter(([, v]) => v != null && v !== "")
-                      .map(([k, v]) => [k, String(v)]),
-                  ),
-                  page: String(result.page + 1),
-                }).toString()}`}
-              >
-                Próxima
-              </Link>
-            </Button>
-          ) : null}
-        </div>
-      </div>
+      <PaginationBar
+        page={result.page}
+        pageCount={result.pageCount}
+        total={result.total}
+        totalLabel="produto(s)"
+        prevHref={
+          result.page > 1
+            ? `/app/products?${toQueryParams(query, result.page - 1)}`
+            : undefined
+        }
+        nextHref={
+          result.page < result.pageCount
+            ? `/app/products?${toQueryParams(query, result.page + 1)}`
+            : undefined
+        }
+      />
     </PageContainer>
   );
 }

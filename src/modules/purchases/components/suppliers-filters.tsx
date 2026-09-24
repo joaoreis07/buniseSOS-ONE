@@ -1,44 +1,55 @@
 import Link from "next/link";
+import { Search } from "lucide-react";
+import type { SupplierListQuery } from "@/modules/purchases/schemas/supplier.schemas";
+import { SUPPLIER_STATUS_LABELS } from "@/modules/purchases/lib/purchase-labels";
+import { FilterPillNav } from "@/shared/components/page-layout";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
-import { Label } from "@/shared/ui/label";
-import { SUPPLIER_STATUS_LABELS } from "@/modules/purchases/lib/purchase-labels";
-import type { SupplierListQuery } from "@/modules/purchases/schemas/supplier.schemas";
+
+const STATUS_OPTIONS = [
+  { value: "", label: "Todos" },
+  ...Object.entries(SUPPLIER_STATUS_LABELS).map(([value, label]) => ({
+    value,
+    label,
+  })),
+];
 
 export function SuppliersFilters({ query }: { query: SupplierListQuery }) {
   return (
-    <form className="grid gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm md:grid-cols-4">
-      <div className="space-y-1 md:col-span-2">
-        <Label htmlFor="q">Busca</Label>
-        <Input
-          id="q"
-          name="q"
-          defaultValue={query.q ?? ""}
-          placeholder="Nome, documento ou e-mail"
+    <form className="space-y-4">
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div className="relative">
+          <Search
+            className="absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-slate-400"
+            aria-hidden
+          />
+          <Input
+            id="q"
+            name="q"
+            defaultValue={query.q ?? ""}
+            placeholder="Buscar por nome, documento ou e-mail…"
+            className="h-9 w-full pl-9 sm:w-72"
+          />
+        </div>
+        <FilterPillNav
+          basePath="/app/suppliers"
+          param="status"
+          active={query.status ?? ""}
+          options={STATUS_OPTIONS}
+          preserve={{ q: query.q }}
         />
+        <div className="flex items-end gap-2 sm:ml-auto">
+          <Button type="submit" size="sm">
+            Filtrar
+          </Button>
+          <Button asChild type="button" variant="outline" size="sm">
+            <Link href="/app/suppliers">Limpar</Link>
+          </Button>
+        </div>
       </div>
-      <div className="space-y-1">
-        <Label htmlFor="status">Status</Label>
-        <select
-          id="status"
-          name="status"
-          defaultValue={query.status ?? ""}
-          className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm"
-        >
-          <option value="">Todos</option>
-          {Object.entries(SUPPLIER_STATUS_LABELS).map(([value, label]) => (
-            <option key={value} value={value}>
-              {label}
-            </option>
-          ))}
-        </select>
-      </div>
-      <div className="flex items-end gap-2">
-        <Button type="submit">Filtrar</Button>
-        <Button asChild variant="outline">
-          <Link href="/app/suppliers">Limpar</Link>
-        </Button>
-      </div>
+      {query.status ? (
+        <input type="hidden" name="status" value={query.status} />
+      ) : null}
     </form>
   );
 }

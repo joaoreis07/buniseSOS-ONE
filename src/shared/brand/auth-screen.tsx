@@ -2,54 +2,85 @@ import Link from "next/link";
 import { CheckCircle2 } from "lucide-react";
 import { BrandMark } from "@/shared/brand/brand-logo";
 
-export function AuthScreen({ children }: { children: React.ReactNode }) {
+const FEATURES = [
+  "CRM e Pipeline de vendas",
+  "Controle financeiro completo",
+  "Estoque e compras integrados",
+  "Relatórios e comunicações",
+];
+
+export function AuthScreen({
+  children,
+  variant = "login",
+}: {
+  children: React.ReactNode;
+  variant?: "login" | "register";
+}) {
   return (
-    <main className="grid min-h-screen bg-slate-50 lg:grid-cols-[minmax(0,1fr)_minmax(460px,0.72fr)]">
-      <section className="relative hidden overflow-hidden bg-[#071225] p-12 text-white lg:flex lg:flex-col lg:justify-between">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(37,99,235,.32),transparent_35%),radial-gradient(circle_at_80%_80%,rgba(34,211,238,.14),transparent_30%)]" />
-        <Link href="/" className="relative flex items-center gap-3">
-          <BrandMark size={44} className="size-11 ring-1 ring-white/20" priority />
-          <span>
-            <span className="block text-lg font-semibold">BusinessOS One</span>
-            <span className="block text-xs uppercase tracking-[0.16em] text-blue-300">
-              Gestão integrada
-            </span>
-          </span>
-        </Link>
-        <div className="relative max-w-xl">
-          <p className="text-sm font-semibold uppercase tracking-[0.16em] text-blue-300">
-            Sua operação em um só lugar
-          </p>
-          <h1 className="mt-4 text-4xl font-semibold leading-tight tracking-[-0.05em]">
-            Clareza para decidir. Controle para crescer.
-          </h1>
-          <p className="mt-5 max-w-lg text-base leading-7 text-slate-300">
-            CRM, vendas, estoque, compras e financeiro conectados à rotina da sua empresa.
-          </p>
-          <ul className="mt-8 grid gap-3 text-sm text-slate-200">
-            {["Visão completa da operação", "Permissões por perfil", "Dados isolados por empresa"].map(
-              (item) => (
-                <li key={item} className="flex items-center gap-3">
-                  <CheckCircle2 className="size-4 text-blue-400" />
-                  {item}
-                </li>
-              ),
-            )}
-          </ul>
-        </div>
-        <p className="relative text-xs text-slate-500">
-          BusinessOS One · Gestão simples. Resultados reais.
-        </p>
-      </section>
-      <section className="flex min-h-screen items-center justify-center px-4 py-10 sm:px-8">
-        <div className="w-full max-w-md">
-          <Link href="/" className="mb-8 flex items-center justify-center gap-3 lg:hidden">
-            <BrandMark size={40} className="size-10" priority />
-            <span className="font-semibold text-slate-950">BusinessOS One</span>
+    <main className="flex min-h-screen">
+      <section className="relative hidden flex-col overflow-hidden bg-[var(--bos-navy)] p-12 lg:flex lg:w-1/2">
+        <div className="absolute inset-0 bg-gradient-to-br from-[var(--bos-navy)] via-[#1a2d4e] to-[var(--bos-navy)]" />
+        <div className="relative z-10 flex h-full flex-col">
+          <Link href="/" className="flex items-center gap-3">
+            <BrandMark size={32} className="size-8 brightness-0 invert" priority />
+            <span className="text-lg font-semibold text-white">BusinessOS One</span>
           </Link>
+
+          <div className="flex flex-1 flex-col justify-center">
+            <h2 className="mb-4 text-3xl leading-tight font-extrabold text-white">
+              {variant === "register" ? (
+                <>Crie sua conta grátis</>
+              ) : (
+                <>
+                  Gestão simples.
+                  <br />
+                  Resultados reais.
+                </>
+              )}
+            </h2>
+            <p className="max-w-sm text-base leading-relaxed text-white/60">
+              {variant === "register"
+                ? "Comece a usar o BusinessOS ONE hoje. Plano gratuito completo, sem cartão de crédito."
+                : "CRM, vendas, estoque, financeiro e muito mais em um sistema integrado para sua empresa crescer."}
+            </p>
+            <div className="mt-10 space-y-4">
+              {(variant === "register"
+                ? [
+                    "Configuração em 5 minutos",
+                    "Sem cartão de crédito",
+                    "Cancele quando quiser",
+                    "Dados protegidos com criptografia",
+                  ]
+                : FEATURES
+              ).map((item) => (
+                <div key={item} className="flex items-center gap-3">
+                  <CheckCircle2 className="size-4 shrink-0 text-[var(--bos-primary)]" />
+                  <span className="text-sm text-white/70">{item}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <p className="text-xs text-white/25">© {new Date().getFullYear()} BusinessOS ONE</p>
+        </div>
+      </section>
+
+      <section className="flex flex-1 flex-col justify-center bg-white px-6 py-12 lg:px-16">
+        <div className="mx-auto w-full max-w-sm">
+          <div className="mb-8 lg:hidden">
+            <Link href="/" className="flex items-center gap-3">
+              <BrandMark size={28} className="size-7" priority />
+              <span className="font-semibold text-[var(--bos-navy)]">BusinessOS One</span>
+            </Link>
+          </div>
           {children}
         </div>
       </section>
     </main>
   );
 }
+
+export const authInputClass =
+  "h-10 rounded-lg border-slate-200 text-sm focus-visible:border-[var(--bos-primary)] focus-visible:ring-[var(--bos-primary)]/20";
+
+export const authLabelClass = "text-xs font-semibold text-slate-600";
